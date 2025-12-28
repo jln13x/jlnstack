@@ -4,6 +4,10 @@
   "version": "0.0.2",
   "license": "MIT",
   "author": "jln13x",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
