@@ -1,0 +1,237 @@
+---
+title: Next.js
+description: Procedure API for Next.js App Router
+---
+
+# Next.js
+
+The Next.js adapter provides full integration with the App Router.
+
+```ts
+import { init } from "@jlnstack/procedure/next"
+```
+
+## init
+
+Initialize Procedure with a base context:
+
+```ts
+const { procedure, middleware } = init({
+  ctx: async () => ({ db: getDb() })
+})
+```
+
+## procedure
+
+Creates a new procedure builder with Next.js specific methods:
+
+```ts
+const handler = procedure
+  .params<{ slug: string }>()
+  .rsc(...)
+```
+
+## .use()
+
+Adds a middleware to the procedure:
+
+```ts
+procedure.use(withAuth)
+procedure.use([middlewareA, middlewareB])  // parallel
+```
+
+## .params()
+
+Declares route parameters. The type should match your route structure:
+
+```ts
+// app/posts/[slug]/page.tsx
+const getPost = procedure
+  .params<{ slug: string }>()
+  .run(async ({ ctx }) => {
+    return ctx.db.posts.findBySlug(ctx.params.slug)
+  })
+```
+
+## .searchParams()
+
+Validates and types search parameters using any Standard Schema compatible validator (Zod, Valibot, ArkType, etc.):
+
+```ts
+import { z } from "zod"
+
+const searchSchema = z.object({
+  page: z.coerce.number().default(1),
+  sort: z.enum(["asc", "desc"]).default("desc")
+})
+
+const getPosts = procedure
+  .searchParams(searchSchema)
+  .run(async ({ ctx }) => {
+    return ctx.db.posts.findMany({
+      page: ctx.searchParams.page,
+      sort: ctx.searchParams.sort
+    })
+  })
+```
+
+## .rsc()
+
+Finalizes as a React Server Component:
+
+```tsx
+const UserAvatar = procedure
+  .use(withAuth)
+  .rsc(async ({ ctx }) => {
+    return <Avatar src={ctx.user.avatar} name={ctx.user.name} />
+  })
+```
+
+Use it in any server component:
+
+```tsx
+export default function Header() {
+  return (
+    <header>
+      <Logo />
+      <UserAvatar />
+    </header>
+  )
+}
+```
+
+## .page()
+
+Finalizes as a Next.js page component. Automatically receives `searchParams`:
+
+```tsx
+// rsc.ts
+export const PostPage = procedure
+  .params<{ slug: string }>()
+  .searchParams(schema)
+  .page(async ({ ctx }) => {
+    const post = await ctx.db.posts.find(ctx.params.slug)
+    return <Article post={post} page={ctx.searchParams.page} />
+  })
+
+// page.tsx
+import { PostPage } from "./rsc"
+export default PostPage
+```
+
+## .layout()
+
+Finalizes as a Next.js layout component. Receives `children` alongside the context:
+
+```tsx
+// rsc.ts
+export const PostLayout = procedure
+  .params<{ slug: string }>()
+  .layout(async ({ children, ctx }) => {
+    const post = await ctx.db.posts.find(ctx.params.slug)
+    return (
+      <div>
+        <Sidebar post={post} />
+        {children}
+      </div>
+    )
+  })
+
+// layout.tsx
+import { PostLayout } from "./rsc"
+export default PostLayout
+```
+
+## .metadata()
+
+Generates Next.js metadata:
+
+```ts
+// rsc.ts
+export const generateMetadata = procedure
+  .params<{ slug: string }>()
+  .metadata(async ({ ctx }) => {
+    const post = await ctx.db.posts.find(ctx.params.slug)
+    return {
+      title: post.title,
+      description: post.excerpt
+    }
+  })
+
+// page.tsx
+export { generateMetadata } from "./rsc"
+```
+
+## .layoutMetadata()
+
+Generates metadata for layouts (only receives `params`, not `searchParams`):
+
+```ts
+export const generateMetadata = procedure
+  .params<{ slug: string }>()
+  .layoutMetadata(async ({ ctx }) => ({
+    title: `Posts - ${ctx.params.slug}`
+  }))
+```
+
+## .staticParams()
+
+Generates static params for `generateStaticParams`:
+
+```ts
+// rsc.ts
+export const generateStaticParams = procedure
+  .params<{ slug: string }>()
+  .staticParams(async ({ ctx }) => {
+    const posts = await ctx.db.posts.findMany()
+    return posts.map((p) => ({ slug: p.slug }))
+  })
+
+// page.tsx
+export { generateStaticParams } from "./rsc"
+```
+
+## Reusable Procedures
+
+Create reusable procedure builders with shared middlewares:
+
+```ts
+// lib/i18n-procedure.ts
+const withI18n = middleware(async ({ ctx, next }) => {
+  const t = await initTranslations(ctx.params.locale)
+  return next({ ctx: { ...ctx, t } })
+})
+
+export const i18nProcedure = procedure
+  .params<{ locale: string }>()
+  .use(withI18n)
+```
+
+Use the same procedure for both page and metadata:
+
+```tsx
+// app/[locale]/about/rsc.ts
+import { i18nProcedure } from "@/lib/i18n-procedure"
+
+export const AboutPage = i18nProcedure.page(async ({ ctx }) => {
+  return (
+    <main>
+      <h1>{ctx.t("about.title")}</h1>
+      <p>{ctx.t("about.description")}</p>
+    </main>
+  )
+})
+
+export const generateMetadata = i18nProcedure.metadata(async ({ ctx }) => ({
+  title: ctx.t("about.title"),
+  description: ctx.t("about.description")
+}))
+```
+
+```tsx
+// app/[locale]/about/page.tsx
+import { AboutPage, generateMetadata } from "./rsc"
+
+export default AboutPage
+export { generateMetadata }
+```

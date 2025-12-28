@@ -1,0 +1,86 @@
+---
+title: Core
+description: Framework-agnostic Procedure API
+---
+
+# Core
+
+The core API is framework-agnostic and can be used in any JavaScript environment (Node.js, Bun, Edge, Browser, etc.).
+
+```ts
+import { init } from "@jlnstack/procedure"
+```
+
+## init
+
+Initialize Procedure with a base context factory:
+
+```ts
+const { procedure, middleware } = init({
+  ctx: async () => ({
+    db: getDb(),
+    config: getConfig()
+  })
+})
+```
+
+The `ctx` function is called fresh for each procedure execution.
+
+## .use()
+
+Adds a middleware to the procedure. Middlewares can enrich the context or validate inputs.
+
+```ts
+const withUser = middleware(({ ctx, next }) => {
+  return next({
+    ctx: { ...ctx, user: { id: "1" } }
+  })
+})
+
+const handler = procedure
+  .use(withUser)
+  .run(async ({ ctx }) => {
+    return ctx.db.users.find(ctx.user.id)
+  })
+```
+
+### Parallel execution
+
+You can run multiple middlewares in parallel by passing an array to `.use()`:
+
+```ts
+procedure.use([middlewareA, middlewareB])
+```
+
+## .input()
+
+Adds input validation using [Standard Schema](https://github.com/standard-schema/standard-schema). Supports Zod, Valibot, ArkType, etc.
+
+```ts
+import { z } from "zod"
+
+const getPost = procedure
+  .input(z.object({ id: z.string() }))
+  .run(async ({ input, ctx }) => {
+    return ctx.db.posts.find(input.id)
+  })
+
+// Calling with input
+const post = await getPost({ id: "123" })
+```
+
+## .run()
+
+Finalizes the procedure into a callable async function.
+
+```ts
+const getPosts = procedure
+  .use(withAuth)
+  .run(async ({ ctx }) => {
+    return ctx.db.posts.findMany()
+  })
+
+// Call the finalized function
+const posts = await getPosts()
+```
+

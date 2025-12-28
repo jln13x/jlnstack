@@ -1,0 +1,15 @@
+{
+  "title": "Procedure",
+  "description": "Type-safe procedure builder",
+  "root": true,
+  "pages": [
+    "---Getting Started---",
+    "index",
+    "installation",
+    "middlewares",
+    "---API---",
+    "core",
+    "react",
+    "next"
+  ]
+}

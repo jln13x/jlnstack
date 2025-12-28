@@ -1,0 +1,42 @@
+---
+title: Introduction
+description: Type-safe function builder for building composable procedures
+---
+
+# Procedure
+
+Procedure is a framework-agnostic, type-safe function builder. It allows you to compose middlewares to build up context and validate inputs, then finalize into a callable handler with full type inference.
+
+## Why Procedure?
+
+- **Type-safe context** — Each middleware enriches the context with full TypeScript inference.
+- **Composable** — Reuse middlewares across different procedures and projects.
+- **Validation** — First-class support for [Standard Schema](https://github.com/standard-schema/standard-schema) (Zod, Valibot, ArkType, etc.).
+- **Framework Agnostic** — Works in any environment: Node.js, Bun, Edge, React Server Components, etc.
+
+## Quick Example
+
+```ts
+import { init } from "@jlnstack/procedure"
+import { z } from "zod"
+
+const { procedure, middleware } = init({
+  ctx: async () => ({ db: new Database() })
+})
+
+const withUser = middleware(({ ctx, next }) => {
+  return next({
+    ctx: { ...ctx, user: { id: "1", name: "John" } }
+  })
+})
+
+export const getPost = procedure
+  .use(withUser)
+  .input(z.object({ id: z.string() }))
+  .run(async ({ ctx, input }) => {
+    return ctx.db.posts.find(input.id, ctx.user.id)
+  })
+
+// Usage
+const post = await getPost({ id: "post-123" })
+```

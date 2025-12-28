@@ -1,0 +1,92 @@
+---
+title: Middlewares
+description: Creating and composing middlewares
+---
+
+# Middlewares
+
+Middlewares are functions that transform the context. Each middleware receives the current context and a `next` function to continue the chain.
+
+## Creating Middlewares
+
+Use the `middleware` helper from your initialized factory:
+
+```ts
+const { middleware } = init({
+  ctx: async () => ({ db: getDb() })
+})
+
+const withAuth = middleware(({ ctx, next }) => {
+  return next({ ctx: { ...ctx, user: getCurrentUser() } })
+})
+
+const withTenant = middleware(({ ctx, next }) => {
+  return next({ ctx: { ...ctx, tenant: getTenant(ctx.user) } })
+})
+```
+
+## Chaining Middlewares
+
+Use `.use()` to add middlewares to a procedure. Each middleware receives the context from the previous one:
+
+```ts
+procedure
+  .use(withAuth)      // ctx: { db, user }
+  .use(withTenant)    // ctx: { db, user, tenant }
+  .run(async ({ ctx }) => {
+    // ctx is fully typed with all properties
+  })
+```
+
+## Parallel Execution
+
+Pass an array to `.use()` to run middlewares in parallel. Their results are merged:
+
+```ts
+const fetchUser = middleware(async ({ ctx, next }) => {
+  return next({ ctx: { ...ctx, user: await fetchUserData() } })
+})
+
+const fetchSettings = middleware(async ({ ctx, next }) => {
+  return next({ ctx: { ...ctx, settings: await fetchUserSettings() } })
+})
+
+procedure
+  .use([fetchUser, fetchSettings])  // runs in parallel
+  .run(async ({ ctx }) => {
+    // ctx: { db, user, settings }
+  })
+```
+
+## Async Middlewares
+
+Middlewares can be async:
+
+```ts
+const withAuth = middleware(async ({ ctx, next }) => {
+  const session = await getSession()
+  return next({ ctx: { ...ctx, session } })
+})
+```
+
+## Reusing Middlewares
+
+Define middlewares once and reuse across procedures:
+
+```ts
+// lib/middlewares.ts
+export const withAuth = middleware(...)
+export const withTenant = middleware(...)
+
+// features/posts.ts
+const getPost = procedure
+  .use(withAuth)
+  .run(...)
+
+// features/users.ts  
+const getUser = procedure
+  .use(withAuth)
+  .use(withTenant)
+  .run(...)
+```
+

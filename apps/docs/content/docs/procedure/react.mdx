@@ -1,0 +1,95 @@
+---
+title: React
+description: Procedure API for React Server Components
+---
+
+# React
+
+The React adapter is a simplified API for React Server Components.
+
+```ts
+import { init } from "@jlnstack/procedure/react"
+```
+
+## init
+
+Initialize Procedure with a base context:
+
+```ts
+const { procedure, middleware } = init({
+  ctx: async () => ({ db: getDb() })
+})
+```
+
+## procedure
+
+Creates a new procedure builder:
+
+```ts
+const myHandler = procedure
+  .use(...)
+  .rsc(...)
+```
+
+## .use()
+
+Adds a middleware to the procedure:
+
+```ts
+procedure.use(withAuth)
+procedure.use([middlewareA, middlewareB])  // parallel
+```
+
+## .input()
+
+Adds input validation using [Standard Schema](https://github.com/standard-schema/standard-schema):
+
+```ts
+import { z } from "zod"
+
+const getPost = procedure
+  .input(z.object({ id: z.string() }))
+  .rsc(async ({ input, ctx }) => {
+    return ctx.db.posts.find(input.id)
+  })
+```
+
+## .run()
+
+Finalizes the procedure as a callable async function:
+
+```ts
+const getData = procedure
+  .use(withAuth)
+  .run(async ({ ctx }) => {
+    return ctx.db.items.findMany()
+  })
+
+const data = await getData()
+```
+
+## .rsc()
+
+Finalizes the procedure as a React Server Component:
+
+```tsx
+const ItemList = procedure
+  .use(withAuth)
+  .rsc(async ({ ctx }) => {
+    const items = await ctx.db.items.findMany()
+    return <List items={items} />
+  })
+```
+
+Use it directly in your page:
+
+```tsx
+export default function Page() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <ItemList />
+    </Suspense>
+  )
+}
+```
+
