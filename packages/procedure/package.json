@@ -4,6 +4,10 @@
   "version": "0.0.2",
   "license": "MIT",
   "author": "jln13x",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jln13x/jlnstack"
+  },
   "publishConfig": {
     "access": "public",
     "provenance": true
