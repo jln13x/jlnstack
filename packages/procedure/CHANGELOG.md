@@ -4,6 +4,12 @@
 
 ### Patch Changes
 
+- 0feafa9: release
+
+## 0.0.2
+
+### Patch Changes
+
 - 8771935: release
 
 ## 0.0.1
