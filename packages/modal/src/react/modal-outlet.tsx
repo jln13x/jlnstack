@@ -1,6 +1,7 @@
 "use client";
 
-import { Fragment, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
+import { InnerModalProvider } from "./inner-modal-context";
 import { useModalClient } from "./modal-client-context";
 
 export function ModalOutlet() {
@@ -11,8 +12,26 @@ export function ModalOutlet() {
     () => client.getState(),
   );
 
-  return state.modals.map(({ render }, index) => (
+  return state.modals.map((modal, index) => (
     // biome-ignore lint/suspicious/noArrayIndexKey: key
-    <Fragment key={`modal-${index}`}>{render()}</Fragment>
+    <ModalWrapper key={`modal-${index}`} modal={modal} />
   ));
+}
+
+function ModalWrapper({
+  modal,
+}: {
+  modal: {
+    open: boolean;
+    render: () => unknown;
+    close: () => void;
+  };
+}) {
+  const close = useCallback(() => modal.close(), [modal.close]);
+
+  return (
+    <InnerModalProvider open={modal.open} close={close}>
+      {modal.render() as React.ReactNode}
+    </InnerModalProvider>
+  );
 }
