@@ -1,0 +1,128 @@
+---
+title: React
+description: Using modals in React
+---
+
+# React
+
+## Setup
+
+### 1. Mount Provider & Outlet
+
+Create a modal client and wrap your app with the provider. Place `ModalOutlet` where you want modals to render.
+
+```tsx
+// app/providers.tsx
+"use client";
+
+import { ModalClient, ModalClientProvider, ModalOutlet } from "@jlnstack/modal/react";
+
+const modalClient = new ModalClient();
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <ModalClientProvider client={modalClient}>
+      {children}
+      <ModalOutlet />
+    </ModalClientProvider>
+  );
+}
+```
+
+### 2. Create a Modal
+
+Use `createModal` to define a modal with typed input.
+
+```tsx
+// modals/confirm-modal.tsx
+import { createModal } from "@jlnstack/modal";
+
+export const confirmModal = createModal<{ title: string; onConfirm: () => void }>(
+  (input) => (
+    <div className="modal">
+      <h2>{input.title}</h2>
+      <button onClick={input.onConfirm}>Confirm</button>
+    </div>
+  )
+);
+```
+
+### 3. useModal
+
+Use the `useModal` hook to open and close modals.
+
+```tsx
+import { useModal } from "@jlnstack/modal/react";
+import { confirmModal } from "./modals/confirm-modal";
+
+function DeleteButton() {
+  const modal = useModal(confirmModal);
+
+  return (
+    <button
+      onClick={() =>
+        modal.open({
+          title: "Delete item?",
+          onConfirm: () => {
+            deleteItem();
+            modal.close();
+          },
+        })
+      }
+    >
+      Delete
+    </button>
+  );
+}
+```
+
+## Modal Registry
+
+For larger applications, organize your modals in a registry object for easy access.
+
+```tsx
+// modals/index.ts
+import { createModal } from "@jlnstack/modal";
+
+export const modals = {
+  confirm: createModal<{ title: string; onConfirm: () => void }>((input) => (
+    <div className="modal">
+      <h2>{input.title}</h2>
+      <button onClick={input.onConfirm}>Confirm</button>
+    </div>
+  )),
+
+  settings: {
+    theme: createModal<{ currentTheme: string }>((input) => (
+      <div className="modal">
+        <h2>Theme Settings</h2>
+        <p>Current: {input.currentTheme}</p>
+      </div>
+    )),
+
+    profile: createModal<{ userId: string }>((input) => (
+      <div className="modal">
+        <h2>Profile Settings</h2>
+        <p>User: {input.userId}</p>
+      </div>
+    )),
+  },
+};
+```
+
+Access modals with dot notation:
+
+```tsx
+import { useModal } from "@jlnstack/modal/react";
+import { modals } from "./modals";
+
+function SettingsButton() {
+  const themeModal = useModal(modals.settings.theme);
+
+  return (
+    <button onClick={() => themeModal.open({ currentTheme: "dark" })}>
+      Theme Settings
+    </button>
+  );
+}
+```

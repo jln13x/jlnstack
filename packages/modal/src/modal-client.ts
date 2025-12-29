@@ -19,6 +19,7 @@ type ModalClientState = {
 class ModalClient {
   private modals = new Map<Modal<any>, ModalInstance>();
   private listeners = new Set<Listener>();
+  private cachedState: ModalClientState = { modals: [] };
 
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
@@ -26,6 +27,7 @@ class ModalClient {
   }
 
   private notify(): void {
+    this.cachedState = { modals: Array.from(this.modals.values()) };
     for (const listener of this.listeners) {
       listener();
     }
@@ -58,9 +60,7 @@ class ModalClient {
   }
 
   getState(): ModalClientState {
-    return {
-      modals: Array.from(this.modals.values()),
-    };
+    return this.cachedState;
   }
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { Fragment, useSyncExternalStore } from "react";
 import { useModalClient } from "./modal-client-context";
 
 export function ModalOutlet() {
@@ -12,11 +12,7 @@ export function ModalOutlet() {
   );
 
   return state.modals.map(({ render }, index) => (
-    <div
-      // biome-ignore lint/suspicious/noArrayIndexKey: key
-      key={`modal-${index}`}
-    >
-      {render()}
-    </div>
+    // biome-ignore lint/suspicious/noArrayIndexKey: key
+    <Fragment key={`modal-${index}`}>{render()}</Fragment>
   ));
 }
