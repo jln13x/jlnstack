@@ -6,7 +6,7 @@
   "author": "jln13x",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jln13x/jlnstack"
+    "url": "git+https://github.com/jln13x/jlnstack.git"
   },
   "publishConfig": {
     "access": "public",
