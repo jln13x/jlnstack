@@ -1,0 +1,6 @@
+{
+  "title": "Modal",
+  "description": "Type-safe modal management for React",
+  "root": true,
+  "pages": ["---Getting Started---", "index", "react"]
+}
