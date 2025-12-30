@@ -5,6 +5,7 @@ import { createContext, use, useMemo } from "react";
 type InnerModalContextValue = {
   open: boolean;
   close: () => void;
+  resolve: (value: unknown) => void;
 };
 
 const InnerModalContext = createContext<InnerModalContextValue | null>(null);
@@ -12,13 +13,15 @@ const InnerModalContext = createContext<InnerModalContextValue | null>(null);
 function InnerModalProvider({
   open,
   close,
+  resolve,
   children,
 }: {
   open: boolean;
   close: () => void;
+  resolve: (value: unknown) => void;
   children: React.ReactNode;
 }) {
-  const value = useMemo(() => ({ open, close }), [open, close]);
+  const value = useMemo(() => ({ open, close, resolve }), [open, close, resolve]);
   return <InnerModalContext value={value}>{children}</InnerModalContext>;
 }
 
