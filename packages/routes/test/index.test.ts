@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createRoutes, type RouteNode } from "../src/index";
+import { createRoutes } from "../src/index";
 
 type AppRoutes =
   | "/"
@@ -10,7 +10,7 @@ type AppRoutes =
   | "/docs/[...path]"
   | "/shop/[[...filters]]";
 
-const routes = createRoutes<AppRoutes>() as RouteNode<AppRoutes, "", {}>;
+const routes = createRoutes<AppRoutes>();
 
 describe("createRoutes", () => {
   it("returns root route", () => {
