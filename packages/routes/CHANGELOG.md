@@ -1,5 +1,11 @@
 # @jlnstack/routes
 
+## 0.0.7
+
+### Patch Changes
+
+- 86fe161: bump
+
 ## 0.0.6
 
 ### Patch Changes
