@@ -14,8 +14,7 @@
     "lint": "biome check",
     "format": "biome format --write",
     "test": "turbo run test",
-    "build": "pnpm run build:procedure",
-    "build:procedure": "pnpm --filter=@jlnstack/procedure build"
+    "build": "turbo run build --filter='!docs'"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
