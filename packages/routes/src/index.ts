@@ -171,6 +171,60 @@ type Stringify<T> = T extends string | number | boolean | bigint
   ? `${T}`
   : never;
 
+type UnionToIntersection<U> = (
+  U extends unknown
+    ? (k: U) => void
+    : never
+) extends (k: infer I) => void
+  ? I
+  : never;
+
+type UnionToLast<U> = UnionToIntersection<
+  U extends unknown ? () => U : never
+> extends () => infer R
+  ? R
+  : never;
+
+type UnionToTuple<U, R extends unknown[] = [], Last = UnionToLast<U>> = [
+  U,
+] extends [never]
+  ? R
+  : UnionToTuple<Exclude<U, Last>, [Last, ...R]>;
+
+type JoinStrings<
+  T extends readonly string[],
+  Sep extends string = "&",
+> = T extends readonly [infer Only extends string]
+  ? Only
+  : T extends readonly [
+        infer First extends string,
+        ...infer Rest extends readonly string[],
+      ]
+    ? `${First}${Sep}${JoinStrings<Rest, Sep>}`
+    : "";
+
+type QueryPairs<T extends Record<string, unknown>> = {
+  [K in keyof T]-?: T[K] extends undefined | never
+    ? never
+    : `${K & string}=${Stringify<T[K]>}`;
+}[keyof T];
+
+type BuildQueryString<T extends Record<string, unknown>> = JoinStrings<
+  UnionToTuple<QueryPairs<T>> extends readonly string[]
+    ? UnionToTuple<QueryPairs<T>>
+    : never
+>;
+
+type AppendQuery<Path extends string, SP> = SP extends Record<string, unknown>
+  ? [keyof SP] extends [never]
+    ? Path
+    : BuildQueryString<SP> extends infer QS extends string
+      ? QS extends ""
+        ? Path
+        : `${Path}?${QS}`
+      : Path
+  : Path;
+
 type ReplaceDynamicSegments<
   Path extends string,
   P extends Record<string, unknown>,
@@ -210,18 +264,27 @@ export type RouteNode<
   SearchParamMap extends SearchParamMapConstraint<Routes> = {},
 > = {
   getRoute: [keyof Params] extends [never]
-    ? (
+    ? <
+        const SP extends
+          | SearchParamsFor<
+              Routes,
+              Path extends "" ? "/" : Path,
+              SearchParamMap
+            >
+          | undefined = undefined,
+      >(
         params?: undefined,
-        searchParams?: SearchParamsFor<
-          Routes,
-          Path extends "" ? "/" : Path,
-          SearchParamMap
-        >,
-      ) => Path extends "" ? "/" : Path
-    : <const P extends Params>(
+        searchParams?: SP,
+      ) => AppendQuery<Path extends "" ? "/" : Path, SP>
+    : <
+        const P extends Params,
+        const SP extends
+          | SearchParamsFor<Routes, Path, SearchParamMap>
+          | undefined = undefined,
+      >(
         params: P,
-        searchParams?: SearchParamsFor<Routes, Path, SearchParamMap>,
-      ) => ReplaceDynamicSegments<Path, P>;
+        searchParams?: SP,
+      ) => AppendQuery<ReplaceDynamicSegments<Path, P>, SP>;
 } & {
   [Seg in ChildSegments<Routes, Path>]: RouteNode<
     Routes,

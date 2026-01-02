@@ -274,7 +274,8 @@ describe("search params", () => {
       { "/search": { q: typeof stringSchema; limit: typeof numberSchema2 } }
     >();
 
-    routes.search.getRoute(undefined, { q: "hello", limit: 10 });
+    const route = routes.search.getRoute(undefined, { q: "hello", limit: 10 });
+    expectTypeOf(route).toEqualTypeOf<"/search?q=hello&limit=10">();
     // @ts-expect-error - q should be string (from schema output), not number
     routes.search.getRoute(undefined, { q: 123 });
   });
