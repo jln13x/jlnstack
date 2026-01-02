@@ -309,21 +309,17 @@ type NextPath<
   ? `/${GetOriginalSegment<Routes, Path, Seg>}`
   : `${Path}/${GetOriginalSegment<Routes, Path, Seg>}`;
 
-export type RouteNode<
-  Routes extends string,
+type RouteNode<
+  R extends string,
   Path extends string,
   Params extends Record<string, unknown> = {},
-  ParamMap extends ParamMapConstraint<Routes> = {},
-  SearchParamMap extends SearchParamMapConstraint<Routes> = {},
+  ParamMap extends ParamMapConstraint<R> = {},
+  SearchParamMap extends SearchParamMapConstraint<R> = {},
 > = {
   getRoute: [keyof Params] extends [never]
     ? <
         const SP extends
-          | SearchParamsFor<
-              Routes,
-              Path extends "" ? "/" : Path,
-              SearchParamMap
-            >
+          | SearchParamsFor<R, Path extends "" ? "/" : Path, SearchParamMap>
           | undefined = undefined,
       >(
         params?: undefined,
@@ -332,41 +328,41 @@ export type RouteNode<
     : <
         const P extends Params,
         const SP extends
-          | SearchParamsFor<Routes, Path, SearchParamMap>
+          | SearchParamsFor<R, Path, SearchParamMap>
           | undefined = undefined,
       >(
         params: P,
         searchParams?: SP,
       ) => AppendQuery<ReplaceDynamicSegments<Path, P>, SP>;
 } & {
-  [Seg in ChildSegments<Routes, Path>]: RouteNode<
-    Routes,
-    NextPath<Routes, Path, Seg>,
-    IsOptionalCatchAllAtPath<Routes, Path, Seg> extends true
+  [Seg in ChildSegments<R, Path>]: RouteNode<
+    R,
+    NextPath<R, Path, Seg>,
+    IsOptionalCatchAllAtPath<R, Path, Seg> extends true
       ? Params & {
           [K in Seg]?: GetParamType<
-            Routes,
-            NextPath<Routes, Path, Seg>,
+            R,
+            NextPath<R, Path, Seg>,
             K,
             ParamMap,
             string[]
           >;
         }
-      : IsCatchAllAtPath<Routes, Path, Seg> extends true
+      : IsCatchAllAtPath<R, Path, Seg> extends true
         ? Params & {
             [K in Seg]: GetParamType<
-              Routes,
-              NextPath<Routes, Path, Seg>,
+              R,
+              NextPath<R, Path, Seg>,
               K,
               ParamMap,
               string[]
             >;
           }
-        : IsDynamicAtPath<Routes, Path, Seg> extends true
+        : IsDynamicAtPath<R, Path, Seg> extends true
           ? Params & {
               [K in Seg]: GetParamType<
-                Routes,
-                NextPath<Routes, Path, Seg>,
+                R,
+                NextPath<R, Path, Seg>,
                 K,
                 ParamMap,
                 string
@@ -377,6 +373,14 @@ export type RouteNode<
     SearchParamMap
   >;
 };
+
+export type Routes<R extends string, Config = {}> = RouteNode<
+  R,
+  "",
+  {},
+  ExtractParamMap<R, Config>,
+  ExtractSearchParamMap<R, Config>
+>;
 
 function isStandardSchema(
   value: unknown,
@@ -434,17 +438,9 @@ function validateParams(
 }
 
 function createRoutesWithConfig<
-  const Routes extends string,
-  const Config extends RoutesConfigConstraint<Routes, Config>,
->(
-  config?: Config,
-): RouteNode<
-  Routes,
-  "",
-  {},
-  ExtractParamMap<Routes, Config>,
-  ExtractSearchParamMap<Routes, Config>
-> {
+  const R extends string,
+  const Config extends RoutesConfigConstraint<R, Config>,
+>(config?: Config): Routes<R, Config> {
   const paramSchemas: Record<string, Record<string, unknown>> = {};
 
   if (config) {
@@ -527,27 +523,15 @@ function createRoutesWithConfig<
 
     const queryString = urlSearchParams.toString();
     return queryString ? `${basePath}?${queryString}` : basePath;
-  }) as RouteNode<
-    Routes,
-    "",
-    {},
-    ExtractParamMap<Routes, Config>,
-    ExtractSearchParamMap<Routes, Config>
-  >;
+  }) as Routes<R, Config>;
 }
 
-export function createRoutes<const Routes extends string>(): <
-  const Config extends RoutesConfigConstraint<Routes, Config>,
+export function createRoutes<const R extends string>(): <
+  const Config extends RoutesConfigConstraint<R, Config>,
 >(
   config?: Config,
-) => RouteNode<
-  Routes,
-  "",
-  {},
-  ExtractParamMap<Routes, Config>,
-  ExtractSearchParamMap<Routes, Config>
-> {
-  return <const Config extends RoutesConfigConstraint<Routes, Config>>(
+) => Routes<R, Config> {
+  return <const Config extends RoutesConfigConstraint<R, Config>>(
     config?: Config,
-  ) => createRoutesWithConfig<Routes, Config>(config);
+  ) => createRoutesWithConfig<R, Config>(config);
 }
