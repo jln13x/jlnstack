@@ -1,3 +1,4 @@
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { expectTypeOf, test } from "vitest";
 import { createRoutes } from "../src/index";
 
@@ -142,4 +143,68 @@ test("nested objects are rejected in ParamMap", () => {
       };
     }
   >();
+});
+
+declare const numberSchema: StandardSchemaV1<unknown, number>;
+declare const booleanSchema: StandardSchemaV1<unknown, boolean>;
+
+test("StandardSchema extracts output type for params", () => {
+  const schemaRoutes = createRoutes({
+    "/users/[id]": { id: numberSchema },
+  });
+
+  schemaRoutes.users.id.getRoute({ id: 42 });
+  // @ts-expect-error - id should be number (from schema output), not string
+  schemaRoutes.users.id.getRoute({ id: "invalid" });
+});
+
+test("StandardSchema works with multiple params", () => {
+  const schemaRoutes = createRoutes({
+    "/users/[id]/posts/[postId]": {
+      id: numberSchema,
+      postId: booleanSchema,
+    },
+  });
+
+  schemaRoutes.users.id.posts.postId.getRoute({ id: 42, postId: true });
+  // @ts-expect-error - id should be number, postId should be boolean
+  schemaRoutes.users.id.posts.postId.getRoute({ id: "invalid", postId: 123 });
+});
+
+test("StandardSchema can be mixed with raw types via explicit generics", () => {
+  const mixedRoutes = createRoutes<
+    "/users/[id]/posts/[postId]",
+    {
+      "/users/[id]/posts/[postId]": {
+        id: StandardSchemaV1<unknown, number>;
+        postId: boolean;
+      };
+    }
+  >();
+
+  mixedRoutes.users.id.posts.postId.getRoute({ id: 42, postId: true });
+});
+
+test("multiple routes with partial schema coverage", () => {
+  const schemaRoutes = createRoutes({
+    "/users/[id]": { id: numberSchema },
+    "/blog/[slug]": {},
+  });
+
+  schemaRoutes.users.id.getRoute({ id: 42 });
+  schemaRoutes.blog.slug.getRoute({ slug: "my-post" });
+});
+
+test("createRoutes without schema map still works", () => {
+  const noSchemaRoutes = createRoutes<"/users/[id]">();
+  noSchemaRoutes.users.id.getRoute({ id: "string-value" });
+});
+
+test("return type works with schema params", () => {
+  const schemaRoutes = createRoutes({
+    "/users/[id]": { id: numberSchema },
+  });
+
+  const route = schemaRoutes.users.id.getRoute({ id: 42 });
+  expectTypeOf(route).toEqualTypeOf<"/users/42">();
 });

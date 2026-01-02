@@ -27,8 +27,9 @@
   "devDependencies": {
     "@vitest/ui": "^2.1.8",
     "tsdown": "^0.15.4",
-    "typescript": "catalog:",
-    "vitest": "^2.1.8"
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8",
+    "@standard-schema/spec": "^1.1.0"
   },
   "exports": {
     "./package.json": "./package.json",

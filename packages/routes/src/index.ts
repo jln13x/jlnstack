@@ -1,3 +1,4 @@
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { createRecursiveProxy } from "./proxy";
 
 type ValidParamValue =
@@ -8,9 +9,17 @@ type ValidParamValue =
   | string[]
   | readonly string[];
 
+type ParamMapValue =
+  | ValidParamValue
+  | StandardSchemaV1<unknown, ValidParamValue>;
+
 type ParamMapConstraint<Routes extends string> = {
-  [K in Routes]?: Record<string, ValidParamValue>;
+  [K in Routes]?: Record<string, ParamMapValue>;
 };
+
+type ExtractParamType<T> = T extends StandardSchemaV1
+  ? StandardSchemaV1.InferOutput<T>
+  : T;
 
 type FindParamInMap<
   Routes extends string,
@@ -21,7 +30,7 @@ type FindParamInMap<
   [R in Routes]: R extends `${CurrentPath}${"" | `/${string}`}`
     ? R extends keyof ParamMap
       ? ParamName extends keyof NonNullable<ParamMap[R]>
-        ? NonNullable<ParamMap[R]>[ParamName]
+        ? ExtractParamType<NonNullable<ParamMap[R]>[ParamName]>
         : never
       : never
     : never;
@@ -214,25 +223,108 @@ export type RouteNode<
   >;
 };
 
+function isStandardSchema(
+  value: unknown,
+): value is StandardSchemaV1<unknown, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "~standard" in value &&
+    typeof (value as StandardSchemaV1)["~standard"] === "object"
+  );
+}
+
+function findMatchingRoute(
+  segments: string[],
+  schemaMap: Record<string, Record<string, unknown>>,
+): string | undefined {
+  for (const routePattern of Object.keys(schemaMap)) {
+    const patternSegments = routePattern.split("/").filter(Boolean);
+    if (patternSegments.length !== segments.length) continue;
+
+    const matches = patternSegments.every((pattern, i) => {
+      if (pattern.startsWith("[") && pattern.endsWith("]")) return true;
+      if (pattern.startsWith("[[") && pattern.endsWith("]]")) return true;
+      return pattern === segments[i];
+    });
+
+    if (matches) return routePattern;
+  }
+  return undefined;
+}
+
+function validateParams(
+  params: Record<string, unknown>,
+  schemas: Record<string, unknown>,
+): Record<string, unknown> {
+  const validated: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(params)) {
+    const schema = schemas[key];
+    if (isStandardSchema(schema)) {
+      const result = schema["~standard"].validate(value);
+      if (result instanceof Promise) {
+        throw new Error(`Async validation is not supported for param "${key}"`);
+      }
+      if (result.issues) {
+        throw new Error(
+          `Validation failed for param "${key}": ${result.issues[0]?.message}`,
+        );
+      }
+      validated[key] = result.value;
+    } else {
+      validated[key] = value;
+    }
+  }
+  return validated;
+}
+
+export function createRoutes<const Routes extends string>(): RouteNode<
+  Routes,
+  "",
+  {},
+  {}
+>;
+export function createRoutes<
+  const Routes extends string,
+  ParamMap extends ParamMapConstraint<Routes>,
+>(): RouteNode<Routes, "", {}, ParamMap>;
+export function createRoutes<
+  const ParamMap extends ParamMapConstraint<string>,
+  Routes extends string = Extract<keyof ParamMap, string>,
+>(schemaMap: ParamMap): RouteNode<Routes, "", {}, ParamMap>;
 export function createRoutes<
   const Routes extends string,
   ParamMap extends ParamMapConstraint<Routes> = {},
->() {
+>(schemaMap?: ParamMap) {
   return createRecursiveProxy(({ path, args }) => {
     const segments = path.slice(0, -1);
-    const params = (args[0] ?? {}) as Record<
+    const rawParams = (args[0] ?? {}) as Record<
       string,
       string | string[] | undefined
     >;
 
     if (segments.length === 0) return "/";
 
+    let params = rawParams;
+    if (schemaMap) {
+      const matchingRoute = findMatchingRoute(
+        segments,
+        schemaMap as Record<string, Record<string, unknown>>,
+      );
+      if (matchingRoute && matchingRoute in schemaMap) {
+        const routeSchemas = schemaMap[
+          matchingRoute as keyof typeof schemaMap
+        ] as Record<string, unknown>;
+        params = validateParams(rawParams, routeSchemas) as typeof rawParams;
+      }
+    }
+
     const resolved = segments.flatMap((seg) => {
       if (!(seg in params)) return seg;
       const value = params[seg];
       if (Array.isArray(value)) return value;
       if (value === undefined) return [];
-      return value;
+      return String(value);
     });
 
     return resolved.length === 0 ? "/" : `/${resolved.join("/")}`;

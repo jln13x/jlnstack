@@ -118,15 +118,18 @@ importers:
 
   packages/routes:
     devDependencies:
+      '@standard-schema/spec':
+        specifier: ^1.1.0
+        version: 1.1.0
       '@vitest/ui':
         specifier: ^2.1.8
         version: 2.1.9(vitest@2.1.9)
       tsdown:
         specifier: ^0.15.4
-        version: 0.15.4(typescript@5.9.2)
+        version: 0.15.4(typescript@5.9.3)
       typescript:
-        specifier: 'catalog:'
-        version: 5.9.2
+        specifier: ^5.9.3
+        version: 5.9.3
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@24.10.4)(@vitest/ui@2.1.9)(jsdom@25.0.1)(lightningcss@1.30.2)
@@ -6389,6 +6392,24 @@ snapshots:
       - oxc-resolver
       - supports-color
 
+  rolldown-plugin-dts@0.16.8(rolldown@1.0.0-beta.58)(typescript@5.9.3):
+    dependencies:
+      '@babel/generator': 7.28.5
+      '@babel/parser': 7.28.5
+      '@babel/types': 7.28.5
+      ast-kit: 2.1.2
+      birpc: 2.5.0
+      debug: 4.4.3
+      dts-resolver: 2.1.2
+      get-tsconfig: 4.10.1
+      magic-string: 0.30.21
+      rolldown: 1.0.0-beta.58
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - oxc-resolver
+      - supports-color
+
   rolldown@1.0.0-beta.58:
     dependencies:
       '@oxc-project/types': 0.106.0
@@ -6655,6 +6676,31 @@ snapshots:
       unconfig: 7.3.3
     optionalDependencies:
       typescript: 5.9.2
+    transitivePeerDependencies:
+      - '@ts-macro/tsc'
+      - '@typescript/native-preview'
+      - oxc-resolver
+      - supports-color
+      - vue-tsc
+
+  tsdown@0.15.4(typescript@5.9.3):
+    dependencies:
+      ansis: 4.2.0
+      cac: 6.7.14
+      chokidar: 4.0.3
+      debug: 4.4.3
+      diff: 8.0.2
+      empathic: 2.0.0
+      hookable: 5.5.3
+      rolldown: 1.0.0-beta.58
+      rolldown-plugin-dts: 0.16.8(rolldown@1.0.0-beta.58)(typescript@5.9.3)
+      semver: 7.7.3
+      tinyexec: 1.0.2
+      tinyglobby: 0.2.15
+      tree-kill: 1.2.2
+      unconfig: 7.3.3
+    optionalDependencies:
+      typescript: 5.9.3
     transitivePeerDependencies:
       - '@ts-macro/tsc'
       - '@typescript/native-preview'

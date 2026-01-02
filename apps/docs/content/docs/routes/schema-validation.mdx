@@ -1,0 +1,102 @@
+---
+title: Schema Validation
+description: Validate and transform route params with Standard Schema
+---
+
+# Schema Validation
+
+Routes supports [Standard Schema](https://standardschema.dev/) for runtime validation and transformation of route parameters.
+
+## Basic Usage
+
+Pass a schema map to `createRoutes` to enable validation:
+
+```ts
+import { createRoutes } from "@jlnstack/routes"
+import { z } from "zod"
+
+const routes = createRoutes({
+  "/users/[id]": { id: z.coerce.number() },
+})
+
+routes.users.id.getRoute({ id: 42 })
+// => "/users/42"
+```
+
+The schema's output type is automatically inferred — `id` expects a `number`, not a `string`.
+
+## Supported Libraries
+
+Any library implementing the Standard Schema spec works:
+
+- [Zod](https://zod.dev/)
+- [Valibot](https://valibot.dev/)
+- [ArkType](https://arktype.io/)
+- [And more...](https://standardschema.dev/#what-schema-libraries-implement-the-spec)
+
+## Multiple Params
+
+Define schemas for multiple parameters:
+
+```ts
+const routes = createRoutes({
+  "/users/[id]/posts/[postId]": {
+    id: z.coerce.number(),
+    postId: z.string().uuid(),
+  },
+})
+
+routes.users.id.posts.postId.getRoute({
+  id: 123,
+  postId: "550e8400-e29b-41d4-a716-446655440000",
+})
+// => "/users/123/posts/550e8400-e29b-41d4-a716-446655440000"
+```
+
+## Partial Schema Coverage
+
+You don't need schemas for every param. Unspecified params default to `string`:
+
+```ts
+const routes = createRoutes({
+  "/users/[id]": { id: z.coerce.number() },
+  "/blog/[slug]": {},
+})
+
+routes.users.id.getRoute({ id: 42 })        // id: number
+routes.blog.slug.getRoute({ slug: "post" }) // slug: string
+```
+
+## Type-only Param Maps
+
+For type customization without runtime validation, use explicit generics:
+
+```ts
+const routes = createRoutes<
+  "/users/[id]",
+  { "/users/[id]": { id: number } }
+>()
+
+routes.users.id.getRoute({ id: 42 })
+// => "/users/42"
+```
+
+This provides compile-time type safety with zero runtime overhead.
+
+## Validation Errors
+
+When validation fails, an error is thrown with details:
+
+```ts
+const routes = createRoutes({
+  "/users/[id]": { id: z.number().positive() },
+})
+
+routes.users.id.getRoute({ id: -1 })
+// throws: Validation failed for param "id": Number must be greater than 0
+```
+
+## Limitations
+
+- **Async validation is not supported** — schemas must validate synchronously
+- Route patterns are inferred from schema map keys when no explicit generic is provided
