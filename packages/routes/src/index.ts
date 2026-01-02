@@ -17,6 +17,73 @@ type ParamMapConstraint<Routes extends string> = {
   [K in Routes]?: Record<string, ParamMapValue>;
 };
 
+type SearchParamValue =
+  | string
+  | number
+  | boolean
+  | string[]
+  | StandardSchemaV1<unknown, string | number | boolean | string[]>;
+
+type SearchParamMapConstraint<Routes extends string> = {
+  [K in Routes]?: Record<string, SearchParamValue>;
+};
+
+type ExtractRouteParams<Route extends string> =
+  Route extends `${string}[[...${infer Param}]]${infer Rest}`
+    ? Param | ExtractRouteParams<Rest>
+    : Route extends `${string}[...${infer Param}]${infer Rest}`
+      ? Param | ExtractRouteParams<Rest>
+      : Route extends `${string}[${infer Param}]${infer Rest}`
+        ? Param | ExtractRouteParams<Rest>
+        : never;
+
+type RouteConfigFor<Route extends string> = {
+  params?: { [K in ExtractRouteParams<Route>]?: ParamMapValue };
+  searchParams?: Record<string, SearchParamValue>;
+};
+
+type RoutesConfigConstraint<Routes extends string, T = {}> = {
+  [K in Routes]?: RouteConfigFor<K>;
+} & {
+  [K in keyof T]: K extends Routes ? RouteConfigFor<K> : never;
+};
+
+type ExtractParamMap<Routes extends string, Config> = {
+  [K in Routes]: K extends keyof Config
+    ? Config[K] extends {
+        params: infer P extends Record<string, ParamMapValue>;
+      }
+      ? P
+      : undefined
+    : undefined;
+};
+
+type ExtractSearchParamMap<Routes extends string, Config> = {
+  [K in Routes]: K extends keyof Config
+    ? Config[K] extends {
+        searchParams: infer SP extends Record<string, SearchParamValue>;
+      }
+      ? SP
+      : undefined
+    : undefined;
+};
+
+type ExtractSearchParamType<T> = T extends StandardSchemaV1
+  ? StandardSchemaV1.InferOutput<T>
+  : T;
+
+type SearchParamsFor<
+  Routes extends string,
+  Path extends string,
+  SearchParamMap extends SearchParamMapConstraint<Routes>,
+> = Path extends keyof SearchParamMap
+  ? SearchParamMap[Path] extends infer SP
+    ? SP extends Record<string, SearchParamValue>
+      ? { [K in keyof SP]?: ExtractSearchParamType<SP[K]> }
+      : Record<string, string | number | boolean | string[] | undefined>
+    : Record<string, string | number | boolean | string[] | undefined>
+  : Record<string, string | number | boolean | string[] | undefined>;
+
 type ExtractParamType<T> = T extends StandardSchemaV1
   ? StandardSchemaV1.InferOutput<T>
   : T;
@@ -144,6 +211,73 @@ type Stringify<T> = T extends string | number | boolean | bigint
   ? `${T}`
   : never;
 
+type UnionToIntersection<U> = (
+  U extends unknown
+    ? (k: U) => void
+    : never
+) extends (k: infer I) => void
+  ? I
+  : never;
+
+type UnionToLast<U> = UnionToIntersection<
+  U extends unknown ? () => U : never
+> extends () => infer R
+  ? R
+  : never;
+
+type UnionToTuple<U, R extends unknown[] = [], Last = UnionToLast<U>> = [
+  U,
+] extends [never]
+  ? R
+  : UnionToTuple<Exclude<U, Last>, [Last, ...R]>;
+
+type JoinStrings<
+  T extends readonly string[],
+  Sep extends string = "&",
+> = T extends readonly [infer Only extends string]
+  ? Only
+  : T extends readonly [
+        infer First extends string,
+        ...infer Rest extends readonly string[],
+      ]
+    ? `${First}${Sep}${JoinStrings<Rest, Sep>}`
+    : "";
+
+type ArrayToQueryPairs<
+  K extends string,
+  T extends readonly unknown[],
+> = T extends readonly [infer First, ...infer Rest extends readonly unknown[]]
+  ? First extends string | number | boolean | bigint
+    ? Rest["length"] extends 0
+      ? `${K}=${First}`
+      : `${K}=${First}` | ArrayToQueryPairs<K, Rest>
+    : never
+  : never;
+
+type QueryPairs<T extends Record<string, unknown>> = {
+  [K in keyof T]-?: T[K] extends undefined | never
+    ? never
+    : T[K] extends readonly (string | number | boolean | bigint)[]
+      ? ArrayToQueryPairs<K & string, T[K]>
+      : `${K & string}=${Stringify<T[K]>}`;
+}[keyof T];
+
+type BuildQueryString<T extends Record<string, unknown>> = JoinStrings<
+  UnionToTuple<QueryPairs<T>> extends readonly string[]
+    ? UnionToTuple<QueryPairs<T>>
+    : never
+>;
+
+type AppendQuery<Path extends string, SP> = SP extends Record<string, unknown>
+  ? [keyof SP] extends [never]
+    ? Path
+    : BuildQueryString<SP> extends infer QS extends string
+      ? QS extends ""
+        ? Path
+        : `${Path}?${QS}`
+      : Path
+  : Path;
+
 type ReplaceDynamicSegments<
   Path extends string,
   P extends Record<string, unknown>,
@@ -175,53 +309,78 @@ type NextPath<
   ? `/${GetOriginalSegment<Routes, Path, Seg>}`
   : `${Path}/${GetOriginalSegment<Routes, Path, Seg>}`;
 
-export type RouteNode<
-  Routes extends string,
+type RouteNode<
+  R extends string,
   Path extends string,
   Params extends Record<string, unknown> = {},
-  ParamMap extends ParamMapConstraint<Routes> = {},
+  ParamMap extends ParamMapConstraint<R> = {},
+  SearchParamMap extends SearchParamMapConstraint<R> = {},
 > = {
   getRoute: [keyof Params] extends [never]
-    ? () => Path extends "" ? "/" : Path
-    : <const P extends Params>(params: P) => ReplaceDynamicSegments<Path, P>;
+    ? <
+        const SP extends
+          | SearchParamsFor<R, Path extends "" ? "/" : Path, SearchParamMap>
+          | undefined = undefined,
+      >(
+        params?: undefined,
+        searchParams?: SP,
+      ) => AppendQuery<Path extends "" ? "/" : Path, SP>
+    : <
+        const P extends Params,
+        const SP extends
+          | SearchParamsFor<R, Path, SearchParamMap>
+          | undefined = undefined,
+      >(
+        params: P,
+        searchParams?: SP,
+      ) => AppendQuery<ReplaceDynamicSegments<Path, P>, SP>;
 } & {
-  [Seg in ChildSegments<Routes, Path>]: RouteNode<
-    Routes,
-    NextPath<Routes, Path, Seg>,
-    IsOptionalCatchAllAtPath<Routes, Path, Seg> extends true
+  [Seg in ChildSegments<R, Path>]: RouteNode<
+    R,
+    NextPath<R, Path, Seg>,
+    IsOptionalCatchAllAtPath<R, Path, Seg> extends true
       ? Params & {
           [K in Seg]?: GetParamType<
-            Routes,
-            NextPath<Routes, Path, Seg>,
+            R,
+            NextPath<R, Path, Seg>,
             K,
             ParamMap,
             string[]
           >;
         }
-      : IsCatchAllAtPath<Routes, Path, Seg> extends true
+      : IsCatchAllAtPath<R, Path, Seg> extends true
         ? Params & {
             [K in Seg]: GetParamType<
-              Routes,
-              NextPath<Routes, Path, Seg>,
+              R,
+              NextPath<R, Path, Seg>,
               K,
               ParamMap,
               string[]
             >;
           }
-        : IsDynamicAtPath<Routes, Path, Seg> extends true
+        : IsDynamicAtPath<R, Path, Seg> extends true
           ? Params & {
               [K in Seg]: GetParamType<
-                Routes,
-                NextPath<Routes, Path, Seg>,
+                R,
+                NextPath<R, Path, Seg>,
                 K,
                 ParamMap,
                 string
               >;
             }
           : Params,
-    ParamMap
+    ParamMap,
+    SearchParamMap
   >;
 };
+
+export type Routes<R extends string, Config = {}> = RouteNode<
+  R,
+  "",
+  {},
+  ExtractParamMap<R, Config>,
+  ExtractSearchParamMap<R, Config>
+>;
 
 function isStandardSchema(
   value: unknown,
@@ -278,43 +437,61 @@ function validateParams(
   return validated;
 }
 
-export function createRoutes<const Routes extends string>(): RouteNode<
-  Routes,
-  "",
-  {},
-  {}
->;
-export function createRoutes<
-  const Routes extends string,
-  ParamMap extends ParamMapConstraint<Routes>,
->(): RouteNode<Routes, "", {}, ParamMap>;
-export function createRoutes<
-  const ParamMap extends ParamMapConstraint<string>,
-  Routes extends string = Extract<keyof ParamMap, string>,
->(schemaMap: ParamMap): RouteNode<Routes, "", {}, ParamMap>;
-export function createRoutes<
-  const Routes extends string,
-  ParamMap extends ParamMapConstraint<Routes> = {},
->(schemaMap?: ParamMap) {
+function createRoutesWithConfig<
+  const R extends string,
+  const Config extends RoutesConfigConstraint<R, Config>,
+>(config?: Config): Routes<R, Config> {
+  const paramSchemas: Record<string, Record<string, unknown>> = {};
+
+  if (config) {
+    for (const [route, routeConfig] of Object.entries(config)) {
+      const rc = routeConfig as {
+        params?: Record<string, unknown>;
+        searchParams?: Record<string, unknown>;
+      };
+      if (rc?.params) {
+        paramSchemas[route] = rc.params;
+      }
+    }
+  }
+
   return createRecursiveProxy(({ path, args }) => {
     const segments = path.slice(0, -1);
     const rawParams = (args[0] ?? {}) as Record<
       string,
       string | string[] | undefined
     >;
+    const searchParams = args[1] as Record<string, unknown> | undefined;
 
-    if (segments.length === 0) return "/";
+    const appendSearchParams = (basePath: string) => {
+      if (!searchParams || Object.keys(searchParams).length === 0) {
+        return basePath;
+      }
+      const urlSearchParams = new URLSearchParams();
+      for (const [key, value] of Object.entries(searchParams)) {
+        if (value === undefined || value === null) continue;
+        if (Array.isArray(value)) {
+          for (const v of value) {
+            urlSearchParams.append(key, String(v));
+          }
+        } else {
+          urlSearchParams.append(key, String(value));
+        }
+      }
+      const queryString = urlSearchParams.toString();
+      return queryString ? `${basePath}?${queryString}` : basePath;
+    };
+
+    if (segments.length === 0) return appendSearchParams("/");
 
     let params = rawParams;
-    if (schemaMap) {
-      const matchingRoute = findMatchingRoute(
-        segments,
-        schemaMap as Record<string, Record<string, unknown>>,
-      );
-      if (matchingRoute && matchingRoute in schemaMap) {
-        const routeSchemas = schemaMap[
-          matchingRoute as keyof typeof schemaMap
-        ] as Record<string, unknown>;
+    if (Object.keys(paramSchemas).length > 0) {
+      const matchingRoute = findMatchingRoute(segments, paramSchemas);
+      if (matchingRoute && matchingRoute in paramSchemas) {
+        const routeSchemas = paramSchemas[matchingRoute] as Record<
+          string,
+          unknown
+        >;
         params = validateParams(rawParams, routeSchemas) as typeof rawParams;
       }
     }
@@ -327,6 +504,34 @@ export function createRoutes<
       return String(value);
     });
 
-    return resolved.length === 0 ? "/" : `/${resolved.join("/")}`;
-  }) as RouteNode<Routes, "", {}, ParamMap>;
+    const basePath = resolved.length === 0 ? "/" : `/${resolved.join("/")}`;
+    if (!searchParams || Object.keys(searchParams).length === 0) {
+      return basePath;
+    }
+
+    const urlSearchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(searchParams)) {
+      if (value === undefined || value === null) continue;
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          urlSearchParams.append(key, String(v));
+        }
+      } else {
+        urlSearchParams.append(key, String(value));
+      }
+    }
+
+    const queryString = urlSearchParams.toString();
+    return queryString ? `${basePath}?${queryString}` : basePath;
+  }) as Routes<R, Config>;
+}
+
+export function createRoutes<const R extends string>(): <
+  const Config extends RoutesConfigConstraint<R, Config>,
+>(
+  config?: Config,
+) => Routes<R, Config> {
+  return <const Config extends RoutesConfigConstraint<R, Config>>(
+    config?: Config,
+  ) => createRoutesWithConfig<R, Config>(config);
 }

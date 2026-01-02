@@ -1,0 +1,96 @@
+---
+title: Search Params
+description: Type-safe search parameters with schema validation
+---
+
+# Search Params
+
+Routes supports typed search parameters with schema validation using [Standard Schema](https://standardschema.dev/).
+
+## Basic Usage
+
+Define search params schemas in your route config:
+
+```ts
+import { createRoutes } from "@jlnstack/routes"
+import { z } from "zod"
+
+type AppRoutes = "/" | "/search" | "/users/[id]"
+
+const routes = createRoutes<AppRoutes>()({
+  "/search": {
+    searchParams: {
+      q: z.string(),
+      page: z.coerce.number(),
+    },
+  },
+})
+```
+
+Pass search params as the second argument to `getRoute`:
+
+```ts
+routes.search.getRoute(undefined, { q: "hello", page: 1 })
+// => "/search?q=hello&page=1"
+```
+
+For routes with path params, pass both:
+
+```ts
+const routes = createRoutes<AppRoutes>()({
+  "/users/[id]": {
+    searchParams: { tab: z.string() },
+  },
+})
+
+routes.users.id.getRoute({ id: "123" }, { tab: "settings" })
+// => "/users/123?tab=settings"
+```
+
+## Array Values
+
+Search params support array values:
+
+```ts
+const routes = createRoutes<AppRoutes>()({
+  "/search": {
+    searchParams: {
+      tags: z.array(z.string()),
+    },
+  },
+})
+
+routes.search.getRoute(undefined, { tags: ["react", "typescript"] })
+// => "/search?tags=react&tags=typescript"
+```
+
+## Optional Params
+
+All search params are optional by default:
+
+```ts
+routes.search.getRoute(undefined, { q: "hello" })
+// => "/search?q=hello"
+
+routes.search.getRoute(undefined, {})
+// => "/search"
+
+routes.search.getRoute()
+// => "/search"
+```
+
+## Combined with Path Params
+
+Mix path param schemas with search param schemas:
+
+```ts
+const routes = createRoutes<AppRoutes>()({
+  "/users/[id]": {
+    params: { id: z.coerce.number() },
+    searchParams: { tab: z.enum(["profile", "settings"]) },
+  },
+})
+
+routes.users.id.getRoute({ id: 42 }, { tab: "settings" })
+// => "/users/42?tab=settings"
+```

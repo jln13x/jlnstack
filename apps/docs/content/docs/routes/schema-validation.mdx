@@ -9,14 +9,18 @@ Routes supports [Standard Schema](https://standardschema.dev/) for runtime valid
 
 ## Basic Usage
 
-Pass a schema map to `createRoutes` to enable validation:
+Pass a config with `params` to `createRoutes` to enable validation:
 
 ```ts
 import { createRoutes } from "@jlnstack/routes"
 import { z } from "zod"
 
-const routes = createRoutes({
-  "/users/[id]": { id: z.coerce.number() },
+type AppRoutes = "/users/[id]"
+
+const routes = createRoutes<AppRoutes>()({
+  "/users/[id]": {
+    params: { id: z.coerce.number() },
+  },
 })
 
 routes.users.id.getRoute({ id: 42 })
@@ -39,10 +43,14 @@ Any library implementing the Standard Schema spec works:
 Define schemas for multiple parameters:
 
 ```ts
-const routes = createRoutes({
+type AppRoutes = "/users/[id]/posts/[postId]"
+
+const routes = createRoutes<AppRoutes>()({
   "/users/[id]/posts/[postId]": {
-    id: z.coerce.number(),
-    postId: z.string().uuid(),
+    params: {
+      id: z.coerce.number(),
+      postId: z.string().uuid(),
+    },
   },
 })
 
@@ -58,38 +66,27 @@ routes.users.id.posts.postId.getRoute({
 You don't need schemas for every param. Unspecified params default to `string`:
 
 ```ts
-const routes = createRoutes({
-  "/users/[id]": { id: z.coerce.number() },
-  "/blog/[slug]": {},
+type AppRoutes = "/users/[id]" | "/blog/[slug]"
+
+const routes = createRoutes<AppRoutes>()({
+  "/users/[id]": { params: { id: z.coerce.number() } },
 })
 
 routes.users.id.getRoute({ id: 42 })        // id: number
 routes.blog.slug.getRoute({ slug: "post" }) // slug: string
 ```
 
-## Type-only Param Maps
-
-For type customization without runtime validation, use explicit generics:
-
-```ts
-const routes = createRoutes<
-  "/users/[id]",
-  { "/users/[id]": { id: number } }
->()
-
-routes.users.id.getRoute({ id: 42 })
-// => "/users/42"
-```
-
-This provides compile-time type safety with zero runtime overhead.
-
 ## Validation Errors
 
 When validation fails, an error is thrown with details:
 
 ```ts
-const routes = createRoutes({
-  "/users/[id]": { id: z.number().positive() },
+type AppRoutes = "/users/[id]"
+
+const routes = createRoutes<AppRoutes>()({
+  "/users/[id]": {
+    params: { id: z.number().positive() },
+  },
 })
 
 routes.users.id.getRoute({ id: -1 })

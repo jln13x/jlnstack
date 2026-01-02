@@ -19,7 +19,7 @@ type AppRoutes =
   | "/blog/[slug]"
   | "/users/[id]/posts/[postId]"
 
-export const routes = createRoutes<AppRoutes>();
+export const routes = createRoutes<AppRoutes>()()
 ```
 
 Build paths using the chainable API:
@@ -56,7 +56,7 @@ module.exports = {
 import { createRoutes } from "@jlnstack/routes"
 import type { AppRoutes } from ".next/dev/types/routes.d.ts"
 
-export const routes = createRoutes<AppRoutes>();
+export const routes = createRoutes<AppRoutes>()()
 ```
 
 This keeps your route types in sync with your file system automatically.

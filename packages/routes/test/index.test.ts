@@ -45,7 +45,7 @@ type AppRoutes =
   | "/docs/[...path]"
   | "/shop/[[...filters]]";
 
-const routes = createRoutes<AppRoutes>();
+const routes = createRoutes<AppRoutes>()();
 
 describe("createRoutes", () => {
   it("returns root route", () => {
@@ -92,11 +92,80 @@ describe("createRoutes", () => {
   });
 });
 
+describe("search params", () => {
+  it("appends search params to route", () => {
+    const route = routes.dashboard.getRoute(undefined, {
+      page: "1",
+      sort: "asc",
+    });
+    expect(route).toBe("/dashboard?page=1&sort=asc");
+  });
+
+  it("appends search params to dynamic route", () => {
+    const route = routes.blog.slug.getRoute(
+      { slug: "my-post" },
+      { highlight: "true" },
+    );
+    expect(route).toBe("/blog/my-post?highlight=true");
+  });
+
+  it("handles array search params", () => {
+    const route = routes.dashboard.getRoute(undefined, {
+      tags: ["a", "b", "c"],
+    });
+    expect(route).toBe("/dashboard?tags=a&tags=b&tags=c");
+  });
+
+  it("handles numeric search params", () => {
+    const route = routes.dashboard.getRoute(undefined, { page: 1, limit: 10 });
+    expect(route).toBe("/dashboard?page=1&limit=10");
+  });
+
+  it("handles boolean search params", () => {
+    const route = routes.dashboard.getRoute(undefined, {
+      active: true,
+      deleted: false,
+    });
+    expect(route).toBe("/dashboard?active=true&deleted=false");
+  });
+
+  it("skips undefined search params", () => {
+    const route = routes.dashboard.getRoute(undefined, {
+      page: 1,
+      sort: undefined,
+    });
+    expect(route).toBe("/dashboard?page=1");
+  });
+
+  it("skips null search params", () => {
+    const route = routes.dashboard.getRoute(undefined, {
+      page: 1,
+      sort: null as unknown as string,
+    });
+    expect(route).toBe("/dashboard?page=1");
+  });
+
+  it("returns path without query string when no search params", () => {
+    const route = routes.dashboard.getRoute(undefined, {});
+    expect(route).toBe("/dashboard");
+  });
+
+  it("returns path without query string when search params is undefined", () => {
+    const route = routes.dashboard.getRoute(undefined, undefined);
+    expect(route).toBe("/dashboard");
+  });
+
+  it("works with root route", () => {
+    const route = routes.getRoute(undefined, { foo: "bar" });
+    expect(route).toBe("/?foo=bar");
+  });
+});
+
 describe("createRoutes with schemas", () => {
   it("validates and transforms params using schema", () => {
     const numberSchema = createMockSchema((v) => Number(v));
-    const schemaRoutes = createRoutes({
-      "/users/[id]": { id: numberSchema },
+    const schemaRoutes = createRoutes<"/users/[id]">()({
+      "/users/[id]": { params: { id: numberSchema } },
     });
 
     const route = schemaRoutes.users.id.getRoute({ id: 42 });
@@ -105,8 +174,8 @@ describe("createRoutes with schemas", () => {
 
   it("transforms string to number via schema", () => {
     const numberSchema = createMockSchema((v) => Number(v) * 2);
-    const schemaRoutes = createRoutes({
-      "/users/[id]": { id: numberSchema },
+    const schemaRoutes = createRoutes<"/users/[id]">()({
+      "/users/[id]": { params: { id: numberSchema } },
     });
 
     const route = schemaRoutes.users.id.getRoute({ id: 5 });
@@ -115,8 +184,8 @@ describe("createRoutes with schemas", () => {
 
   it("throws on validation failure", () => {
     const failingSchema = createFailingSchema("Invalid id");
-    const schemaRoutes = createRoutes({
-      "/users/[id]": { id: failingSchema },
+    const schemaRoutes = createRoutes<"/users/[id]">()({
+      "/users/[id]": { params: { id: failingSchema } },
     });
 
     expect(() => schemaRoutes.users.id.getRoute({ id: "bad" })).toThrow(
@@ -126,8 +195,8 @@ describe("createRoutes with schemas", () => {
 
   it("throws on async validation", () => {
     const asyncSchema = createAsyncSchema();
-    const schemaRoutes = createRoutes({
-      "/users/[id]": { id: asyncSchema },
+    const schemaRoutes = createRoutes<"/users/[id]">()({
+      "/users/[id]": { params: { id: asyncSchema } },
     });
 
     expect(() => schemaRoutes.users.id.getRoute({ id: "test" })).toThrow(
@@ -138,10 +207,12 @@ describe("createRoutes with schemas", () => {
   it("works with multiple schemas", () => {
     const numberSchema = createMockSchema((v) => Number(v));
     const upperSchema = createMockSchema((v) => String(v).toUpperCase());
-    const schemaRoutes = createRoutes({
+    const schemaRoutes = createRoutes<"/users/[id]/posts/[slug]">()({
       "/users/[id]/posts/[slug]": {
-        id: numberSchema,
-        slug: upperSchema,
+        params: {
+          id: numberSchema,
+          slug: upperSchema,
+        },
       },
     });
 
@@ -154,8 +225,8 @@ describe("createRoutes with schemas", () => {
 
   it("passes through params without schemas", () => {
     const numberSchema = createMockSchema((v) => Number(v));
-    const schemaRoutes = createRoutes({
-      "/users/[id]/posts/[slug]": { id: numberSchema },
+    const schemaRoutes = createRoutes<"/users/[id]/posts/[slug]">()({
+      "/users/[id]/posts/[slug]": { params: { id: numberSchema } },
     });
 
     const route = schemaRoutes.users.id.posts.slug.getRoute({
