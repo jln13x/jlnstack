@@ -45,7 +45,7 @@ type AppRoutes =
   | "/docs/[...path]"
   | "/shop/[[...filters]]";
 
-const routes = createRoutes<AppRoutes>();
+const routes = createRoutes<AppRoutes>()();
 
 describe("createRoutes", () => {
   it("returns root route", () => {
@@ -164,8 +164,8 @@ describe("search params", () => {
 describe("createRoutes with schemas", () => {
   it("validates and transforms params using schema", () => {
     const numberSchema = createMockSchema((v) => Number(v));
-    const schemaRoutes = createRoutes({
-      "/users/[id]": { id: numberSchema },
+    const schemaRoutes = createRoutes<"/users/[id]">()({
+      "/users/[id]": { params: { id: numberSchema } },
     });
 
     const route = schemaRoutes.users.id.getRoute({ id: 42 });
@@ -174,8 +174,8 @@ describe("createRoutes with schemas", () => {
 
   it("transforms string to number via schema", () => {
     const numberSchema = createMockSchema((v) => Number(v) * 2);
-    const schemaRoutes = createRoutes({
-      "/users/[id]": { id: numberSchema },
+    const schemaRoutes = createRoutes<"/users/[id]">()({
+      "/users/[id]": { params: { id: numberSchema } },
     });
 
     const route = schemaRoutes.users.id.getRoute({ id: 5 });
@@ -184,8 +184,8 @@ describe("createRoutes with schemas", () => {
 
   it("throws on validation failure", () => {
     const failingSchema = createFailingSchema("Invalid id");
-    const schemaRoutes = createRoutes({
-      "/users/[id]": { id: failingSchema },
+    const schemaRoutes = createRoutes<"/users/[id]">()({
+      "/users/[id]": { params: { id: failingSchema } },
     });
 
     expect(() => schemaRoutes.users.id.getRoute({ id: "bad" })).toThrow(
@@ -195,8 +195,8 @@ describe("createRoutes with schemas", () => {
 
   it("throws on async validation", () => {
     const asyncSchema = createAsyncSchema();
-    const schemaRoutes = createRoutes({
-      "/users/[id]": { id: asyncSchema },
+    const schemaRoutes = createRoutes<"/users/[id]">()({
+      "/users/[id]": { params: { id: asyncSchema } },
     });
 
     expect(() => schemaRoutes.users.id.getRoute({ id: "test" })).toThrow(
@@ -207,10 +207,12 @@ describe("createRoutes with schemas", () => {
   it("works with multiple schemas", () => {
     const numberSchema = createMockSchema((v) => Number(v));
     const upperSchema = createMockSchema((v) => String(v).toUpperCase());
-    const schemaRoutes = createRoutes({
+    const schemaRoutes = createRoutes<"/users/[id]/posts/[slug]">()({
       "/users/[id]/posts/[slug]": {
-        id: numberSchema,
-        slug: upperSchema,
+        params: {
+          id: numberSchema,
+          slug: upperSchema,
+        },
       },
     });
 
@@ -223,8 +225,8 @@ describe("createRoutes with schemas", () => {
 
   it("passes through params without schemas", () => {
     const numberSchema = createMockSchema((v) => Number(v));
-    const schemaRoutes = createRoutes({
-      "/users/[id]/posts/[slug]": { id: numberSchema },
+    const schemaRoutes = createRoutes<"/users/[id]/posts/[slug]">()({
+      "/users/[id]/posts/[slug]": { params: { id: numberSchema } },
     });
 
     const route = schemaRoutes.users.id.posts.slug.getRoute({
