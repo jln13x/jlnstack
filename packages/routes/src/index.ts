@@ -1,7 +1,15 @@
 import { createRecursiveProxy } from "./proxy";
 
+type ValidParamValue =
+  | string
+  | number
+  | boolean
+  | bigint
+  | string[]
+  | readonly string[];
+
 type ParamMapConstraint<Routes extends string> = {
-  [K in Routes]?: Record<string, unknown>;
+  [K in Routes]?: Record<string, ValidParamValue>;
 };
 
 type FindParamInMap<

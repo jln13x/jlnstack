@@ -127,3 +127,19 @@ test("empty ParamMap still works", () => {
   const emptyParamMapRoutes = createRoutes<ParamMapRoutes, {}>();
   emptyParamMapRoutes.dashboard.slug.getRoute({ slug: "string-value" });
 });
+
+test("nested objects are rejected in ParamMap", () => {
+  createRoutes<
+    "/dashboard/users/[id]",
+    // @ts-expect-error - nested objects are not allowed as param values
+    {
+      "/dashboard/users/[id]": {
+        id: {
+          foo: {
+            bar: string;
+          };
+        };
+      };
+    }
+  >();
+});
