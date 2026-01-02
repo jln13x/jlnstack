@@ -1,5 +1,6 @@
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { expectTypeOf, test } from "vitest";
-import { createRoutes, type RouteNode } from "../src/index";
+import { createRoutes } from "../src/index";
 
 type AppRoutes =
   | "/"
@@ -10,7 +11,7 @@ type AppRoutes =
   | "/docs/[...path]"
   | "/shop/[[...filters]]";
 
-const routes = createRoutes<AppRoutes>() as RouteNode<AppRoutes, "", {}>;
+const routes = createRoutes<AppRoutes>();
 
 test("root route returns literal '/'", () => {
   const route = routes.getRoute();
@@ -57,4 +58,153 @@ test("optional catch-all accepts string array", () => {
 test("optional catch-all accepts undefined", () => {
   const route = routes.shop.filters.getRoute({ filters: undefined });
   expectTypeOf(route).toMatchTypeOf<"/shop">();
+});
+
+type ParamMapRoutes =
+  | "/dashboard/[slug]"
+  | "/dashboard/[slug]/nested/[id]"
+  | "/blog/[postId]";
+
+interface CustomParamMap {
+  "/dashboard/[slug]": { slug: number };
+  "/dashboard/[slug]/nested/[id]": { slug: number; id: boolean };
+}
+
+test("ParamMap type is used for params when provided", () => {
+  const paramMapRoutes = createRoutes<ParamMapRoutes, CustomParamMap>();
+
+  paramMapRoutes.dashboard.slug.getRoute({ slug: 42 });
+  // @ts-expect-error - slug should be number, not string
+  paramMapRoutes.dashboard.slug.getRoute({ slug: "invalid" });
+});
+
+test("default string type is used when no ParamMap entry exists", () => {
+  const paramMapRoutes = createRoutes<ParamMapRoutes, CustomParamMap>();
+
+  paramMapRoutes.blog.postId.getRoute({ postId: "string-value" });
+  // @ts-expect-error - postId should be string (no ParamMap entry), not number
+  paramMapRoutes.blog.postId.getRoute({ postId: 123 });
+});
+
+test("partial ParamMap works - only some params have custom types", () => {
+  interface PartialParamMap {
+    "/dashboard/[slug]/nested/[id]": { slug: number };
+  }
+
+  const partialRoutes = createRoutes<ParamMapRoutes, PartialParamMap>();
+
+  const route = partialRoutes.dashboard.slug.nested.id.getRoute({
+    slug: 42,
+    id: "string-id",
+  });
+
+  expectTypeOf(route).toEqualTypeOf<"/dashboard/42/nested/string-id">();
+});
+
+test("multiple params can have different custom types", () => {
+  const customRoutes = createRoutes<ParamMapRoutes, CustomParamMap>();
+
+  customRoutes.dashboard.slug.nested.id.getRoute({
+    slug: 42,
+    id: true,
+  });
+});
+
+test("return type is literal string when custom types are used", () => {
+  const customRoutes = createRoutes<ParamMapRoutes, CustomParamMap>();
+
+  const route = customRoutes.dashboard.slug.getRoute({ slug: 42 });
+  expectTypeOf(route).toEqualTypeOf<"/dashboard/42">();
+});
+
+test("no ParamMap still works (infers from route pattern)", () => {
+  const noParamMapRoutes = createRoutes<ParamMapRoutes>();
+  noParamMapRoutes.dashboard.slug.getRoute({ slug: "string-value" });
+  const route = noParamMapRoutes.dashboard.slug.getRoute({ slug: "test" });
+  expectTypeOf(route).toEqualTypeOf<"/dashboard/test">();
+});
+
+test("empty ParamMap still works", () => {
+  const emptyParamMapRoutes = createRoutes<ParamMapRoutes, {}>();
+  emptyParamMapRoutes.dashboard.slug.getRoute({ slug: "string-value" });
+});
+
+test("nested objects are rejected in ParamMap", () => {
+  createRoutes<
+    "/dashboard/users/[id]",
+    // @ts-expect-error - nested objects are not allowed as param values
+    {
+      "/dashboard/users/[id]": {
+        id: {
+          foo: {
+            bar: string;
+          };
+        };
+      };
+    }
+  >();
+});
+
+declare const numberSchema: StandardSchemaV1<unknown, number>;
+declare const booleanSchema: StandardSchemaV1<unknown, boolean>;
+
+test("StandardSchema extracts output type for params", () => {
+  const schemaRoutes = createRoutes({
+    "/users/[id]": { id: numberSchema },
+  });
+
+  schemaRoutes.users.id.getRoute({ id: 42 });
+  // @ts-expect-error - id should be number (from schema output), not string
+  schemaRoutes.users.id.getRoute({ id: "invalid" });
+});
+
+test("StandardSchema works with multiple params", () => {
+  const schemaRoutes = createRoutes({
+    "/users/[id]/posts/[postId]": {
+      id: numberSchema,
+      postId: booleanSchema,
+    },
+  });
+
+  schemaRoutes.users.id.posts.postId.getRoute({ id: 42, postId: true });
+  // @ts-expect-error - id should be number, postId should be boolean
+  schemaRoutes.users.id.posts.postId.getRoute({ id: "invalid", postId: 123 });
+});
+
+test("StandardSchema can be mixed with raw types via explicit generics", () => {
+  const mixedRoutes = createRoutes<
+    "/users/[id]/posts/[postId]",
+    {
+      "/users/[id]/posts/[postId]": {
+        id: StandardSchemaV1<unknown, number>;
+        postId: boolean;
+      };
+    }
+  >();
+
+  mixedRoutes.users.id.posts.postId.getRoute({ id: 42, postId: true });
+});
+
+test("multiple routes with partial schema coverage", () => {
+  const schemaRoutes = createRoutes({
+    "/users/[id]": { id: numberSchema },
+    "/blog/[slug]": {},
+  });
+
+  schemaRoutes.users.id.getRoute({ id: 42 });
+  schemaRoutes.blog.slug.getRoute({ slug: "my-post" });
+});
+
+test("createRoutes without schema map still works", () => {
+  const noSchemaRoutes = createRoutes<"/users/[id]">();
+  noSchemaRoutes.users.id.getRoute({ id: "string-value" });
+});
+
+test("return type works with schema params", () => {
+  const schemaRoutes = createRoutes({
+    "/users/[id]": { id: numberSchema },
+  });
+
+  const route = schemaRoutes.users.id.getRoute({ id: 42 });
+  expectTypeOf(route).toEqualTypeOf<"/users/42">();
 });

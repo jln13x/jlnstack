@@ -2,5 +2,11 @@
   "title": "Routes",
   "description": "Type-safe route builder",
   "root": true,
-  "pages": ["index", "installation", "usage", "dynamic-segments"]
+  "pages": [
+    "index",
+    "installation",
+    "usage",
+    "dynamic-segments",
+    "schema-validation"
+  ]
 }
