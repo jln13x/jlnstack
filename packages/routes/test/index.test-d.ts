@@ -1,5 +1,5 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { expectTypeOf, test } from "vitest";
+import { describe, expectTypeOf, test } from "vitest";
 import { createRoutes } from "../src/index";
 
 type AppRoutes =
@@ -207,4 +207,75 @@ test("return type works with schema params", () => {
 
   const route = schemaRoutes.users.id.getRoute({ id: 42 });
   expectTypeOf(route).toEqualTypeOf<"/users/42">();
+});
+
+describe("search params", () => {
+  type SearchParamRoutes = "/dashboard" | "/blog/[slug]" | "/users/[id]";
+
+  interface CustomSearchParamMap {
+    "/dashboard": { page: number; sort: string };
+    "/blog/[slug]": { highlight: boolean };
+  }
+
+  test("getRoute accepts optional search params as 2nd parameter", () => {
+    const routes = createRoutes<SearchParamRoutes, {}, CustomSearchParamMap>();
+
+    routes.dashboard.getRoute(undefined, { page: 1, sort: "asc" });
+    routes.blog.slug.getRoute({ slug: "my-post" }, { highlight: true });
+  });
+
+  test("search params are typed when mapping exists", () => {
+    const routes = createRoutes<SearchParamRoutes, {}, CustomSearchParamMap>();
+
+    // @ts-expect-error - page should be number, not string
+    routes.dashboard.getRoute(undefined, { page: "invalid" });
+
+    // @ts-expect-error - highlight should be boolean, not string
+    routes.blog.slug.getRoute({ slug: "test" }, { highlight: "invalid" });
+  });
+
+  test("search params fallback to generic record when no mapping", () => {
+    const routes = createRoutes<SearchParamRoutes, {}, CustomSearchParamMap>();
+
+    routes.users.id.getRoute(
+      { id: "123" },
+      { anyParam: "value", another: ["a", "b"] },
+    );
+  });
+
+  test("search params are optional even when mapping exists", () => {
+    const routes = createRoutes<SearchParamRoutes, {}, CustomSearchParamMap>();
+
+    routes.dashboard.getRoute();
+    routes.dashboard.getRoute(undefined);
+    routes.blog.slug.getRoute({ slug: "test" });
+  });
+
+  test("individual search params are optional", () => {
+    const routes = createRoutes<SearchParamRoutes, {}, CustomSearchParamMap>();
+
+    routes.dashboard.getRoute(undefined, { page: 1 });
+    routes.dashboard.getRoute(undefined, { sort: "asc" });
+    routes.dashboard.getRoute(undefined, {});
+  });
+
+  test("root route accepts search params", () => {
+    const routes = createRoutes<"/" | "/about", {}, { "/": { foo: string } }>();
+
+    routes.getRoute(undefined, { foo: "bar" });
+  });
+
+  test("StandardSchema works for search params", () => {
+    const stringSchema = {} as StandardSchemaV1<unknown, string>;
+    const numberSchema2 = {} as StandardSchemaV1<unknown, number>;
+    const routes = createRoutes<
+      "/search",
+      {},
+      { "/search": { q: typeof stringSchema; limit: typeof numberSchema2 } }
+    >();
+
+    routes.search.getRoute(undefined, { q: "hello", limit: 10 });
+    // @ts-expect-error - q should be string (from schema output), not number
+    routes.search.getRoute(undefined, { q: 123 });
+  });
 });

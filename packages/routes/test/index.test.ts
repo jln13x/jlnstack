@@ -92,6 +92,75 @@ describe("createRoutes", () => {
   });
 });
 
+describe("search params", () => {
+  it("appends search params to route", () => {
+    const route = routes.dashboard.getRoute(undefined, {
+      page: "1",
+      sort: "asc",
+    });
+    expect(route).toBe("/dashboard?page=1&sort=asc");
+  });
+
+  it("appends search params to dynamic route", () => {
+    const route = routes.blog.slug.getRoute(
+      { slug: "my-post" },
+      { highlight: "true" },
+    );
+    expect(route).toBe("/blog/my-post?highlight=true");
+  });
+
+  it("handles array search params", () => {
+    const route = routes.dashboard.getRoute(undefined, {
+      tags: ["a", "b", "c"],
+    });
+    expect(route).toBe("/dashboard?tags=a&tags=b&tags=c");
+  });
+
+  it("handles numeric search params", () => {
+    const route = routes.dashboard.getRoute(undefined, { page: 1, limit: 10 });
+    expect(route).toBe("/dashboard?page=1&limit=10");
+  });
+
+  it("handles boolean search params", () => {
+    const route = routes.dashboard.getRoute(undefined, {
+      active: true,
+      deleted: false,
+    });
+    expect(route).toBe("/dashboard?active=true&deleted=false");
+  });
+
+  it("skips undefined search params", () => {
+    const route = routes.dashboard.getRoute(undefined, {
+      page: 1,
+      sort: undefined,
+    });
+    expect(route).toBe("/dashboard?page=1");
+  });
+
+  it("skips null search params", () => {
+    const route = routes.dashboard.getRoute(undefined, {
+      page: 1,
+      sort: null as unknown as string,
+    });
+    expect(route).toBe("/dashboard?page=1");
+  });
+
+  it("returns path without query string when no search params", () => {
+    const route = routes.dashboard.getRoute(undefined, {});
+    expect(route).toBe("/dashboard");
+  });
+
+  it("returns path without query string when search params is undefined", () => {
+    const route = routes.dashboard.getRoute(undefined, undefined);
+    expect(route).toBe("/dashboard");
+  });
+
+  it("works with root route", () => {
+    const route = routes.getRoute(undefined, { foo: "bar" });
+    expect(route).toBe("/?foo=bar");
+  });
+});
+
 describe("createRoutes with schemas", () => {
   it("validates and transforms params using schema", () => {
     const numberSchema = createMockSchema((v) => Number(v));

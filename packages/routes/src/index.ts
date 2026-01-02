@@ -17,6 +17,33 @@ type ParamMapConstraint<Routes extends string> = {
   [K in Routes]?: Record<string, ParamMapValue>;
 };
 
+type SearchParamValue =
+  | string
+  | number
+  | boolean
+  | string[]
+  | StandardSchemaV1<unknown, string | number | boolean | string[]>;
+
+type SearchParamMapConstraint<Routes extends string> = {
+  [K in Routes]?: Record<string, SearchParamValue>;
+};
+
+type ExtractSearchParamType<T> = T extends StandardSchemaV1
+  ? StandardSchemaV1.InferOutput<T>
+  : T;
+
+type SearchParamsFor<
+  Routes extends string,
+  Path extends string,
+  SearchParamMap extends SearchParamMapConstraint<Routes>,
+> = Path extends keyof SearchParamMap
+  ? SearchParamMap[Path] extends infer SP
+    ? SP extends Record<string, SearchParamValue>
+      ? { [K in keyof SP]?: ExtractSearchParamType<SP[K]> }
+      : Record<string, string | number | boolean | string[] | undefined>
+    : Record<string, string | number | boolean | string[] | undefined>
+  : Record<string, string | number | boolean | string[] | undefined>;
+
 type ExtractParamType<T> = T extends StandardSchemaV1
   ? StandardSchemaV1.InferOutput<T>
   : T;
@@ -180,10 +207,21 @@ export type RouteNode<
   Path extends string,
   Params extends Record<string, unknown> = {},
   ParamMap extends ParamMapConstraint<Routes> = {},
+  SearchParamMap extends SearchParamMapConstraint<Routes> = {},
 > = {
   getRoute: [keyof Params] extends [never]
-    ? () => Path extends "" ? "/" : Path
-    : <const P extends Params>(params: P) => ReplaceDynamicSegments<Path, P>;
+    ? (
+        params?: undefined,
+        searchParams?: SearchParamsFor<
+          Routes,
+          Path extends "" ? "/" : Path,
+          SearchParamMap
+        >,
+      ) => Path extends "" ? "/" : Path
+    : <const P extends Params>(
+        params: P,
+        searchParams?: SearchParamsFor<Routes, Path, SearchParamMap>,
+      ) => ReplaceDynamicSegments<Path, P>;
 } & {
   [Seg in ChildSegments<Routes, Path>]: RouteNode<
     Routes,
@@ -219,7 +257,8 @@ export type RouteNode<
               >;
             }
           : Params,
-    ParamMap
+    ParamMap,
+    SearchParamMap
   >;
 };
 
@@ -282,19 +321,22 @@ export function createRoutes<const Routes extends string>(): RouteNode<
   Routes,
   "",
   {},
+  {},
   {}
 >;
 export function createRoutes<
   const Routes extends string,
   ParamMap extends ParamMapConstraint<Routes>,
->(): RouteNode<Routes, "", {}, ParamMap>;
+  SearchParamMap extends SearchParamMapConstraint<Routes> = {},
+>(): RouteNode<Routes, "", {}, ParamMap, SearchParamMap>;
 export function createRoutes<
   const ParamMap extends ParamMapConstraint<string>,
   Routes extends string = Extract<keyof ParamMap, string>,
->(schemaMap: ParamMap): RouteNode<Routes, "", {}, ParamMap>;
+>(schemaMap: ParamMap): RouteNode<Routes, "", {}, ParamMap, {}>;
 export function createRoutes<
   const Routes extends string,
   ParamMap extends ParamMapConstraint<Routes> = {},
+  SearchParamMap extends SearchParamMapConstraint<Routes> = {},
 >(schemaMap?: ParamMap) {
   return createRecursiveProxy(({ path, args }) => {
     const segments = path.slice(0, -1);
@@ -302,8 +344,28 @@ export function createRoutes<
       string,
       string | string[] | undefined
     >;
+    const searchParams = args[1] as Record<string, unknown> | undefined;
 
-    if (segments.length === 0) return "/";
+    const appendSearchParams = (basePath: string) => {
+      if (!searchParams || Object.keys(searchParams).length === 0) {
+        return basePath;
+      }
+      const urlSearchParams = new URLSearchParams();
+      for (const [key, value] of Object.entries(searchParams)) {
+        if (value === undefined || value === null) continue;
+        if (Array.isArray(value)) {
+          for (const v of value) {
+            urlSearchParams.append(key, String(v));
+          }
+        } else {
+          urlSearchParams.append(key, String(value));
+        }
+      }
+      const queryString = urlSearchParams.toString();
+      return queryString ? `${basePath}?${queryString}` : basePath;
+    };
+
+    if (segments.length === 0) return appendSearchParams("/");
 
     let params = rawParams;
     if (schemaMap) {
@@ -327,6 +389,24 @@ export function createRoutes<
       return String(value);
     });
 
-    return resolved.length === 0 ? "/" : `/${resolved.join("/")}`;
-  }) as RouteNode<Routes, "", {}, ParamMap>;
+    const basePath = resolved.length === 0 ? "/" : `/${resolved.join("/")}`;
+    if (!searchParams || Object.keys(searchParams).length === 0) {
+      return basePath;
+    }
+
+    const urlSearchParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(searchParams)) {
+      if (value === undefined || value === null) continue;
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          urlSearchParams.append(key, String(v));
+        }
+      } else {
+        urlSearchParams.append(key, String(value));
+      }
+    }
+
+    const queryString = urlSearchParams.toString();
+    return queryString ? `${basePath}?${queryString}` : basePath;
+  }) as RouteNode<Routes, "", {}, ParamMap, SearchParamMap>;
 }
