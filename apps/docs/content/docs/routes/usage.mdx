@@ -1,0 +1,62 @@
+---
+title: Usage
+description: How to use Routes to build type-safe paths
+---
+
+# Usage
+
+## Basic Setup
+
+Define your route types using Next.js [dynamic route segment conventions](https://nextjs.org/docs/app/api-reference/file-conventions/dynamic-routes), then create a typed route builder:
+
+```ts
+import { createRoutes } from "@jlnstack/routes"
+
+type AppRoutes =
+  | "/"
+  | "/dashboard"
+  | "/dashboard/settings"
+  | "/blog/[slug]"
+  | "/users/[id]/posts/[postId]"
+
+export const routes = createRoutes<AppRoutes>();
+```
+
+Build paths using the chainable API:
+
+```ts
+routes.getRoute()
+// => "/"
+
+routes.dashboard.getRoute()
+// => "/dashboard"
+
+routes.dashboard.settings.getRoute()
+// => "/dashboard/settings"
+
+routes.blog.slug.getRoute({ slug: "my-article" })
+// => "/blog/my-article"
+
+routes.users.id.posts.postId.getRoute({ id: "123", postId: "456" })
+// => "/users/123/posts/456"
+```
+
+## Next.js Typed Routes
+
+If you're using Next.js with [typed routes](https://nextjs.org/docs/app/api-reference/config/next-config-js/typedRoutes) enabled, you can import the generated route types directly:
+
+```ts title="next.config.js"
+/** @type {import('next').NextConfig} */
+module.exports = {
+  typedRoutes: true,
+}
+```
+
+```ts title="routes.ts"
+import { createRoutes } from "@jlnstack/routes"
+import type { AppRoutes } from ".next/dev/types/routes.d.ts"
+
+export const routes = createRoutes<AppRoutes>();
+```
+
+This keeps your route types in sync with your file system automatically.
