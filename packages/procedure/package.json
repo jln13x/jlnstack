@@ -12,6 +12,10 @@
     "access": "public",
     "provenance": true
   },
+  "files": [
+    "dist",
+    "package.json"
+  ],
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
