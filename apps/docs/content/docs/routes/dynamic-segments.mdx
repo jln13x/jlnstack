@@ -1,0 +1,44 @@
+---
+title: Dynamic Segments
+description: Understanding dynamic route segments
+---
+
+# Dynamic Segments
+
+Routes supports all Next.js [dynamic segment patterns](https://nextjs.org/docs/app/api-reference/file-conventions/dynamic-routes).
+
+## `[param]` — Dynamic Segment
+
+A single dynamic segment that captures one URL part.
+
+```ts
+type Routes = "/blog/[slug]"
+
+routes.blog.slug.getRoute({ slug: "hello-world" })
+// => "/blog/hello-world"
+```
+
+## `[...param]` — Catch-all Segment
+
+Captures multiple URL segments as an array. **Required** — at least one segment must be provided.
+
+```ts
+type Routes = "/docs/[...path]"
+
+routes.docs.path.getRoute({ path: ["api", "reference", "routes"] })
+// => "/docs/api/reference/routes"
+```
+
+## `[[...param]]` — Optional Catch-all Segment
+
+Like catch-all, but **optional** — the route matches even without any segments.
+
+```ts
+type Routes = "/shop/[[...filters]]"
+
+routes.shop.filters.getRoute({ filters: ["color", "red"] })
+// => "/shop/color/red"
+
+routes.shop.filters.getRoute({ filters: undefined })
+// => "/shop"
+```

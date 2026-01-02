@@ -1,7 +1,7 @@
 {
-  "name": "@jlnstack/procedure",
-  "description": "",
-  "version": "0.0.2",
+  "name": "@jlnstack/routes",
+  "description": "Type-safe route builder",
+  "version": "0.0.3",
   "license": "MIT",
   "author": "jln13x",
   "repository": {
@@ -24,17 +24,7 @@
     "test:run": "vitest run",
     "test:ui": "vitest --ui"
   },
-  "peerDependencies": {
-    "react": ">=19",
-    "react-dom": ">=19",
-    "next": ">=16"
-  },
   "devDependencies": {
-    "@standard-schema/spec": "^1.0.0",
-    "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.1.0",
-    "@types/react": "^19.1.16",
-    "@types/react-dom": "^19.1.9",
     "@vitest/ui": "^2.1.8",
     "tsdown": "^0.15.4",
     "typescript": "catalog:",
@@ -50,26 +40,6 @@
       "require": {
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
-      }
-    },
-    "./react": {
-      "import": {
-        "types": "./dist/react.d.mts",
-        "default": "./dist/react.mjs"
-      },
-      "require": {
-        "types": "./dist/react.d.cts",
-        "default": "./dist/react.cjs"
-      }
-    },
-    "./next": {
-      "import": {
-        "types": "./dist/next.d.mts",
-        "default": "./dist/next.mjs"
-      },
-      "require": {
-        "types": "./dist/next.d.cts",
-        "default": "./dist/next.cjs"
       }
     }
   }
