@@ -44,16 +44,15 @@ function deleteCookie(name: string): void {
   document.cookie = `${encodeURIComponent(name)}=; max-age=0`;
 }
 
-export function createCookie<T>(
-  name: string,
-  options?: CreateCookieOptions<T>,
+export function createCookie<T = string>(
+  options: CreateCookieOptions<T>,
 ): Cookie<T> {
   return createCookieCore({
-    name,
-    schema: options?.schema,
-    serializer: options?.serializer,
-    get: () => getCookie(name),
-    set: (value, opts) => setCookie(name, value, opts),
-    delete: () => deleteCookie(name),
+    name: options.name,
+    schema: options.schema,
+    serializer: options.serializer,
+    get: () => getCookie(options.name),
+    set: (value, opts) => setCookie(options.name, value, opts),
+    delete: () => deleteCookie(options.name),
   });
 }

@@ -15,7 +15,7 @@ export interface Serializer<T> {
   deserialize: (raw: string) => T;
 }
 
-export interface Cookie<T> {
+export interface Cookie<T = string> {
   name: string;
   get(): Promise<T | undefined>;
   set(value: T, options?: CookieOptions): Promise<void>;
@@ -32,6 +32,7 @@ export interface CookieConfig<T> {
 }
 
 export interface CreateCookieOptions<T> {
+  name: string;
   schema?: StandardSchemaV1<T>;
   serializer?: Serializer<T>;
 }

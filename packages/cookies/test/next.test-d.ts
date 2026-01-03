@@ -8,15 +8,15 @@ declare const objectSchema: StandardSchemaV1<{ sort: string; order: string }>;
 
 describe("next createCookie types", () => {
   test("returns Cookie type with correct value type", () => {
-    const cookie = createCookie<string>("theme");
+    const cookie = createCookie<string>({ name: "theme" });
 
-    expectTypeOf(cookie).toMatchTypeOf<Cookie<string>>();
+    expectTypeOf(cookie).toExtend<Cookie<string>>();
     expectTypeOf(cookie.get()).toEqualTypeOf<Promise<string | undefined>>();
     expectTypeOf(cookie.name).toEqualTypeOf<string>();
   });
 
   test("generic type is enforced on set", () => {
-    const cookie = createCookie<"light" | "dark">("theme");
+    const cookie = createCookie<"light" | "dark">({ name: "theme" });
 
     expectTypeOf(cookie.get()).toEqualTypeOf<
       Promise<"light" | "dark" | undefined>
@@ -27,7 +27,7 @@ describe("next createCookie types", () => {
   });
 
   test("schema infers value type", () => {
-    const cookie = createCookie("filter", { schema: objectSchema });
+    const cookie = createCookie({ name: "filter", schema: objectSchema });
 
     expectTypeOf(cookie.get()).toEqualTypeOf<
       Promise<{ sort: string; order: string } | undefined>
@@ -35,7 +35,7 @@ describe("next createCookie types", () => {
   });
 
   test("set accepts CookieOptions", () => {
-    const cookie = createCookie<string>("session");
+    const cookie = createCookie<string>({ name: "session" });
 
     cookie.set("value", { maxAge: 3600, secure: true, sameSite: "strict" });
   });
@@ -51,6 +51,6 @@ describe("next createCookie types", () => {
       sameSite: "lax",
     };
 
-    expectTypeOf(options).toMatchTypeOf<CookieOptions>();
+    expectTypeOf(options).toExtend<CookieOptions>();
   });
 });

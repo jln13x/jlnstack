@@ -1,6 +1,7 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { describe, expect, it } from "vitest";
 import { createCookie, createCookieGroup } from "../src/index";
+import type { Serializer } from "../src/types";
 
 function createMockSchema<T>(
   transform: (value: unknown) => T,
@@ -57,6 +58,24 @@ describe("createCookie", () => {
 
     await cookie.delete();
     expect(await cookie.get()).toBe(undefined);
+  });
+
+  it("defaults to string type when no schema and no generic", async () => {
+    let store: string | undefined;
+
+    const cookie = createCookie({
+      name: "theme",
+      get: () => store,
+      set: (value) => {
+        store = value;
+      },
+      delete: () => {
+        store = undefined;
+      },
+    });
+
+    await cookie.set("dark");
+    expect(await cookie.get()).toBe("dark");
   });
 
   it("gets and sets object values without schema", async () => {
@@ -153,6 +172,35 @@ describe("createCookie", () => {
 
     await cookie.set("abc123", { maxAge: 3600, secure: true });
     expect(receivedOptions).toEqual({ maxAge: 3600, secure: true });
+  });
+
+  it("uses custom serializer for date time serialization", async () => {
+    let store: string | undefined;
+
+    const dateSerializer: Serializer<Date> = {
+      serialize: (value) => value.toISOString(),
+      deserialize: (raw) => new Date(raw),
+    };
+
+    const cookie = createCookie<Date>({
+      name: "lastVisit",
+      serializer: dateSerializer,
+      get: () => store,
+      set: (value) => {
+        store = value;
+      },
+      delete: () => {
+        store = undefined;
+      },
+    });
+
+    const testDate = new Date("2024-01-15T10:30:00Z");
+    await cookie.set(testDate);
+
+    const retrieved = await cookie.get();
+    expect(retrieved).toBeInstanceOf(Date);
+    expect(retrieved?.toISOString()).toBe("2024-01-15T10:30:00.000Z");
+    expect(store).toBe("2024-01-15T10:30:00.000Z");
   });
 
   it("serializes and deserializes complex objects", async () => {

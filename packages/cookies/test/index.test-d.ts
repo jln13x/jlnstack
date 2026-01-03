@@ -3,7 +3,6 @@ import { describe, expectTypeOf, test } from "vitest";
 import { createCookie, createCookieGroup } from "../src/index";
 import type { Cookie, CookieGroup } from "../src/types";
 
-declare const stringSchema: StandardSchemaV1<string>;
 declare const objectSchema: StandardSchemaV1<{ sort: string; order: string }>;
 
 describe("createCookie types", () => {
@@ -15,9 +14,21 @@ describe("createCookie types", () => {
       delete: () => {},
     });
 
-    expectTypeOf(cookie).toMatchTypeOf<Cookie<string>>();
+    expectTypeOf(cookie).toExtend<Cookie<string>>();
     expectTypeOf(cookie.get()).toEqualTypeOf<Promise<string | undefined>>();
     expectTypeOf(cookie.name).toEqualTypeOf<string>();
+  });
+
+  test("defaults to string type when no schema and no generic", () => {
+    const cookie = createCookie({
+      name: "theme",
+      get: () => undefined,
+      set: () => {},
+      delete: () => {},
+    });
+
+    expectTypeOf(cookie).toExtend<Cookie<string>>();
+    expectTypeOf(cookie.get()).toEqualTypeOf<Promise<string | undefined>>();
   });
 
   test("generic type is enforced on get and set", () => {
@@ -83,7 +94,7 @@ describe("createCookieGroup types", () => {
       user: userCookie,
     });
 
-    expectTypeOf(group).toMatchTypeOf<
+    expectTypeOf(group).toExtend<
       CookieGroup<{
         session: Cookie<string>;
         user: Cookie<{ id: number; name: string }>;
@@ -129,7 +140,7 @@ describe("createCookieGroup types", () => {
 
     const group = createCookieGroup({ session: sessionCookie });
 
-    expectTypeOf(group.session).toMatchTypeOf<Cookie<string>>();
+    expectTypeOf(group.session).toExtend<Cookie<string>>();
     expectTypeOf(group.session.get()).toEqualTypeOf<
       Promise<string | undefined>
     >();

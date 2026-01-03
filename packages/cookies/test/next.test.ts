@@ -49,7 +49,7 @@ describe("next createCookie", () => {
   });
 
   it("gets and sets string values", async () => {
-    const cookie = createCookie<string>("theme");
+    const cookie = createCookie<string>({ name: "theme" });
 
     expect(await cookie.get()).toBe(undefined);
 
@@ -63,14 +63,14 @@ describe("next createCookie", () => {
   });
 
   it("gets and sets object values", async () => {
-    const cookie = createCookie<{ sort: string }>("filter");
+    const cookie = createCookie<{ sort: string }>({ name: "filter" });
 
     await cookie.set({ sort: "name" });
     expect(await cookie.get()).toEqual({ sort: "name" });
   });
 
   it("deletes cookies", async () => {
-    const cookie = createCookie<string>("session");
+    const cookie = createCookie<string>({ name: "session" });
 
     await cookie.set("abc123");
     expect(await cookie.get()).toBe("abc123");
@@ -81,7 +81,7 @@ describe("next createCookie", () => {
   });
 
   it("passes options to set", async () => {
-    const cookie = createCookie<string>("session");
+    const cookie = createCookie<string>({ name: "session" });
 
     await cookie.set("value", { maxAge: 3600, secure: true });
     expect(mockCookieStore.set).toHaveBeenCalledWith("session", "value", {
@@ -92,7 +92,7 @@ describe("next createCookie", () => {
 
   it("validates values with schema on get", async () => {
     const schema = createMockSchema((v) => v as { sort: string });
-    const cookie = createCookie("filter", { schema });
+    const cookie = createCookie({ name: "filter", schema });
 
     mockCookieStore.store.set("filter", JSON.stringify({ sort: "name" }));
     expect(await cookie.get()).toEqual({ sort: "name" });
@@ -100,7 +100,7 @@ describe("next createCookie", () => {
 
   it("returns undefined when schema validation fails on get", async () => {
     const schema = createFailingSchema("Invalid value");
-    const cookie = createCookie("test", { schema });
+    const cookie = createCookie({ name: "test", schema });
 
     mockCookieStore.store.set("test", JSON.stringify({ invalid: true }));
     expect(await cookie.get()).toBe(undefined);
@@ -108,7 +108,7 @@ describe("next createCookie", () => {
 
   it("throws when schema validation fails on set", async () => {
     const schema = createFailingSchema("Invalid value");
-    const cookie = createCookie("test", { schema });
+    const cookie = createCookie({ name: "test", schema });
 
     await expect(cookie.set("bad" as never)).rejects.toThrow(
       "Invalid cookie value",
@@ -116,12 +116,12 @@ describe("next createCookie", () => {
   });
 
   it("exposes name property", () => {
-    const cookie = createCookie<string>("myName");
+    const cookie = createCookie<string>({ name: "myName" });
     expect(cookie.name).toBe("myName");
   });
 
   it("handles undefined cookie value", async () => {
-    const cookie = createCookie<string>("nonexistent");
+    const cookie = createCookie<string>({ name: "nonexistent" });
     expect(await cookie.get()).toBe(undefined);
   });
 });

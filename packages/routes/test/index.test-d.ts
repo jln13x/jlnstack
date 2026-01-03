@@ -45,19 +45,19 @@ test("catch-all requires string array param", () => {
   const route = routes.docs.path.getRoute({
     path: ["api", "reference"],
   });
-  expectTypeOf(route).toMatchTypeOf<"/docs/api/reference">();
+  expectTypeOf(route).toExtend<"/docs/api/reference">();
 });
 
 test("optional catch-all accepts string array", () => {
   const route = routes.shop.filters.getRoute({
     filters: ["color", "red"],
   });
-  expectTypeOf(route).toMatchTypeOf<"/shop/color/red">();
+  expectTypeOf(route).toExtend<"/shop/color/red">();
 });
 
 test("optional catch-all accepts undefined", () => {
   const route = routes.shop.filters.getRoute({ filters: undefined });
-  expectTypeOf(route).toMatchTypeOf<"/shop">();
+  expectTypeOf(route).toExtend<"/shop">();
 });
 
 type ParamMapRoutes =

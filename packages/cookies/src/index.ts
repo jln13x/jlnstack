@@ -37,7 +37,7 @@ async function validateSchema<T>(
   return { success: true, value: result.value as T };
 }
 
-export function createCookie<T>(config: CookieConfig<T>): Cookie<T> {
+export function createCookie<T = string>(config: CookieConfig<T>): Cookie<T> {
   const {
     name,
     schema,
