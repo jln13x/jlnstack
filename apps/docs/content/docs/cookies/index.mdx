@@ -1,0 +1,39 @@
+---
+title: Introduction
+description: Type-safe cookie management with schema validation
+---
+
+# Cookies
+
+Cookies is a type-safe cookie management library with first-class support for schema validation. Define your cookies once with optional validation schemas and get full type inference when reading and writing.
+
+## Why Cookies?
+
+- **Type-safe** — Full TypeScript inference for cookie values.
+- **Schema validation** — First-class support for [Standard Schema](https://github.com/standard-schema/standard-schema) (Zod, Valibot, ArkType, etc.).
+- **Framework adapters** — Built-in adapters for Next.js and browser environments.
+- **Automatic serialization** — JSON values are automatically serialized and deserialized.
+
+## Quick Example
+
+```ts
+import { createCookie } from "@jlnstack/cookies/next"
+import { z } from "zod"
+
+const userPrefs = createCookie(
+  "user-prefs",
+  z.object({
+    theme: z.enum(["light", "dark"]),
+    language: z.string()
+  })
+)
+
+// Read cookie (returns undefined if missing or invalid)
+const prefs = await userPrefs.get()
+
+// Write cookie
+await userPrefs.set({ theme: "dark", language: "en" })
+
+// Delete cookie
+await userPrefs.delete()
+```

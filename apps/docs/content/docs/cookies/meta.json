@@ -1,0 +1,15 @@
+{
+  "title": "Cookies",
+  "description": "Type-safe cookie management",
+  "root": true,
+  "pages": [
+    "index",
+    "installation",
+    "usage",
+    "schema-validation",
+    "serializer",
+    "---Adapters---",
+    "next",
+    "browser"
+  ]
+}
