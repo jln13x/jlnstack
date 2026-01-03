@@ -1,13 +1,14 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { Cookie, CookieConfig, CookieOptions, Serializer } from "./types";
-
-export type {
+import type {
   Cookie,
   CookieConfig,
+  CookieGroup,
   CookieOptions,
-  CreateCookieOptions,
+  CookieValues,
   Serializer,
 } from "./types";
+
+export type { Cookie, CookieGroup, CookieOptions, Serializer } from "./types";
 
 const jsonSerializer: Serializer<unknown> = {
   serialize: (value) => {
@@ -74,6 +75,38 @@ export function createCookie<T>(config: CookieConfig<T>): Cookie<T> {
     },
     async delete() {
       await deleteFn();
+    },
+  };
+}
+
+export function createCookieGroup<T extends Record<string, Cookie<unknown>>>(
+  cookies: T,
+): CookieGroup<T> {
+  return {
+    ...cookies,
+    async get() {
+      const entries = await Promise.all(
+        Object.entries(cookies).map(async ([key, cookie]) => [
+          key,
+          await cookie.get(),
+        ]),
+      );
+      return Object.fromEntries(entries) as {
+        [K in keyof T]: Awaited<ReturnType<T[K]["get"]>>;
+      };
+    },
+    async set(values: Partial<CookieValues<T>>, options?: CookieOptions) {
+      const promises: Promise<void>[] = [];
+      for (const [key, value] of Object.entries(values)) {
+        const cookie = cookies[key as keyof T];
+        if (cookie && value !== undefined) {
+          promises.push(cookie.set(value, options));
+        }
+      }
+      await Promise.all(promises);
+    },
+    async deleteAll() {
+      await Promise.all(Object.values(cookies).map((c) => c.delete()));
     },
   };
 }

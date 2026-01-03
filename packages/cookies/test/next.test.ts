@@ -54,7 +54,11 @@ describe("next createCookie", () => {
     expect(await cookie.get()).toBe(undefined);
 
     await cookie.set("dark");
-    expect(mockCookieStore.set).toHaveBeenCalledWith("theme", "dark", undefined);
+    expect(mockCookieStore.set).toHaveBeenCalledWith(
+      "theme",
+      "dark",
+      undefined,
+    );
     expect(await cookie.get()).toBe("dark");
   });
 

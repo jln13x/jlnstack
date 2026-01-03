@@ -41,3 +41,16 @@ export type InferCookieValue<TSchema> = TSchema extends StandardSchemaV1<
 >
   ? T
   : never;
+
+export type CookieValues<T extends Record<string, Cookie<unknown>>> = {
+  [K in keyof T]: Parameters<T[K]["set"]>[0];
+};
+
+export interface _CookieGroup<T extends Record<string, Cookie<unknown>>> {
+  get(): Promise<{ [K in keyof T]: Awaited<ReturnType<T[K]["get"]>> }>;
+  set(values: Partial<CookieValues<T>>, options?: CookieOptions): Promise<void>;
+  deleteAll(): Promise<void>;
+}
+
+export type CookieGroup<T extends Record<string, Cookie<unknown>>> =
+  _CookieGroup<T> & T;

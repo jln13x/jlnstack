@@ -6,6 +6,7 @@
     "index",
     "installation",
     "usage",
+    "groups",
     "schema-validation",
     "serializer",
     "---Adapters---",
