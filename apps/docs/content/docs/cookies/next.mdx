@@ -1,0 +1,80 @@
+---
+title: Next.js
+description: Cookie management for Next.js
+---
+
+# Next.js
+
+The Next.js adapter uses the `cookies()` function from `next/headers` under the hood.
+
+```ts
+import { createCookie } from "@jlnstack/cookies/next"
+```
+
+## Server Components
+
+```ts
+import { createCookie } from "@jlnstack/cookies/next"
+
+const theme = createCookie<"light" | "dark">("theme")
+
+export default async function Page() {
+  const currentTheme = await theme.get()
+  
+  return <div>Theme: {currentTheme ?? "system"}</div>
+}
+```
+
+## Server Actions
+
+```ts
+"use server"
+
+import { createCookie } from "@jlnstack/cookies/next"
+
+const theme = createCookie<"light" | "dark">("theme")
+
+export async function setTheme(value: "light" | "dark") {
+  await theme.set(value, {
+    maxAge: 60 * 60 * 24 * 365,
+    path: "/"
+  })
+}
+```
+
+## Route Handlers
+
+```ts
+import { createCookie } from "@jlnstack/cookies/next"
+
+const session = createCookie<string>("session")
+
+export async function GET() {
+  const token = await session.get()
+  
+  if (!token) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 })
+  }
+  
+  return Response.json({ session: token })
+}
+```
+
+## Middleware
+
+```ts
+import { createCookie } from "@jlnstack/cookies/next"
+import { NextResponse } from "next/server"
+
+const locale = createCookie<string>("locale")
+
+export async function middleware() {
+  const currentLocale = await locale.get()
+  
+  if (!currentLocale) {
+    const response = NextResponse.next()
+    await locale.set("en", { path: "/" })
+    return response
+  }
+}
+```

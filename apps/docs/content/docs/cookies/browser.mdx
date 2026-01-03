@@ -1,0 +1,76 @@
+---
+title: Browser
+description: Cookie management for browser environments
+---
+
+# Browser
+
+The browser adapter uses `document.cookie` for client-side cookie management.
+
+```ts
+import { createCookie } from "@jlnstack/cookies/browser"
+```
+
+## Basic Usage
+
+```ts
+import { createCookie } from "@jlnstack/cookies/browser"
+
+const theme = createCookie<"light" | "dark">("theme")
+
+// Read
+const currentTheme = await theme.get()
+
+// Write
+await theme.set("dark", { path: "/" })
+
+// Delete
+await theme.delete()
+```
+
+## React Example
+
+```tsx
+"use client"
+
+import { createCookie } from "@jlnstack/cookies/browser"
+import { useEffect, useState } from "react"
+
+const theme = createCookie<"light" | "dark">("theme")
+
+export function ThemeToggle() {
+  const [currentTheme, setCurrentTheme] = useState<"light" | "dark">("light")
+
+  useEffect(() => {
+    theme.get().then((value) => {
+      if (value) setCurrentTheme(value)
+    })
+  }, [])
+
+  const toggle = async () => {
+    const newTheme = currentTheme === "light" ? "dark" : "light"
+    await theme.set(newTheme, { path: "/" })
+    setCurrentTheme(newTheme)
+  }
+
+  return (
+    <button onClick={toggle}>
+      Current: {currentTheme}
+    </button>
+  )
+}
+```
+
+## Cookie Options
+
+The browser adapter supports all standard cookie options except `httpOnly` (which is server-only):
+
+```ts
+await theme.set("dark", {
+  maxAge: 60 * 60 * 24 * 365, // 1 year
+  path: "/",
+  domain: "example.com",
+  secure: true,
+  sameSite: "lax"
+})
+```

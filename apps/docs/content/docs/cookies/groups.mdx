@@ -1,0 +1,71 @@
+---
+title: Groups
+description: Batch operations on related cookies
+---
+
+# Cookie Groups
+
+Use `createCookieGroup` to combine related cookies and perform batch operations.
+
+## Creating a Group
+
+```ts
+import { createCookie, createCookieGroup } from "@jlnstack/cookies/next"
+
+const sessionCookie = createCookie<string>("session")
+const userCookie = createCookie<{ id: number; name: string }>("user")
+
+const authCookies = createCookieGroup({
+  session: sessionCookie,
+  user: userCookie,
+})
+```
+
+## Reading All Cookies
+
+Get all cookie values in a single call:
+
+```ts
+const { session, user } = await authCookies.get()
+// session: string | undefined
+// user: { id: number; name: string } | undefined
+```
+
+## Writing Cookies
+
+Set one or more cookies at once. Only the cookies you specify will be updated:
+
+```ts
+// Set only the session cookie
+await authCookies.set({ session: "token123" })
+
+// Set both cookies
+await authCookies.set({
+  session: "token123",
+  user: { id: 1, name: "John" },
+})
+
+// With options
+await authCookies.set(
+  { session: "token123" },
+  { maxAge: 60 * 60 * 24 * 7 }
+)
+```
+
+## Deleting All Cookies
+
+Delete all cookies in the group:
+
+```ts
+await authCookies.deleteAll()
+```
+
+## Individual Cookie Access
+
+Access individual cookies as properties for fine-grained control:
+
+```ts
+await authCookies.session.set("token123")
+const session = await authCookies.session.get()
+await authCookies.session.delete()
+```

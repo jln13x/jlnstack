@@ -1,0 +1,5 @@
+---
+"@jlnstack/cookies": patch
+---
+
+release

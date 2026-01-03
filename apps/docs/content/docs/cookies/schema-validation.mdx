@@ -1,0 +1,72 @@
+---
+title: Schema Validation
+description: Validate cookie values with Standard Schema
+---
+
+# Schema Validation
+
+Cookies supports [Standard Schema](https://github.com/standard-schema/standard-schema) for runtime validation. This works with Zod, Valibot, ArkType, and any other Standard Schema compatible library.
+
+## Defining a Schema
+
+Pass a schema in the options object:
+
+```ts
+import { createCookie } from "@jlnstack/cookies/next"
+import { z } from "zod"
+
+const userPrefs = createCookie("user-prefs", {
+  schema: z.object({
+    theme: z.enum(["light", "dark"]),
+    notifications: z.boolean()
+  })
+})
+```
+
+## Reading with Validation
+
+When reading, if the cookie value doesn't match the schema, `undefined` is returned:
+
+```ts
+const prefs = await userPrefs.get()
+// prefs: { theme: "light" | "dark"; notifications: boolean } | undefined
+```
+
+## Writing with Validation
+
+When writing, if the value doesn't match the schema, an error is thrown:
+
+```ts
+await userPrefs.set({ theme: "dark", notifications: true })
+
+// This throws an error
+await userPrefs.set({ theme: "invalid" })
+```
+
+## Using with Valibot
+
+```ts
+import { createCookie } from "@jlnstack/cookies/next"
+import * as v from "valibot"
+
+const settings = createCookie("settings", {
+  schema: v.object({
+    fontSize: v.number(),
+    compact: v.boolean()
+  })
+})
+```
+
+## Using with ArkType
+
+```ts
+import { createCookie } from "@jlnstack/cookies/next"
+import { type } from "arktype"
+
+const config = createCookie("config", {
+  schema: type({
+    apiVersion: "string",
+    debug: "boolean"
+  })
+})
+```
