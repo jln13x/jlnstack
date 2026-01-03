@@ -223,4 +223,49 @@ describe("createCookieGroup types", () => {
 
     expectTypeOf(group.set({ test: "value" })).toEqualTypeOf<Promise<void>>();
   });
+
+  test("accepts options with prefix", () => {
+    const cookie = createCookie<string>({
+      name: "test",
+      get: () => undefined,
+      set: () => {},
+      delete: () => {},
+    });
+
+    const group = createCookieGroup({ test: cookie }, { prefix: "app_" });
+
+    expectTypeOf(group.test.name).toEqualTypeOf<string>();
+  });
+
+  test("accepts options with defaults", () => {
+    const cookie = createCookie<string>({
+      name: "test",
+      get: () => undefined,
+      set: () => {},
+      delete: () => {},
+    });
+
+    const group = createCookieGroup(
+      { test: cookie },
+      { defaults: { secure: true, httpOnly: true } },
+    );
+
+    expectTypeOf(group).toExtend<CookieGroup<{ test: Cookie<string> }>>();
+  });
+
+  test("accepts options with both prefix and defaults", () => {
+    const cookie = createCookie<string>({
+      name: "test",
+      get: () => undefined,
+      set: () => {},
+      delete: () => {},
+    });
+
+    const group = createCookieGroup(
+      { test: cookie },
+      { prefix: "app_", defaults: { secure: true } },
+    );
+
+    expectTypeOf(group.test.name).toEqualTypeOf<string>();
+  });
 });

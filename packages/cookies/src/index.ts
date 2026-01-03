@@ -3,12 +3,19 @@ import type {
   Cookie,
   CookieConfig,
   CookieGroup,
+  CookieGroupOptions,
   CookieOptions,
   CookieValues,
   Serializer,
 } from "./types";
 
-export type { Cookie, CookieGroup, CookieOptions, Serializer } from "./types";
+export type {
+  Cookie,
+  CookieGroup,
+  CookieGroupOptions,
+  CookieOptions,
+  Serializer,
+} from "./types";
 
 const jsonSerializer: Serializer<unknown> = {
   serialize: (value) => {
@@ -81,12 +88,28 @@ export function createCookie<T = string>(config: CookieConfig<T>): Cookie<T> {
 
 export function createCookieGroup<T extends Record<string, Cookie<unknown>>>(
   cookies: T,
+  options?: CookieGroupOptions,
 ): CookieGroup<T> {
+  const prefix = options?.prefix ?? "";
+  const defaults = options?.defaults;
+
+  const prefixedCookies = Object.fromEntries(
+    Object.entries(cookies).map(([key, cookie]) => [
+      key,
+      {
+        ...cookie,
+        name: prefix + cookie.name,
+        set: (value: unknown, opts?: CookieOptions) =>
+          cookie.set(value, { ...defaults, ...opts }),
+      },
+    ]),
+  ) as T;
+
   return {
-    ...cookies,
+    ...prefixedCookies,
     async get() {
       const entries = await Promise.all(
-        Object.entries(cookies).map(async ([key, cookie]) => [
+        Object.entries(prefixedCookies).map(async ([key, cookie]) => [
           key,
           await cookie.get(),
         ]),
@@ -95,18 +118,18 @@ export function createCookieGroup<T extends Record<string, Cookie<unknown>>>(
         [K in keyof T]: Awaited<ReturnType<T[K]["get"]>>;
       };
     },
-    async set(values: Partial<CookieValues<T>>, options?: CookieOptions) {
+    async set(values: Partial<CookieValues<T>>, opts?: CookieOptions) {
       const promises: Promise<void>[] = [];
       for (const [key, value] of Object.entries(values)) {
-        const cookie = cookies[key as keyof T];
+        const cookie = prefixedCookies[key as keyof T];
         if (cookie && value !== undefined) {
-          promises.push(cookie.set(value, options));
+          promises.push(cookie.set(value, opts));
         }
       }
       await Promise.all(promises);
     },
     async deleteAll() {
-      await Promise.all(Object.values(cookies).map((c) => c.delete()));
+      await Promise.all(Object.values(prefixedCookies).map((c) => c.delete()));
     },
   };
 }

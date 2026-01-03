@@ -21,6 +21,75 @@ const authCookies = createCookieGroup({
 })
 ```
 
+## Group Options
+
+The second argument accepts options for the group:
+
+### Prefix
+
+Add a prefix to all cookie names in the group:
+
+```ts
+const authCookies = createCookieGroup(
+  {
+    session: sessionCookie,
+    user: userCookie,
+  },
+  { prefix: "auth_" }
+)
+
+// Cookie names become "auth_session" and "auth_user"
+authCookies.session.name // "auth_session"
+authCookies.user.name    // "auth_user"
+```
+
+### Default Cookie Options
+
+Apply default cookie options to all cookies in the group:
+
+```ts
+const authCookies = createCookieGroup(
+  {
+    session: sessionCookie,
+    user: userCookie,
+  },
+  {
+    defaults: {
+      secure: true,
+      httpOnly: true,
+      sameSite: "strict",
+    },
+  }
+)
+
+// All set operations use these defaults
+await authCookies.session.set("token123")
+await authCookies.set({ user: { id: 1, name: "John" } })
+```
+
+You can override defaults per set call:
+
+```ts
+await authCookies.set(
+  { session: "token123" },
+  { maxAge: 60 * 60 } // Overrides defaults.maxAge, keeps other defaults
+)
+```
+
+### Combining Options
+
+Use both prefix and defaults together:
+
+```ts
+const authCookies = createCookieGroup(
+  { session: sessionCookie, user: userCookie },
+  {
+    prefix: "myapp_",
+    defaults: { secure: true, httpOnly: true },
+  }
+)
+```
+
 ## Reading All Cookies
 
 Get all cookie values in a single call:

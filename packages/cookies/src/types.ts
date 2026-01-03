@@ -47,6 +47,11 @@ export type CookieValues<T extends Record<string, Cookie<unknown>>> = {
   [K in keyof T]: Parameters<T[K]["set"]>[0];
 };
 
+export interface CookieGroupOptions {
+  prefix?: string;
+  defaults?: CookieOptions;
+}
+
 export interface _CookieGroup<T extends Record<string, Cookie<unknown>>> {
   get(): Promise<{ [K in keyof T]: Awaited<ReturnType<T[K]["get"]>> }>;
   set(values: Partial<CookieValues<T>>, options?: CookieOptions): Promise<void>;

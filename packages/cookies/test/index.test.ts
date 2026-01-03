@@ -426,4 +426,127 @@ describe("createCookieGroup", () => {
 
     expect(receivedOptions).toEqual({ maxAge: 7200, secure: true });
   });
+
+  it("prefixes cookie names when prefix option is provided", async () => {
+    const sessionCookie = createCookie<string>({
+      name: "session",
+      get: () => undefined,
+      set: () => {},
+      delete: () => {},
+    });
+
+    const userCookie = createCookie<string>({
+      name: "user",
+      get: () => undefined,
+      set: () => {},
+      delete: () => {},
+    });
+
+    const group = createCookieGroup(
+      { session: sessionCookie, user: userCookie },
+      { prefix: "auth_" },
+    );
+
+    expect(group.session.name).toBe("auth_session");
+    expect(group.user.name).toBe("auth_user");
+  });
+
+  it("applies default cookie options to all set operations", async () => {
+    const receivedOptions: unknown[] = [];
+
+    const sessionCookie = createCookie<string>({
+      name: "session",
+      get: () => undefined,
+      set: (_v, options) => {
+        receivedOptions.push(options);
+      },
+      delete: () => {},
+    });
+
+    const userCookie = createCookie<string>({
+      name: "user",
+      get: () => undefined,
+      set: (_v, options) => {
+        receivedOptions.push(options);
+      },
+      delete: () => {},
+    });
+
+    const group = createCookieGroup(
+      { session: sessionCookie, user: userCookie },
+      { defaults: { secure: true, httpOnly: true } },
+    );
+
+    await group.set({ session: "token", user: "john" });
+
+    expect(receivedOptions[0]).toEqual({ secure: true, httpOnly: true });
+    expect(receivedOptions[1]).toEqual({ secure: true, httpOnly: true });
+  });
+
+  it("allows overriding default options per set call", async () => {
+    let receivedOptions: unknown;
+
+    const sessionCookie = createCookie<string>({
+      name: "session",
+      get: () => undefined,
+      set: (_v, options) => {
+        receivedOptions = options;
+      },
+      delete: () => {},
+    });
+
+    const group = createCookieGroup(
+      { session: sessionCookie },
+      { defaults: { secure: true, maxAge: 3600 } },
+    );
+
+    await group.set({ session: "token" }, { maxAge: 7200 });
+
+    expect(receivedOptions).toEqual({ secure: true, maxAge: 7200 });
+  });
+
+  it("applies default options when using individual cookie set", async () => {
+    let receivedOptions: unknown;
+
+    const sessionCookie = createCookie<string>({
+      name: "session",
+      get: () => undefined,
+      set: (_v, options) => {
+        receivedOptions = options;
+      },
+      delete: () => {},
+    });
+
+    const group = createCookieGroup(
+      { session: sessionCookie },
+      { defaults: { secure: true, httpOnly: true } },
+    );
+
+    await group.session.set("token");
+
+    expect(receivedOptions).toEqual({ secure: true, httpOnly: true });
+  });
+
+  it("combines prefix and defaults options", async () => {
+    let receivedOptions: unknown;
+
+    const sessionCookie = createCookie<string>({
+      name: "session",
+      get: () => undefined,
+      set: (_v, options) => {
+        receivedOptions = options;
+      },
+      delete: () => {},
+    });
+
+    const group = createCookieGroup(
+      { session: sessionCookie },
+      { prefix: "app_", defaults: { secure: true } },
+    );
+
+    expect(group.session.name).toBe("app_session");
+
+    await group.session.set("token");
+    expect(receivedOptions).toEqual({ secure: true });
+  });
 });

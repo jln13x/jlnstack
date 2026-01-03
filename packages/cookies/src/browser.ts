@@ -2,7 +2,13 @@ import { createCookie as createCookieCore } from "./index";
 import type { Cookie, CookieOptions, CreateCookieOptions } from "./types";
 
 export { createCookieGroup } from "./index";
-export type { Cookie, CookieGroup, CookieOptions, Serializer } from "./types";
+export type {
+  Cookie,
+  CookieGroup,
+  CookieGroupOptions,
+  CookieOptions,
+  Serializer,
+} from "./types";
 
 function getCookie(name: string): string | undefined {
   const cookies = document.cookie.split("; ");

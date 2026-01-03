@@ -3,7 +3,13 @@ import { createCookie as createCookieCore } from "./index";
 import type { Cookie, CreateCookieOptions } from "./types";
 
 export { createCookieGroup } from "./index";
-export type { Cookie, CookieGroup, CookieOptions, Serializer } from "./types";
+export type {
+  Cookie,
+  CookieGroup,
+  CookieGroupOptions,
+  CookieOptions,
+  Serializer,
+} from "./types";
 
 export function createCookie<T = string>(
   options: CreateCookieOptions<T>,
