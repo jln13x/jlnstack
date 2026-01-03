@@ -1,7 +1,7 @@
 {
   "name": "@jlnstack/routes",
   "description": "Type-safe route builder",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "license": "MIT",
   "author": "jln13x",
   "repository": {
