@@ -20,7 +20,7 @@ type AvailableFilter<Schema extends FilterSchemaConstraint> = {
 
 type UseFilterOptions<Schema extends FilterSchemaConstraint> = {
   defaultValues?: FilterInput<Schema>;
-  onFilterChange?: (filters: FilterInput<Schema>) => FilterInput<Schema>;
+  onFilterChange?: (filters: FilterInput<Schema>) => void | Promise<void>;
 };
 
 type UseFilterReturn<Schema extends FilterSchemaConstraint> = {

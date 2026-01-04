@@ -5,7 +5,9 @@ class FilterStore<Schema extends FilterSchemaConstraint> {
   private _filters: FilterInput<Schema>;
   private _definitions: FilterDefinitions<Schema>;
   private _defaultFilters: FilterInput<Schema>;
-  private _onFilterChange?: (filters: FilterInput<Schema>) => void;
+  private _onFilterChange?: (
+    filters: FilterInput<Schema>,
+  ) => void | Promise<void>;
   private _listeners: Set<Listener> = new Set();
 
   constructor(options: FilterStoreOptions<Schema>) {
