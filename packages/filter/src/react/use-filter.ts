@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { createFilterStore, type FilterStore } from "../filter-client";
 import type {
   FilterInput,
@@ -17,6 +17,11 @@ import {
 type AvailableFilter<Schema extends FilterSchemaConstraint> = {
   [K in keyof Schema]: { name: K } & Schema[K];
 }[keyof Schema];
+
+type UseFilterOptions<Schema extends FilterSchemaConstraint> = {
+  defaultValues?: FilterInput<Schema>;
+  onFilterChange?: (filters: FilterInput<Schema>) => FilterInput<Schema>;
+};
 
 type UseFilterReturn<Schema extends FilterSchemaConstraint> = {
   schema: Schema;
@@ -41,9 +46,14 @@ type UseFilterReturn<Schema extends FilterSchemaConstraint> = {
 
 function useFilter<const Schema extends FilterSchemaConstraint>(
   schema: Schema,
+  options?: UseFilterOptions<Schema>,
 ): UseFilterReturn<Schema> {
   const [store] = useState(() =>
-    createFilterStore<Schema>({ definitions: schema }),
+    createFilterStore<Schema>({
+      definitions: schema,
+      defaultFilters: options?.defaultValues,
+      onFilterChange: options?.onFilterChange,
+    }),
   );
 
   const [Filter] = useState(() => createFilterComponent(store, schema));
@@ -73,4 +83,4 @@ function useFilter<const Schema extends FilterSchemaConstraint>(
 }
 
 export { useFilter };
-export type { AvailableFilter, UseFilterReturn };
+export type { AvailableFilter, UseFilterOptions, UseFilterReturn };

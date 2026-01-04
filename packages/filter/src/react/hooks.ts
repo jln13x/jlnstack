@@ -31,7 +31,8 @@ export function createUseFilterDefinitions<
     return useMemo(() => {
       const result: AvailableFilter<Schema>[] = [];
       for (const key of Object.keys(schema) as (keyof Schema & string)[]) {
-        const def = schema[key] as AnyFilterDef;
+        const { _value: _, schema: __, ...def } = schema[key] as AnyFilterDef;
+
         result.push({
           name: key,
           ...def,

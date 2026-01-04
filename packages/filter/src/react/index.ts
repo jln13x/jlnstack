@@ -19,6 +19,7 @@ export type {
 export { createFilterComponent } from "./filter-field";
 export type {
   AvailableFilter,
+  UseFilterOptions,
   UseFilterReturn,
 } from "./use-filter";
 export { useFilter } from "./use-filter";
