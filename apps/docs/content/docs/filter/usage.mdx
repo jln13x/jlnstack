@@ -1,0 +1,229 @@
+---
+title: Basic Usage
+description: Learn how to use useFilter and its reactive hooks
+---
+
+# Basic Usage
+
+The `useFilter` hook is the primary way to manage filter state in React. It returns a **stable reference** by default — meaning the returned object won't change between renders. Reactivity is opt-in through hooks.
+
+## Defining Filters
+
+First, define your filter schema using `defineFilters`:
+
+```ts
+import { defineFilters, stringFilter, booleanFilter, numberFilter } from "@jlnstack/filter"
+
+export const userFilters = defineFilters({
+  name: stringFilter({ label: "Name", operators: ["eq", "contains"] }),
+  verified: booleanFilter({ label: "Verified" }),
+  age: numberFilter({ label: "Age", min: 0, max: 120 }),
+})
+```
+
+## Using useFilter
+
+The `useFilter` hook creates a filter store from your schema:
+
+```tsx
+import { useFilter } from "@jlnstack/filter/react"
+import { userFilters } from "./filters"
+
+function UsersPage() {
+  const filter = useFilter(userFilters, {
+    defaultValues: {
+      verified: true,
+    },
+    onFilterChange: (filters) => {
+      console.log("Filters changed:", filters)
+    },
+  })
+
+  // Imperative access (stable, non-reactive)
+  const handleExport = () => {
+    const current = filter.getFilters()
+    exportData(current)
+  }
+
+  return (
+    <div>
+      <button onClick={() => filter.setFilter("verified", false)}>
+        Show Unverified
+      </button>
+      <button onClick={filter.reset}>Reset</button>
+      <button onClick={handleExport}>Export</button>
+    </div>
+  )
+}
+```
+
+### Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `defaultValues` | `FilterInput<Schema>` | Initial filter values |
+| `onFilterChange` | `(filters) => void` | Callback when any filter changes |
+
+### Returned API
+
+| Property | Description |
+|----------|-------------|
+| `getFilters()` | Get current filter values (stable reference) |
+| `setFilter(key, value)` | Set a single filter value |
+| `setFilters(values \| updater)` | Set multiple filters or use updater function |
+| `clear(key)` | Clear a specific filter |
+| `reset()` | Reset all filters to default values |
+| `Filter` | Render prop component for filter fields |
+| `useFilterValues()` | Hook to subscribe to all filter values |
+| `useFilterValue(key)` | Hook to subscribe to a single filter value |
+| `useFilterDefinitions()` | Hook to get filter definitions |
+| `schema` | The filter schema |
+| `_store` | Internal store reference |
+
+## The Filter Component
+
+The `Filter` component is a render prop component that provides reactive access to a single filter:
+
+```tsx
+function FilterPanel() {
+  const filter = useFilter(userFilters)
+
+  return (
+    <div>
+      <filter.Filter
+        name="name"
+        render={({ value, onValueChange, onClear, definition }) => (
+          <div>
+            <label>{definition.label}</label>
+            <input
+              value={value?.value ?? ""}
+              onChange={(e) =>
+                onValueChange({ operator: "contains", value: e.target.value })
+              }
+            />
+            <button onClick={onClear}>Clear</button>
+          </div>
+        )}
+      />
+
+      <filter.Filter
+        name="verified"
+        render={({ value, onValueChange }) => (
+          <select
+            value={value === undefined ? "" : String(value)}
+            onChange={(e) =>
+              onValueChange(e.target.value === "" ? undefined : e.target.value === "true")
+            }
+          >
+            <option value="">All</option>
+            <option value="true">Verified</option>
+            <option value="false">Unverified</option>
+          </select>
+        )}
+      />
+    </div>
+  )
+}
+```
+
+### Render Function Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `name` | `string` | The filter key |
+| `type` | `string` | The filter type id (e.g., "string", "boolean") |
+| `value` | `Value \| undefined` | Current filter value |
+| `onValueChange` | `(value) => void` | Update the filter value |
+| `onClear` | `() => void` | Clear the filter |
+| `definition` | `FilterDef` | Full filter definition with options |
+
+## Reactive Hooks
+
+While `getFilters()` returns a stable reference, you often need to re-render when filters change. Use the built-in hooks:
+
+### useFilterValues
+
+Subscribe to all filter values:
+
+```tsx
+function FilterBadges() {
+  const filter = useFilter(userFilters)
+  const values = filter.useFilterValues()
+
+  const activeFilters = Object.entries(values).filter(([, v]) => v !== undefined)
+
+  return (
+    <div>
+      {activeFilters.map(([key, value]) => (
+        <span key={key}>
+          {key}: {JSON.stringify(value)}
+          <button onClick={() => filter.clear(key)}>×</button>
+        </span>
+      ))}
+    </div>
+  )
+}
+```
+
+### useFilterValue
+
+Subscribe to a single filter value:
+
+```tsx
+function VerifiedStatus() {
+  const filter = useFilter(userFilters)
+  const verified = filter.useFilterValue("verified")
+
+  return <div>Showing: {verified === undefined ? "all" : verified ? "verified" : "unverified"}</div>
+}
+```
+
+### useFilterDefinitions
+
+Get an array of all filter definitions (useful for dynamic filter UIs):
+
+```tsx
+function AddFilterMenu() {
+  const filter = useFilter(userFilters)
+  const definitions = filter.useFilterDefinitions()
+
+  return (
+    <select>
+      <option value="">Add filter...</option>
+      {definitions.map((def) => (
+        <option key={def.name} value={def.name}>
+          {def.label ?? def.name}
+        </option>
+      ))}
+    </select>
+  )
+}
+```
+
+## Why Stable by Default?
+
+The `useFilter` hook returns a stable object reference. This design choice:
+
+1. **Prevents unnecessary re-renders** — Components that only call imperative methods like `setFilter` or `getFilters` won't re-render when filters change.
+2. **Optimizes performance** — Only components that use the reactive hooks (`useFilterValues`, `useFilterValue`) will re-render.
+3. **Gives you control** — Choose where you need reactivity and where you don't.
+
+```tsx
+// ❌ This component won't re-render when filters change
+function ExportButton() {
+  const filter = useFilter(userFilters)
+  return (
+    <button onClick={() => exportData(filter.getFilters())}>
+      Export
+    </button>
+  )
+}
+
+// ✅ This component re-renders when filters change
+function ActiveFilterCount() {
+  const filter = useFilter(userFilters)
+  const values = filter.useFilterValues() // subscribes to changes
+  const count = Object.values(values).filter(Boolean).length
+  return <span>{count} active filters</span>
+}
+```

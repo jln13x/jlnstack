@@ -1,0 +1,18 @@
+{
+  "title": "Filter",
+  "description": "Type-safe filter state management",
+  "root": true,
+  "pages": [
+    "---Getting Started---",
+    "index",
+    "installation",
+    "usage",
+    "context",
+    "---Filters---",
+    "built-in",
+    "custom-filters",
+    "---Integrations---",
+    "drizzle",
+    "examples"
+  ]
+}

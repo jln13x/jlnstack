@@ -1,0 +1,268 @@
+---
+title: Custom Filters
+description: Create your own filter types with custom value shapes
+---
+
+# Custom Filters
+
+While the built-in filters cover common use cases, you can create custom filters for specialized data types or when you need specific options.
+
+## Creating a Custom Filter
+
+Use `createFilter` to define a new filter type:
+
+```ts
+import { createFilter, defineFilters } from "@jlnstack/filter"
+
+// 1. Create the filter with an ID and value type
+const selectFilter = createFilter("select")
+  .input<string>()
+  .options<{
+    label?: string
+    options: { value: string; label: string }[]
+  }>()
+
+// 2. Use it in your schema
+const filters = defineFilters({
+  status: selectFilter({
+    label: "Status",
+    options: [
+      { value: "active", label: "Active" },
+      { value: "pending", label: "Pending" },
+      { value: "archived", label: "Archived" },
+    ],
+  }),
+})
+```
+
+## The createFilter API
+
+```ts
+createFilter(id)
+  .input<ValueType>()      // or .input(standardSchema)
+  .options<OptionsType>()  // Define custom options
+```
+
+### With Schema Validation
+
+You can pass a [Standard Schema](https://github.com/standard-schema/standard-schema) compatible validator:
+
+```ts
+import { z } from "zod"
+import { createFilter, defineFilters } from "@jlnstack/filter"
+
+const rangeSchema = z.object({
+  min: z.number(),
+  max: z.number(),
+})
+
+const rangeFilter = createFilter("range")
+  .input(rangeSchema)
+  .options<{
+    label?: string
+    step?: number
+  }>()
+
+const filters = defineFilters({
+  priceRange: rangeFilter({
+    label: "Price Range",
+    step: 10,
+  }),
+})
+```
+
+## Examples
+
+### Enum Filter
+
+```ts
+const statusValues = ["active", "pending", "archived"] as const
+type Status = (typeof statusValues)[number]
+
+const statusFilter = createFilter("status")
+  .input<Status>()
+  .options<{
+    label?: string
+  }>()
+
+const filters = defineFilters({
+  status: statusFilter({ label: "Status" }),
+})
+
+// Usage
+filter.setFilter("status", "active") // ✅ Type-safe
+filter.setFilter("status", "invalid") // ❌ Type error
+```
+
+### Multi-Select Filter
+
+```ts
+const multiSelectFilter = createFilter("multi-select")
+  .input<string[]>()
+  .options<{
+    label?: string
+    options: { value: string; label: string }[]
+  }>()
+
+const filters = defineFilters({
+  tags: multiSelectFilter({
+    label: "Tags",
+    options: [
+      { value: "featured", label: "Featured" },
+      { value: "sale", label: "On Sale" },
+      { value: "new", label: "New Arrival" },
+    ],
+  }),
+})
+
+// Usage in component
+<filter.Filter
+  name="tags"
+  render={({ value, onValueChange, definition }) => (
+    <div>
+      {definition.options.map((opt) => (
+        <label key={opt.value}>
+          <input
+            type="checkbox"
+            checked={value?.includes(opt.value)}
+            onChange={(e) => {
+              const current = value ?? []
+              onValueChange(
+                e.target.checked
+                  ? [...current, opt.value]
+                  : current.filter((v) => v !== opt.value)
+              )
+            }}
+          />
+          {opt.label}
+        </label>
+      ))}
+    </div>
+  )}
+/>
+```
+
+### Date Range Filter
+
+```ts
+type DateRange = {
+  from: Date | string
+  to: Date | string
+}
+
+const dateRangeFilter = createFilter("date-range")
+  .input<DateRange>()
+  .options<{
+    label?: string
+    presets?: { label: string; value: DateRange }[]
+  }>()
+
+const filters = defineFilters({
+  dateRange: dateRangeFilter({
+    label: "Date Range",
+    presets: [
+      {
+        label: "Last 7 days",
+        value: {
+          from: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          to: new Date(),
+        },
+      },
+      {
+        label: "Last 30 days",
+        value: {
+          from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          to: new Date(),
+        },
+      },
+    ],
+  }),
+})
+```
+
+### Filter with Required Options
+
+If your filter requires certain options, TypeScript will enforce them:
+
+```ts
+const selectFilter = createFilter("select")
+  .input<string>()
+  .options<{
+    label?: string  // Optional
+    options: { value: string; label: string }[]  // Required
+  }>()
+
+// ❌ Type error - missing required 'options'
+const filters = defineFilters({
+  status: selectFilter({ label: "Status" }),
+})
+
+// ✅ Correct
+const filters = defineFilters({
+  status: selectFilter({
+    label: "Status",
+    options: [{ value: "active", label: "Active" }],
+  }),
+})
+```
+
+### Filter with No Options
+
+If your filter doesn't need options, call `.options()` with no type parameter:
+
+```ts
+const timestampFilter = createFilter("timestamp")
+  .input<number>()
+  .options()
+
+const filters = defineFilters({
+  lastLogin: timestampFilter(), // No options needed
+})
+```
+
+## Accessing Definition in Render
+
+The `definition` prop in the render function gives you access to all options:
+
+```tsx
+<filter.Filter
+  name="status"
+  render={({ value, onValueChange, definition }) => (
+    <select
+      value={value ?? ""}
+      onChange={(e) => onValueChange(e.target.value || undefined)}
+    >
+      <option value="">All</option>
+      {definition.options.map((opt) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  )}
+/>
+```
+
+## Using Filter Type in Components
+
+You can infer the filter definition type for component props:
+
+```ts
+import type { AvailableFilter } from "@jlnstack/filter/react"
+
+type FilterItemProps = {
+  filter: AvailableFilter<typeof filters>
+}
+
+function FilterItem({ filter }: FilterItemProps) {
+  // filter.name, filter.id, and all options are typed
+  return (
+    <div>
+      <span>{filter.label ?? filter.name}</span>
+      {filter.id === "select" && (
+        <span>({filter.options.length} options)</span>
+      )}
+    </div>
+  )
+}
+```

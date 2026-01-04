@@ -1,0 +1,56 @@
+---
+title: Introduction
+description: Type-safe filter state management for React
+---
+
+# Filter
+
+Filter is a type-safe filter state management library for React. Define your filter schema once and get full type inference across your application.
+
+## Why Filter?
+
+- **Type-safe** — Full TypeScript inference for filter values and definitions.
+- **Stable by default** — The `useFilter` hook returns a stable reference. Reactivity is opt-in through hooks like `useFilterValues`.
+- **Built-in filters** — Ready-to-use filters for strings, numbers, dates, and booleans.
+- **Extensible** — Create custom filters with your own value types and options.
+- **Framework agnostic** — Core logic works anywhere, with React hooks for easy integration.
+
+## Quick Example
+
+```tsx
+import { defineFilters, stringFilter, booleanFilter } from "@jlnstack/filter"
+import { useFilter } from "@jlnstack/filter/react"
+
+const filters = defineFilters({
+  name: stringFilter({ label: "Name" }),
+  active: booleanFilter({ label: "Active" }),
+})
+
+function MyComponent() {
+  const filter = useFilter(filters)
+
+  // Get current filter values (stable reference)
+  const values = filter.getFilters()
+
+  // Set a filter value
+  filter.setFilter("name", { operator: "contains", value: "john" })
+  filter.setFilter("active", true)
+
+  // Reset all filters
+  filter.reset()
+
+  return (
+    <filter.Filter
+      name="name"
+      render={({ value, onValueChange }) => (
+        <input
+          value={value?.value ?? ""}
+          onChange={(e) =>
+            onValueChange({ operator: "contains", value: e.target.value })
+          }
+        />
+      )}
+    />
+  )
+}
+```

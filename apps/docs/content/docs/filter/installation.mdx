@@ -1,0 +1,44 @@
+---
+title: Installation
+description: Install @jlnstack/filter in your project
+---
+
+# Installation
+
+<Tabs items={["npm", "pnpm", "yarn", "bun"]}>
+  <Tab value="npm">
+    ```bash
+    npm install @jlnstack/filter
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add @jlnstack/filter
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add @jlnstack/filter
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bun add @jlnstack/filter
+    ```
+  </Tab>
+</Tabs>
+
+## Entry Points
+
+The package provides two main entry points:
+
+```ts
+// Core filter definitions (no React dependency)
+import { defineFilters, createFilter } from "@jlnstack/filter"
+
+// React hooks and components
+import { useFilter, FilterProvider, createFilterHooks } from "@jlnstack/filter/react"
+
+// Drizzle ORM integration
+import { toWhere } from "@jlnstack/filter/drizzle"
+```
