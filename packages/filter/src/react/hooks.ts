@@ -29,13 +29,13 @@ export function createUseFilterDefinitions<
   return () => {
     // biome-ignore lint/correctness/useExhaustiveDependencies: its fine
     return useMemo(() => {
-      const result: AvailableFilter<Schema, keyof Schema>[] = [];
+      const result: AvailableFilter<Schema>[] = [];
       for (const key of Object.keys(schema) as (keyof Schema & string)[]) {
         const def = schema[key] as AnyFilterDef;
         result.push({
           name: key,
-          definition: def,
-        } as AvailableFilter<Schema, typeof key>);
+          ...def,
+        } as AvailableFilter<Schema>);
       }
       return result;
     }, []);

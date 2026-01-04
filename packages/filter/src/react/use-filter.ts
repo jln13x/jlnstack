@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import { createFilterStore, type FilterStore } from "../filter-client";
 import type {
   FilterInput,
@@ -14,25 +14,9 @@ import {
   createUseFilterValues,
 } from "./hooks";
 
-type AvailableFilter<
-  Schema extends FilterSchemaConstraint,
-  K extends keyof Schema,
-> = {
-  name: K;
-  definition: Schema[K];
-};
-
-type ActiveFilter<
-  Schema extends FilterSchemaConstraint,
-  K extends keyof Schema,
-> = {
-  name: K;
-  label: string | undefined;
-  type: Schema[K]["id"];
-  value: FilterValue<Schema[K]>;
-  definition: Schema[K];
-  clear: () => void;
-};
+type AvailableFilter<Schema extends FilterSchemaConstraint> = {
+  [K in keyof Schema]: { name: K } & Schema[K];
+}[keyof Schema];
 
 type UseFilterReturn<Schema extends FilterSchemaConstraint> = {
   schema: Schema;
@@ -51,7 +35,7 @@ type UseFilterReturn<Schema extends FilterSchemaConstraint> = {
   Filter: ReturnType<typeof createFilterComponent<Schema>>;
   useFilterValues: () => FilterInput<Schema>;
   useFilterValue: <K extends keyof Schema>(name: K) => FilterInput<Schema>[K];
-  useFilterDefinitions: () => AvailableFilter<Schema, keyof Schema>[];
+  useFilterDefinitions: () => AvailableFilter<Schema>[];
   _store: FilterStore<Schema>;
 };
 

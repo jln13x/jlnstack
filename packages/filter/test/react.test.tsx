@@ -182,8 +182,8 @@ describe("context hooks", () => {
         "active",
       ]);
       expect(result.current[0]).toMatchObject({
+        id: "string",
         name: "name",
-        definition: expect.objectContaining({ id: "string" }),
       });
     });
   });

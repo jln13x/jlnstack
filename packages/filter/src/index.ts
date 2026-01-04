@@ -26,6 +26,10 @@ type FilterValue<F extends AnyFilterDef> = F extends FilterDef<
 
 type FilterSchemaConstraint = Record<string, AnyFilterDef>;
 
+type Filters<Schema extends FilterSchemaConstraint> = Schema
+
+type InferFilterKeys<F extends Filters<any>> = keyof F
+
 type FilterInput<Schema extends FilterSchemaConstraint> = {
   [K in keyof Schema]?: FilterValue<Schema[K]>;
 };
@@ -93,8 +97,8 @@ function createFilter<const Id extends string>(id: Id) {
 
 function defineFilters<const Schema extends FilterSchemaConstraint>(
   schema: Schema,
-): Schema {
-  return schema;
+): Filters<Schema> {
+  return schema as Filters<Schema>;
 }
 
 export { createFilter, defineFilters };
@@ -106,7 +110,9 @@ export type {
   FilterInput,
   FilterOptions,
   FilterSchemaConstraint,
+  Filters,
   FilterValue,
+  InferFilterKeys,
 };
 
 export * from "./built-in";
