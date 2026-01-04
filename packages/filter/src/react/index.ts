@@ -6,10 +6,10 @@ export { createFilterHooks } from "./create-filter-hooks";
 export type { FilterProviderProps } from "./filter-context";
 export {
   FilterProvider,
+  useFilter,
+  useFilterById,
   useFilterContext,
   useFilterDefinitions,
-  useFilterValue,
-  useFilterValues,
 } from "./filter-context";
 export type {
   FilterComponentProps,
@@ -19,7 +19,8 @@ export type {
 export { createFilterComponent } from "./filter-field";
 export type {
   AvailableFilter,
+  FilterActions,
   UseFilterOptions,
   UseFilterReturn,
 } from "./use-filter";
-export { useFilter } from "./use-filter";
+export { useFilter as useFilterHook } from "./use-filter";

@@ -2,23 +2,22 @@
 
 import type { FilterSchemaConstraint } from "../index";
 import {
+  useFilter,
+  useFilterById,
   useFilterContext,
   useFilterDefinitions,
-  useFilterValue,
-  useFilterValues,
 } from "./filter-context";
-import { type UseFilterOptions, useFilter } from "./use-filter";
+import { type UseFilterOptions, useFilter as useFilterHook } from "./use-filter";
 
 export function createFilterHooks<Schema extends FilterSchemaConstraint>(
   schema: Schema,
 ) {
   return {
     useFilter: (options?: UseFilterOptions<Schema>) =>
-      useFilter(schema, options),
+      useFilterHook(schema, options),
     useFilterContext: () => useFilterContext<Schema>(),
-    useFilterValue: <K extends keyof Schema>(name: K) =>
-      useFilterValue<Schema, K>(name),
-    useFilterValues: () => useFilterValues<Schema>(),
+    useFilterTree: () => useFilter<Schema>(),
+    useFilterById: (id: string) => useFilterById<Schema>(id),
     useFilterDefinitions: () => useFilterDefinitions<Schema>(),
   };
 }

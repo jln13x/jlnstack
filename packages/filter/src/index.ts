@@ -132,4 +132,50 @@ export type {
   StringOperators,
   StringValue,
 } from "./built-in/string-filter";
-export type { FilterDefinitions, FilterStoreOptions } from "./types";
+
+export {
+  isCondition,
+  isConditionInput,
+  isGroup,
+  isGroupInput,
+} from "./types";
+
+export type {
+  Condition,
+  ConditionInput,
+  FilterDefinitions,
+  FilterExpression,
+  FilterExpressionInput,
+  FilterOperator,
+  FilterStoreOptions,
+  Group,
+  GroupInput,
+} from "./types";
+
+// Helper functions for building filters
+function condition<Schema extends FilterSchemaConstraint, K extends keyof Schema>(
+  field: K,
+  value: FilterValue<Schema[K]>,
+): ConditionInput<Schema> {
+  return { field, value } as ConditionInput<Schema>;
+}
+
+function and<Schema extends FilterSchemaConstraint>(
+  ...filters: FilterExpressionInput<Schema>[]
+): GroupInput<Schema> {
+  return { operator: "and", filters };
+}
+
+function or<Schema extends FilterSchemaConstraint>(
+  ...filters: FilterExpressionInput<Schema>[]
+): GroupInput<Schema> {
+  return { operator: "or", filters };
+}
+
+export { and, condition, or };
+
+import type {
+  ConditionInput,
+  FilterExpressionInput,
+  GroupInput,
+} from "./types";

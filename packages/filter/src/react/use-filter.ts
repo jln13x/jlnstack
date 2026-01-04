@@ -2,56 +2,69 @@
 
 import { useMemo, useState } from "react";
 import { createFilterStore, type FilterStore } from "../filter-client";
+import type { FilterSchemaConstraint, FilterValue } from "../index";
 import type {
-  FilterInput,
-  FilterSchemaConstraint,
-  FilterValue,
-} from "../index";
+  FilterExpression,
+  FilterOperator,
+  Group,
+  GroupInput,
+} from "../types";
 import { createFilterComponent } from "./filter-field";
-import {
-  createUseFilterDefinitions,
-  createUseFilterValue,
-  createUseFilterValues,
-} from "./hooks";
+import { createUseFilter, createUseFilterById, createUseFilterDefinitions } from "./hooks";
 
 type AvailableFilter<Schema extends FilterSchemaConstraint> = {
   [K in keyof Schema]: { name: K } & Schema[K];
 }[keyof Schema];
 
 type UseFilterOptions<Schema extends FilterSchemaConstraint> = {
-  defaultValues?: FilterInput<Schema>;
-  onFilterChange?: (filters: FilterInput<Schema>) => void | Promise<void>;
+  defaultFilter?: GroupInput<Schema>;
+  onFilterChange?: (filter: Group<Schema>) => void | Promise<void>;
+};
+
+type FilterActions<Schema extends FilterSchemaConstraint> = {
+  addCondition: <K extends keyof Schema>(opts: {
+    field: K;
+    value: FilterValue<Schema[K]>;
+    parentId?: string;
+  }) => string;
+  addGroup: (opts: { operator: FilterOperator; parentId?: string }) => string;
+  updateCondition: <K extends keyof Schema>(opts: {
+    id: string;
+    value: FilterValue<Schema[K]>;
+  }) => void;
+  setOperator: (opts: { id: string; operator: FilterOperator }) => void;
+  removeFilter: (opts: { id: string }) => void;
+  moveFilter: (opts: {
+    id: string;
+    targetParentId: string;
+    index: number;
+  }) => void;
+  groupFilters: (opts: { ids: string[]; operator: FilterOperator }) => string;
+  ungroupFilter: (opts: { id: string }) => void;
+  setFilter: (input: GroupInput<Schema>) => void;
+  reset: () => void;
 };
 
 type UseFilterReturn<Schema extends FilterSchemaConstraint> = {
   schema: Schema;
-  setFilter: <K extends keyof Schema>(
-    key: K,
-    value: FilterValue<Schema[K]> | undefined,
-  ) => void;
-  setFilters: (
-    filtersOrUpdater:
-      | FilterInput<Schema>
-      | ((prev: FilterInput<Schema>) => FilterInput<Schema>),
-  ) => void;
-  clear: (key: keyof Schema) => void;
-  reset: () => void;
-  getFilters: () => FilterInput<Schema>;
+  rootId: string;
+  getFilter: () => Group<Schema>;
+  getFilterById: (id: string) => FilterExpression<Schema> | undefined;
   Filter: ReturnType<typeof createFilterComponent<Schema>>;
-  useFilterValues: () => FilterInput<Schema>;
-  useFilterValue: <K extends keyof Schema>(name: K) => FilterInput<Schema>[K];
+  useFilter: () => Group<Schema>;
+  useFilterById: (id: string) => FilterExpression<Schema> | undefined;
   useFilterDefinitions: () => AvailableFilter<Schema>[];
   _store: FilterStore<Schema>;
-};
+} & FilterActions<Schema>;
 
-function useFilter<const Schema extends FilterSchemaConstraint>(
+function useFilterHook<const Schema extends FilterSchemaConstraint>(
   schema: Schema,
   options?: UseFilterOptions<Schema>,
 ): UseFilterReturn<Schema> {
   const [store] = useState(() =>
     createFilterStore<Schema>({
       definitions: schema,
-      defaultFilters: options?.defaultValues,
+      defaultFilter: options?.defaultFilter,
       onFilterChange: options?.onFilterChange,
     }),
   );
@@ -62,25 +75,27 @@ function useFilter<const Schema extends FilterSchemaConstraint>(
     () => ({
       _store: store,
       schema,
-      setFilter: <K extends keyof Schema>(
-        key: K,
-        value: FilterValue<Schema[K]> | undefined,
-      ) => {
-        store.setFilter(key, value as FilterInput<Schema>[K]);
-      },
-      setFilters: store.setFilters,
-      clear: (key: keyof Schema) =>
-        store.setFilter(key, undefined as FilterInput<Schema>[keyof Schema]),
-      reset: store.resetFilters,
-      getFilters: store.getFilters,
+      rootId: store.rootId,
+      getFilter: store.getFilter,
+      getFilterById: store.getFilterById,
+      addCondition: store.addCondition,
+      addGroup: store.addGroup,
+      updateCondition: store.updateCondition,
+      setOperator: store.setOperator,
+      removeFilter: store.removeFilter,
+      moveFilter: store.moveFilter,
+      groupFilters: store.groupFilters,
+      ungroupFilter: store.ungroupFilter,
+      setFilter: store.setFilter,
+      reset: store.resetFilter,
       Filter,
-      useFilterValues: createUseFilterValues(store),
-      useFilterValue: createUseFilterValue(store),
+      useFilter: createUseFilter(store),
+      useFilterById: createUseFilterById(store),
       useFilterDefinitions: createUseFilterDefinitions(schema),
     }),
     [store, schema, Filter],
   );
 }
 
-export { useFilter };
-export type { AvailableFilter, UseFilterOptions, UseFilterReturn };
+export { useFilterHook as useFilter };
+export type { AvailableFilter, FilterActions, UseFilterOptions, UseFilterReturn };

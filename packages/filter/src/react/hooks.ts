@@ -3,23 +3,24 @@
 import { useMemo, useSyncExternalStore } from "react";
 import type { FilterStore } from "../filter-client";
 import type { AnyFilterDef, FilterSchemaConstraint } from "../index";
+import type { FilterExpression, Group } from "../types";
 import type { AvailableFilter } from "./use-filter";
 
-export function createUseFilterValues<Schema extends FilterSchemaConstraint>(
+export function createUseFilter<Schema extends FilterSchemaConstraint>(
   store: FilterStore<Schema>,
 ) {
-  return () =>
-    useSyncExternalStore(store.subscribe, store.getFilters, store.getFilters);
+  return (): Group<Schema> =>
+    useSyncExternalStore(store.subscribe, store.getFilter, store.getFilter);
 }
 
-export function createUseFilterValue<Schema extends FilterSchemaConstraint>(
+export function createUseFilterById<Schema extends FilterSchemaConstraint>(
   store: FilterStore<Schema>,
 ) {
-  return <K extends keyof Schema>(name: K) =>
+  return (id: string): FilterExpression<Schema> | undefined =>
     useSyncExternalStore(
       store.subscribe,
-      () => store.getFilters()[name],
-      () => store.getFilters()[name],
+      () => store.getFilterById(id),
+      () => store.getFilterById(id),
     );
 }
 

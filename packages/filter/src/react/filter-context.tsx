@@ -2,12 +2,9 @@
 
 import { createContext, type ReactNode, useContext } from "react";
 import type { FilterSchemaConstraint } from "../index";
-import {
-  createUseFilterDefinitions,
-  createUseFilterValue,
-  createUseFilterValues,
-} from "./hooks";
-import type { UseFilterReturn } from "./use-filter";
+import type { FilterExpression, Group } from "../types";
+import { createUseFilter, createUseFilterById, createUseFilterDefinitions } from "./hooks";
+import type { AvailableFilter, UseFilterReturn } from "./use-filter";
 
 const FilterContext = createContext<UseFilterReturn<any> | null>(null);
 
@@ -41,30 +38,31 @@ function useFilterContext<
   return useFilterStoreInternal<Schema>("useFilterContext");
 }
 
-function useFilterValue<
+function useFilter<Schema extends FilterSchemaConstraint>(): Group<Schema> {
+  const { _store } = useFilterStoreInternal<Schema>("useFilter");
+  return createUseFilter(_store)();
+}
+
+function useFilterById<Schema extends FilterSchemaConstraint>(
+  id: string,
+): FilterExpression<Schema> | undefined {
+  const { _store } = useFilterStoreInternal<Schema>("useFilterById");
+  return createUseFilterById(_store)(id);
+}
+
+function useFilterDefinitions<
   Schema extends FilterSchemaConstraint,
-  K extends keyof Schema = keyof Schema,
->(name: K) {
-  const { _store } = useFilterStoreInternal<Schema>(`useFilterValue`);
-  return createUseFilterValue(_store)(name);
-}
-
-function useFilterValues<Schema extends FilterSchemaConstraint>() {
-  const { _store } = useFilterStoreInternal<Schema>(`useFilterValues`);
-  return createUseFilterValues(_store)();
-}
-
-function useFilterDefinitions<Schema extends FilterSchemaConstraint>() {
-  const { schema } = useFilterStoreInternal<Schema>(`useFilterDefinitions`);
+>(): AvailableFilter<Schema>[] {
+  const { schema } = useFilterStoreInternal<Schema>("useFilterDefinitions");
   return createUseFilterDefinitions(schema)();
 }
 
 export {
   FilterProvider,
-  useFilterDefinitions,
+  useFilter,
+  useFilterById,
   useFilterContext,
-  useFilterValue,
-  useFilterValues,
+  useFilterDefinitions,
 };
 
 export type { FilterProviderProps };

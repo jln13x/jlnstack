@@ -2,64 +2,62 @@
 
 import { type ReactNode, useSyncExternalStore } from "react";
 import type { FilterStore } from "../filter-client";
-import type {
-  AnyFilterDef,
-  FilterInput,
-  FilterSchemaConstraint,
-  FilterValue,
-} from "../index";
+import type { AnyFilterDef, FilterSchemaConstraint, FilterValue } from "../index";
+import type { Condition } from "../types";
+import { isGroup } from "../types";
 
-type FilterComponentProps<
-  Schema extends FilterSchemaConstraint,
-  Name extends keyof Schema & string,
-> = {
-  name: Name;
-  render: FilterFieldRenderFn<Schema[Name]>;
+type FilterComponentProps<Schema extends FilterSchemaConstraint> = {
+  condition: Condition<Schema>;
+  render: FilterFieldRenderFn<Schema>;
 };
 
-export type FilterFieldData<Def extends AnyFilterDef> = {
-  name: string;
-  type: Def["id"];
-  value: FilterValue<Def> | undefined;
-  onValueChange: (value: FilterValue<Def> | undefined) => void;
-  onClear: () => void;
-  definition: Def;
+export type FilterFieldData<Schema extends FilterSchemaConstraint> = {
+  id: string;
+  field: keyof Schema;
+  value: FilterValue<Schema[keyof Schema]>;
+  onValueChange: (value: FilterValue<Schema[keyof Schema]>) => void;
+  onRemove: () => void;
+  definition: AnyFilterDef;
 };
 
-export type FilterFieldRenderFn<Def extends AnyFilterDef> = (
-  field: FilterFieldData<Def>,
+export type FilterFieldRenderFn<Schema extends FilterSchemaConstraint> = (
+  field: FilterFieldData<Schema>,
 ) => ReactNode;
 
 export function createFilterComponent<Schema extends FilterSchemaConstraint>(
   store: FilterStore<Schema>,
   schema: Schema,
 ) {
-  return function FilterComponent<Name extends keyof Schema & string>({
-    name,
+  return function FilterComponent({
+    condition,
     render,
-  }: FilterComponentProps<Schema, Name>) {
-    const currentValue = useSyncExternalStore(
+  }: FilterComponentProps<Schema>) {
+    const currentFilter = useSyncExternalStore(
       store.subscribe,
-      () => store.getFilters()[name],
-      () => store.getFilters()[name],
+      () => store.getFilterById(condition.id),
+      () => store.getFilterById(condition.id),
     );
 
-    const def = schema[name] as AnyFilterDef;
+    if (!currentFilter || isGroup(currentFilter)) {
+      return null;
+    }
 
-    const field: FilterFieldData<typeof def> = {
-      name,
-      type: def.id,
-      value: currentValue,
+    const def = schema[currentFilter.field] as AnyFilterDef;
+
+    const field: FilterFieldData<Schema> = {
+      id: currentFilter.id,
+      field: currentFilter.field,
+      value: currentFilter.value as FilterValue<Schema[keyof Schema]>,
       onValueChange: (newValue) => {
-        store.setFilter(name, newValue as FilterInput<Schema>[keyof Schema]);
+        store.updateCondition({ id: currentFilter.id, value: newValue });
       },
-      onClear: () => {
-        store.setFilter(name, undefined as FilterInput<Schema>[keyof Schema]);
+      onRemove: () => {
+        store.removeFilter({ id: currentFilter.id });
       },
       definition: def,
     };
 
-    return render(field as Parameters<typeof render>[0]);
+    return render(field);
   };
 }
 
