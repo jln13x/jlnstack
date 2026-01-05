@@ -3,7 +3,11 @@
 import { createContext, type ReactNode, useContext } from "react";
 import type { FilterSchemaConstraint } from "../index";
 import type { FilterExpression, Group } from "../types";
-import { createUseFilter, createUseFilterById, createUseFilterDefinitions } from "./hooks";
+import {
+  createUseFilter,
+  createUseFilterById,
+  createUseFilterDefinitions,
+} from "./hooks";
 import type { AvailableFilter, UseFilterReturn } from "./use-filter";
 
 const FilterContext = createContext<UseFilterReturn<any> | null>(null);
@@ -18,7 +22,7 @@ function FilterProvider<const Schema extends FilterSchemaConstraint>({
   ...filter
 }: FilterProviderProps<Schema>) {
   return (
-    <FilterContext.Provider value={filter as UseFilterReturn<Schema>}>
+    <FilterContext.Provider value={filter as unknown as UseFilterReturn<any>}>
       {children}
     </FilterContext.Provider>
   );

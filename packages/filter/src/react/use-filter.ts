@@ -25,9 +25,9 @@ type FilterActions<Schema extends FilterSchemaConstraint> = {
   addCondition: <K extends keyof Schema>(opts: {
     field: K;
     value: FilterValue<Schema[K]>;
-    parentId?: string;
+    groupId?: string;
   }) => string;
-  addGroup: (opts: { operator: FilterOperator; parentId?: string }) => string;
+  addGroup: (opts: { operator: FilterOperator; groupId?: string }) => string;
   updateCondition: <K extends keyof Schema>(opts: {
     id: string;
     value: FilterValue<Schema[K]>;
@@ -36,7 +36,7 @@ type FilterActions<Schema extends FilterSchemaConstraint> = {
   removeFilter: (opts: { id: string }) => void;
   moveFilter: (opts: {
     id: string;
-    targetParentId: string;
+    targetGroupId: string;
     index: number;
   }) => void;
   groupFilters: (opts: { ids: string[]; operator: FilterOperator }) => string;

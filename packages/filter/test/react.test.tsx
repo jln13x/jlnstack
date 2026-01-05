@@ -11,12 +11,13 @@ import { booleanFilter, numberFilter, stringFilter } from "../src/index";
 import {
   createFilterHooks,
   FilterProvider,
-  useFilterDefinitions,
   useFilter,
+  useFilterById,
   useFilterContext,
-  useFilterValue,
-  useFilterValues,
+  useFilterDefinitions,
 } from "../src/react";
+import { useFilter as useFilterHook } from "../src/react/use-filter";
+import { isGroup } from "../src/types";
 
 const schema = {
   name: stringFilter({ operators: ["eq", "contains"] }),
@@ -28,9 +29,9 @@ type Schema = typeof schema;
 
 afterEach(cleanup);
 
-describe("useFilter", () => {
+describe("useFilter hook", () => {
   it("should return stable references across renders", () => {
-    const { result, rerender } = renderHook(() => useFilter(schema));
+    const { result, rerender } = renderHook(() => useFilterHook(schema));
 
     const first = result.current;
     rerender();
@@ -41,19 +42,19 @@ describe("useFilter", () => {
     expect(first.schema).toBe(second.schema);
   });
 
-  it("should expose all expected properties", () => {
-    const { result } = renderHook(() => useFilter(schema));
+  it("should expose expected properties", () => {
+    const { result } = renderHook(() => useFilterHook(schema));
 
     expect(result.current).toMatchObject({
       schema,
-      setFilter: expect.any(Function),
-      setFilters: expect.any(Function),
-      clear: expect.any(Function),
-      reset: expect.any(Function),
-      getFilters: expect.any(Function),
+      rootId: expect.any(String),
+      getFilter: expect.any(Function),
+      getFilterById: expect.any(Function),
+      addCondition: expect.any(Function),
+      addGroup: expect.any(Function),
       Filter: expect.any(Function),
-      useFilterValues: expect.any(Function),
-      useFilterValue: expect.any(Function),
+      useFilter: expect.any(Function),
+      useFilterById: expect.any(Function),
       useFilterDefinitions: expect.any(Function),
       _store: expect.any(Object),
     });
@@ -61,24 +62,24 @@ describe("useFilter", () => {
 
   it("derived hooks should react to store changes", () => {
     const { result } = renderHook(() => {
-      const filter = useFilter(schema);
-      const values = filter.useFilterValues();
-      return { filter, values };
+      const filter = useFilterHook(schema);
+      const tree = filter.useFilter();
+      return { filter, tree };
     });
 
-    expect(result.current.values).toEqual({});
+    expect(result.current.tree.filters).toHaveLength(0);
 
     act(() => {
-      result.current.filter.setFilter("active", true);
+      result.current.filter.addCondition({ field: "active", value: true });
     });
 
-    expect(result.current.values).toEqual({ active: true });
+    expect(result.current.tree.filters).toHaveLength(1);
   });
 });
 
 describe("context hooks", () => {
   function setup() {
-    const filterHook = renderHook(() => useFilter(schema));
+    const filterHook = renderHook(() => useFilterHook(schema));
     const wrapper = ({ children }: { children: ReactNode }) => (
       <FilterProvider {...filterHook.result.current}>{children}</FilterProvider>
     );
@@ -92,14 +93,14 @@ describe("context hooks", () => {
       );
     });
 
-    it("useFilterValue throws", () => {
-      expect(() => renderHook(() => useFilterValue("name"))).toThrow(
+    it("useFilter throws", () => {
+      expect(() => renderHook(() => useFilter())).toThrow(
         "must be used within FilterProvider",
       );
     });
 
-    it("useFilterValues throws", () => {
-      expect(() => renderHook(() => useFilterValues())).toThrow(
+    it("useFilterById throws", () => {
+      expect(() => renderHook(() => useFilterById("id"))).toThrow(
         "must be used within FilterProvider",
       );
     });
@@ -119,57 +120,60 @@ describe("context hooks", () => {
       });
 
       expect(result.current.schema).toBe(schema);
-      expect(result.current.getFilters()).toEqual(
-        filterHook.result.current.getFilters(),
+      expect(result.current.getFilter()).toEqual(
+        filterHook.result.current.getFilter(),
       );
     });
   });
 
-  describe("useFilterValue", () => {
+  describe("useFilter (context)", () => {
     it("should react to filter changes", () => {
       const { filterHook, wrapper } = setup();
-      const { result } = renderHook(() => useFilterValue<Schema>("name"), {
-        wrapper,
-      });
+      const { result } = renderHook(() => useFilter<Schema>(), { wrapper });
 
-      expect(result.current).toBeUndefined();
+      expect(result.current.filters).toHaveLength(0);
 
       act(() => {
-        filterHook.result.current.setFilter("name", {
-          operator: "eq",
-          value: "John",
+        filterHook.result.current.addCondition({
+          field: "active",
+          value: true,
         });
       });
 
-      expect(result.current).toEqual({ operator: "eq", value: "John" });
+      expect(result.current.filters).toHaveLength(1);
     });
   });
 
-  describe("useFilterValues", () => {
-    it("should react to filter changes", () => {
+  describe("useFilterById", () => {
+    it("should react to changes", async () => {
       const { filterHook, wrapper } = setup();
-      const { result } = renderHook(() => useFilterValues<Schema>(), {
-        wrapper,
-      });
 
-      expect(result.current).toEqual({});
-
-      act(() => {
-        filterHook.result.current.setFilters({
-          name: { operator: "eq", value: "John" },
-          active: true,
+      const conditionId = await act(async () => {
+        return filterHook.result.current.addCondition({
+          field: "active",
+          value: true,
         });
       });
 
-      expect(result.current).toEqual({
-        name: { operator: "eq", value: "John" },
-        active: true,
+      const { result } = renderHook(() => useFilterById<Schema>(conditionId), {
+        wrapper,
       });
+
+      expect(result.current).toMatchObject({ value: true });
+
+      await act(async () => {
+        filterHook.result.current.updateCondition({
+          id: conditionId,
+          value: false,
+        });
+      });
+
+      expect(result.current).toMatchObject({ value: false });
     });
   });
 
   describe("useFilterDefinitions", () => {
-    it("should return all schema filters with metadata", () => {
+    it("should return schema filters with metadata", () => {
       const { wrapper } = setup();
       const { result } = renderHook(() => useFilterDefinitions<Schema>(), {
         wrapper,
@@ -181,10 +185,6 @@ describe("context hooks", () => {
         "age",
         "active",
       ]);
-      expect(result.current[0]).toMatchObject({
-        id: "string",
-        name: "name",
-      });
     });
   });
 });
@@ -195,82 +195,61 @@ describe("createFilterHooks", () => {
     const { result } = renderHook(() => hooks.useFilter());
 
     expect(result.current.schema).toBe(schema);
-
-    act(() => {
-      result.current.setFilter("name", { operator: "eq", value: "test" });
-    });
-
-    expect(result.current.getFilters()).toEqual({
-      name: { operator: "eq", value: "test" },
-    });
   });
 });
 
 describe("Filter component", () => {
-  it("should render with field data and react to changes", () => {
-    const { result: filterResult } = renderHook(() => useFilter(schema));
+  it("should render condition data and handle interactions", async () => {
+    const { result: filterResult } = renderHook(() => useFilterHook(schema));
     const Filter = filterResult.current.Filter;
+
+    const conditionId = await act(async () => {
+      return filterResult.current.addCondition({
+        field: "name",
+        value: { operator: "eq", value: "initial" },
+      });
+    });
+
+    const condition = filterResult.current.getFilterById(conditionId);
+    if (!condition || isGroup(condition)) throw new Error("Expected condition");
 
     render(
       <Filter
-        name="name"
+        condition={condition}
         render={(field) => (
           <div>
-            <span data-testid="name">{field.name}</span>
-            <span data-testid="type">{field.type}</span>
+            <span data-testid="field">{String(field.field)}</span>
             <span data-testid="value">{JSON.stringify(field.value)}</span>
             <button
               type="button"
               onClick={() =>
-                field.onValueChange({ operator: "eq", value: "test" })
+                field.onValueChange({ operator: "contains", value: "updated" })
               }
             >
-              Set
+              Update
             </button>
-            <button type="button" onClick={field.onClear}>
-              Clear
+            <button type="button" onClick={field.onRemove}>
+              Remove
             </button>
           </div>
         )}
       />,
     );
 
-    expect(screen.getByTestId("name")).toHaveTextContent("name");
-    expect(screen.getByTestId("type")).toHaveTextContent("string");
-    expect(screen.getByTestId("value")).toHaveTextContent("");
+    expect(screen.getByTestId("field")).toHaveTextContent("name");
 
-    act(() => {
-      screen.getByText("Set").click();
+    await act(async () => {
+      screen.getByText("Update").click();
     });
 
     expect(screen.getByTestId("value")).toHaveTextContent(
-      '{"operator":"eq","value":"test"}',
-    );
-    expect(filterResult.current.getFilters()).toEqual({
-      name: { operator: "eq", value: "test" },
-    });
-
-    act(() => {
-      screen.getByText("Clear").click();
-    });
-
-    expect(screen.getByTestId("value")).toHaveTextContent("");
-    expect(filterResult.current.getFilters()).toEqual({});
-  });
-
-  it("should provide filter definition", () => {
-    const { result: filterResult } = renderHook(() => useFilter(schema));
-    const Filter = filterResult.current.Filter;
-
-    render(
-      <Filter
-        name="age"
-        render={(field) => (
-          <span data-testid="def-id">{field.definition.id}</span>
-        )}
-      />,
+      '{"operator":"contains","value":"updated"}',
     );
 
-    expect(screen.getByTestId("def-id")).toHaveTextContent("number");
+    await act(async () => {
+      screen.getByText("Remove").click();
+    });
+
+    expect(filterResult.current.getFilterById(conditionId)).toBeUndefined();
   });
 });

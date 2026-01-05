@@ -26,9 +26,9 @@ type FilterValue<F extends AnyFilterDef> = F extends FilterDef<
 
 type FilterSchemaConstraint = Record<string, AnyFilterDef>;
 
-type Filters<Schema extends FilterSchemaConstraint> = Schema
+type Filters<Schema extends FilterSchemaConstraint> = Schema;
 
-type InferFilterKeys<F extends Filters<any>> = keyof F
+type InferFilterKeys<F extends Filters<any>> = keyof F;
 
 type FilterInput<Schema extends FilterSchemaConstraint> = {
   [K in keyof Schema]?: FilterValue<Schema[K]>;
@@ -132,14 +132,6 @@ export type {
   StringOperators,
   StringValue,
 } from "./built-in/string-filter";
-
-export {
-  isCondition,
-  isConditionInput,
-  isGroup,
-  isGroupInput,
-} from "./types";
-
 export type {
   Condition,
   ConditionInput,
@@ -151,25 +143,31 @@ export type {
   Group,
   GroupInput,
 } from "./types";
+export {
+  isCondition,
+  isConditionInput,
+  isGroup,
+  isGroupInput,
+} from "./types";
 
 // Helper functions for building filters
-function condition<Schema extends FilterSchemaConstraint, K extends keyof Schema>(
-  field: K,
-  value: FilterValue<Schema[K]>,
-): ConditionInput<Schema> {
-  return { field, value } as ConditionInput<Schema>;
+function condition<
+  Schema extends FilterSchemaConstraint,
+  K extends keyof Schema,
+>(field: K, value: FilterValue<Schema[K]>): ConditionInput<Schema> {
+  return { type: "condition", field, value } as ConditionInput<Schema>;
 }
 
 function and<Schema extends FilterSchemaConstraint>(
   ...filters: FilterExpressionInput<Schema>[]
 ): GroupInput<Schema> {
-  return { operator: "and", filters };
+  return { type: "group", operator: "and", filters };
 }
 
 function or<Schema extends FilterSchemaConstraint>(
   ...filters: FilterExpressionInput<Schema>[]
 ): GroupInput<Schema> {
-  return { operator: "or", filters };
+  return { type: "group", operator: "or", filters };
 }
 
 export { and, condition, or };
