@@ -79,6 +79,7 @@ type FilterStoreOptions<Schema extends FilterSchemaConstraint> = {
   definitions: FilterDefinitions<Schema>;
   defaultFilter?: GroupInput<Schema>;
   onFilterChange?: (filter: Group<Schema>) => void | Promise<void>;
+  idPrefix?: string;
 };
 
 export { isCondition, isConditionInput, isGroup, isGroupInput };

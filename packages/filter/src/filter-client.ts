@@ -12,56 +12,8 @@ import type {
 } from "./types";
 import { isConditionInput, isGroup } from "./types";
 
-function generateId(): string {
-  return crypto.randomUUID();
-}
-
 function error(message: string): never {
   throw new Error(message);
-}
-
-function hydrateFilter<Schema extends FilterSchemaConstraint>(
-  input: FilterExpressionInput<Schema>,
-): FilterExpression<Schema> {
-  if (isConditionInput(input)) {
-    return {
-      type: "condition",
-      id: generateId(),
-      field: input.field,
-      value: input.value,
-    } as Condition<Schema>;
-  }
-  return {
-    type: "group",
-    id: generateId(),
-    operator: input.operator,
-    filters: input.filters.map((f) => hydrateFilter(f)),
-  } as Group<Schema>;
-}
-
-function hydrateGroup<Schema extends FilterSchemaConstraint>(
-  input: GroupInput<Schema>,
-  isRoot = false,
-): Group<Schema> {
-  return {
-    type: "group",
-    id: generateId(),
-    operator: input.operator,
-    filters: input.filters.map((f) => hydrateFilter(f)),
-    ...(isRoot && { root: true }),
-  };
-}
-
-function createEmptyRoot<
-  Schema extends FilterSchemaConstraint,
->(): Group<Schema> {
-  return {
-    type: "group",
-    id: generateId(),
-    operator: "and",
-    filters: [],
-    root: true,
-  };
 }
 
 class FilterStore<Schema extends FilterSchemaConstraint> {
@@ -70,15 +22,64 @@ class FilterStore<Schema extends FilterSchemaConstraint> {
   private _defaultFilter: GroupInput<Schema> | undefined;
   private _onFilterChange?: (filter: Group<Schema>) => void | Promise<void>;
   private _listeners: Set<Listener> = new Set();
+  private _idCounter = 0;
+  private _idPrefix: string;
 
   constructor(options: FilterStoreOptions<Schema>) {
     this._definitions = options.definitions;
     this._defaultFilter = options.defaultFilter;
     this._onFilterChange = options.onFilterChange;
+    this._idPrefix = options.idPrefix ?? "f";
 
     this._root = options.defaultFilter
-      ? hydrateGroup(options.defaultFilter, true)
-      : createEmptyRoot();
+      ? this._hydrateGroup(options.defaultFilter, true)
+      : this._createEmptyRoot();
+  }
+
+  private _generateId(): string {
+    return `${this._idPrefix}-${this._idCounter++}`;
+  }
+
+  private _hydrateFilter(
+    input: FilterExpressionInput<Schema>,
+  ): FilterExpression<Schema> {
+    if (isConditionInput(input)) {
+      return {
+        type: "condition",
+        id: this._generateId(),
+        field: input.field,
+        value: input.value,
+      } as Condition<Schema>;
+    }
+    return {
+      type: "group",
+      id: this._generateId(),
+      operator: input.operator,
+      filters: input.filters.map((f) => this._hydrateFilter(f)),
+    } as Group<Schema>;
+  }
+
+  private _hydrateGroup(
+    input: GroupInput<Schema>,
+    isRoot = false,
+  ): Group<Schema> {
+    return {
+      type: "group",
+      id: this._generateId(),
+      operator: input.operator,
+      filters: input.filters.map((f) => this._hydrateFilter(f)),
+      ...(isRoot && { root: true }),
+    };
+  }
+
+  private _createEmptyRoot(): Group<Schema> {
+    return {
+      type: "group",
+      id: this._generateId(),
+      operator: "and",
+      filters: [],
+      root: true,
+    };
   }
 
   private _findById(id: string): FilterExpression<Schema> | undefined {
@@ -183,7 +184,7 @@ class FilterStore<Schema extends FilterSchemaConstraint> {
     const groupId = opts.groupId ?? this._root.id;
     const condition: Condition<Schema> = {
       type: "condition",
-      id: generateId(),
+      id: this._generateId(),
       field: opts.field,
       value: opts.value,
     } as Condition<Schema>;
@@ -200,7 +201,7 @@ class FilterStore<Schema extends FilterSchemaConstraint> {
     const groupId = opts.groupId ?? this._root.id;
     const group: Group<Schema> = {
       type: "group",
-      id: generateId(),
+      id: this._generateId(),
       operator: opts.operator,
       filters: [],
     };
@@ -326,7 +327,7 @@ class FilterStore<Schema extends FilterSchemaConstraint> {
 
     const newGroup: Group<Schema> = {
       type: "group",
-      id: generateId(),
+      id: this._generateId(),
       operator,
       filters,
     };
@@ -361,14 +362,14 @@ class FilterStore<Schema extends FilterSchemaConstraint> {
   };
 
   setFilter = (input: GroupInput<Schema>): void => {
-    this._root = hydrateGroup(input, true);
+    this._root = this._hydrateGroup(input, true);
     this._notify();
   };
 
   resetFilter = (): void => {
     this._root = this._defaultFilter
-      ? hydrateGroup(this._defaultFilter, true)
-      : createEmptyRoot();
+      ? this._hydrateGroup(this._defaultFilter, true)
+      : this._createEmptyRoot();
     this._notify();
   };
 
