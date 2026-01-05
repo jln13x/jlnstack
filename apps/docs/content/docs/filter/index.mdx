@@ -1,19 +1,19 @@
 ---
 title: Introduction
-description: Type-safe filter state management for React
+description: Type-safe filter state management
 ---
 
 # Filter
 
-Filter is a type-safe filter state management library for React. Define your filter schema once and get full type inference across your application.
+Filter is a type-safe filter state management library. Define your filter schema once and get full type inference across your application.
 
 ## Why Filter?
 
 - **Type-safe** — Full TypeScript inference for filter values and definitions.
-- **Stable by default** — The `useFilter` hook returns a stable reference. Reactivity is opt-in through hooks like `useFilterValues`.
+- **Expression-based** — Build complex filter trees with `and()`, `or()`, and nested groups.
 - **Built-in filters** — Ready-to-use filters for strings, numbers, dates, and booleans.
 - **Extensible** — Create custom filters with your own value types and options.
-- **Framework agnostic** — Core logic works anywhere, with React hooks for easy integration.
+- **Framework agnostic** — Core logic works anywhere. Import from `@jlnstack/filter` for the core, `@jlnstack/filter/react` for React bindings.
 
 ## Quick Example
 
@@ -21,20 +21,19 @@ Filter is a type-safe filter state management library for React. Define your fil
 import { defineFilters, stringFilter, booleanFilter } from "@jlnstack/filter"
 import { useFilter } from "@jlnstack/filter/react"
 
-const filters = defineFilters({
+const schema = defineFilters({
   name: stringFilter({ label: "Name" }),
   active: booleanFilter({ label: "Active" }),
 })
 
 function MyComponent() {
-  const filter = useFilter(filters)
+  const filter = useFilter(schema)
 
-  // Get current filter values (stable reference)
-  const values = filter.getFilters()
-
-  // Set a filter value
-  filter.setFilter("name", { operator: "contains", value: "john" })
-  filter.setFilter("active", true)
+  // Add a filter condition
+  filter.addCondition({
+    field: "name",
+    value: { operator: "contains", value: "john" },
+  })
 
   // Reset all filters
   filter.reset()

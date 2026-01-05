@@ -30,15 +30,22 @@ description: Install @jlnstack/filter in your project
 
 ## Entry Points
 
-The package provides two main entry points:
-
 ```ts
-// Core filter definitions (no React dependency)
-import { defineFilters, createFilter } from "@jlnstack/filter"
+// Core filter definitions and expression helpers (no React dependency)
+import { 
+  defineFilters, 
+  createFilter, 
+  and, 
+  or, 
+  condition 
+} from "@jlnstack/filter"
 
 // React hooks and components
 import { useFilter, FilterProvider, createFilterHooks } from "@jlnstack/filter/react"
 
 // Drizzle ORM integration
 import { toWhere } from "@jlnstack/filter/drizzle"
+
+// Devtools for visualization
+import { generateMermaid, getMermaidLiveUrl } from "@jlnstack/filter/devtools"
 ```

@@ -6,13 +6,16 @@
     "---Getting Started---",
     "index",
     "installation",
+    "---React---",
     "usage",
+    "grouping",
     "context",
     "---Filters---",
     "built-in",
     "custom-filters",
     "---Integrations---",
     "drizzle",
+    "devtools",
     "examples"
   ]
 }

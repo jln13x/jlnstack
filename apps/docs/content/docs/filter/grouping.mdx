@@ -1,0 +1,181 @@
+---
+title: Grouping & Expressions
+description: Build complex filter expressions with groups, AND/OR logic, and presets
+---
+
+# Grouping & Expressions
+
+Filters in `@jlnstack/filter` are structured as a tree of **Groups** and **Conditions**. This allows you to build complex filter logic like "name contains 'john' AND (active OR verified)".
+
+## Filter Structure
+
+Every filter starts with a **root group**. A group has:
+- An **operator** (`"and"` or `"or"`)
+- A list of **filters** (conditions or nested groups)
+
+```ts
+// Conceptual structure
+{
+  type: "group",
+  operator: "and",
+  filters: [
+    { type: "condition", field: "name", value: { operator: "contains", value: "john" } },
+    { type: "condition", field: "active", value: true },
+  ]
+}
+```
+
+## Building Expressions
+
+Use the `and()`, `or()`, and `condition()` helpers to build filter expressions:
+
+```ts
+import { and, or, condition, defineFilters, stringFilter, booleanFilter } from "@jlnstack/filter"
+
+const schema = defineFilters({
+  name: stringFilter(),
+  active: booleanFilter(),
+  verified: booleanFilter(),
+})
+
+// Simple AND filter
+const simpleFilter = and(
+  condition("name", { operator: "contains", value: "john" }),
+  condition("active", true)
+)
+
+// Nested logic: name contains "john" AND (active OR verified)
+const complexFilter = and(
+  condition("name", { operator: "contains", value: "john" }),
+  or(
+    condition("active", true),
+    condition("verified", true)
+  )
+)
+```
+
+## Using with useFilter
+
+Pass a filter expression as the `defaultFilter` option:
+
+```tsx
+import { useFilter } from "@jlnstack/filter/react"
+
+function UsersPage() {
+  const filter = useFilter(schema, {
+    defaultFilter: and(
+      condition("active", true)
+    ),
+  })
+
+  // ...
+}
+```
+
+## Manipulating Groups
+
+The `useFilter` hook provides methods to manipulate the filter tree:
+
+```tsx
+const filter = useFilter(schema)
+
+// Add a condition to the root group
+filter.addCondition({
+  field: "name",
+  value: { operator: "contains", value: "john" },
+})
+
+// Add a nested group
+const groupId = filter.addGroup({ operator: "or" })
+
+// Add conditions to the nested group
+filter.addCondition({
+  field: "active",
+  value: true,
+  groupId,
+})
+
+// Change a group's operator
+filter.setOperator({ id: groupId, operator: "and" })
+
+// Remove a filter or group
+filter.removeFilter({ id: groupId })
+
+// Group existing conditions into a new group
+filter.groupFilters({
+  ids: [conditionId1, conditionId2],
+  operator: "or",
+})
+
+// Ungroup (move children to parent, remove group)
+filter.ungroupFilter({ id: groupId })
+```
+
+## API Reference
+
+| Method | Description |
+|--------|-------------|
+| `addCondition({ field, value, groupId? })` | Add a condition. Returns the condition ID. |
+| `addGroup({ operator, groupId? })` | Add a nested group. Returns the group ID. |
+| `updateCondition({ id, value })` | Update a condition's value |
+| `setOperator({ id, operator })` | Change a group's operator |
+| `removeFilter({ id })` | Remove a condition or group |
+| `moveFilter({ id, targetGroupId, index })` | Move a filter to another group |
+| `groupFilters({ ids, operator, groupId? })` | Group conditions into a new group |
+| `ungroupFilter({ id })` | Dissolve a group, moving children to parent |
+| `setFilter(expression)` | Replace the entire filter tree |
+| `reset()` | Reset to default filter |
+
+## Creating Presets
+
+Use the expression helpers to create reusable filter presets:
+
+```ts title="presets.ts"
+import { and, or, condition } from "@jlnstack/filter"
+
+export const activeUsers = and(
+  condition("active", true),
+  condition("verified", true)
+)
+
+export const recentUsers = and(
+  condition("createdAt", { operator: "gte", value: "2024-01-01" })
+)
+
+export const premiumOrAdmin = or(
+  condition("plan", "premium"),
+  condition("role", "admin")
+)
+```
+
+Apply presets with `setFilter`:
+
+```tsx
+import { activeUsers, recentUsers } from "./presets"
+
+function FilterToolbar() {
+  const filter = useFilter(schema)
+
+  return (
+    <div>
+      <button onClick={() => filter.setFilter(activeUsers)}>
+        Active Users
+      </button>
+      <button onClick={() => filter.setFilter(recentUsers)}>
+        Recent Users
+      </button>
+      <button onClick={() => filter.reset()}>
+        Clear
+      </button>
+    </div>
+  )
+}
+```
+
+Presets can also be used as default values:
+
+```tsx
+const filter = useFilter(schema, {
+  defaultFilter: activeUsers,
+})
+```
