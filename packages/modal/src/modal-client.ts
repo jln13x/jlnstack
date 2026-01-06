@@ -1,28 +1,22 @@
 type ModalComponentOptions<TOutput> = {
   resolve: (value: TOutput) => void;
+  close: () => void;
 };
 
 type ModalDef<TInput, TOutput> = {
-  component: (
-    input: TInput,
-    options: ModalComponentOptions<TOutput>,
-  ) => unknown;
+  component: (input: TInput, options: ModalComponentOptions<TOutput>) => unknown;
 };
 
-type ModalOptions<TInput, TOutput> = {
+type Modal<TInput, TOutput> = {
   _def: ModalDef<TInput, TOutput>;
-  input?: TInput;
-  onOpen?: (input: TInput) => void;
-  onClose?: () => void;
-  onResolve?: (output: TOutput) => void;
 };
 
-type ModalInstance = {
+type ModalInstance<TOutput = unknown> = {
+  id: string;
+  order: number;
   open: boolean;
   render: () => unknown;
-  promise: Promise<unknown>;
-  resolve: (value: unknown) => void;
-  reject: (error: unknown) => void;
+  resolve: (value: TOutput) => void;
   close: () => void;
 };
 
@@ -33,9 +27,14 @@ type ModalClientState = {
 };
 
 class ModalClient {
-  private modals = new Map<ModalDef<unknown, unknown>, ModalInstance>();
+  private counter = 0;
+  private modals = new Map<string, ModalInstance>();
   private listeners = new Set<Listener>();
   private cachedState: ModalClientState = { modals: [] };
+
+  private generateId(): string {
+    return `m-${++this.counter}`;
+  }
 
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
@@ -43,130 +42,62 @@ class ModalClient {
   }
 
   private notify(): void {
-    this.cachedState = { modals: Array.from(this.modals.values()) };
-    this.listeners.forEach((listener) => {
+    const sorted = Array.from(this.modals.values()).sort(
+      (a, b) => a.order - b.order,
+    );
+    this.cachedState = { modals: sorted };
+    for (const listener of this.listeners) {
       listener();
-    });
+    }
   }
 
-  open<TInput, TOutput>(options: ModalOptions<TInput, TOutput>): Promise<any> {
-    const def = options._def as ModalDef<unknown, unknown>;
-    const input = options.input;
-    if (!input) throw new Error("Modal input is required");
+  open<TInput, TOutput>(
+    modal: Modal<TInput, TOutput>,
+    input: TInput,
+  ): Promise<TOutput | undefined> {
+    const id = this.generateId();
+    const order = this.counter;
 
-    options.onOpen?.(input);
+    let resolvePromise!: (value: TOutput | undefined) => void;
 
-    let resolvePromise: (value: unknown) => void;
-    let rejectPromise: (error: unknown) => void;
-
-    const promise = new Promise((resolve, reject) => {
+    const promise = new Promise<TOutput | undefined>((resolve) => {
       resolvePromise = resolve;
-      rejectPromise = reject;
     });
 
-    const instance: ModalInstance = {
+    const cleanup = () => {
+      this.modals.delete(id);
+      this.notify();
+    };
+
+    const instance: ModalInstance<TOutput> = {
+      id,
+      order,
       open: true,
       render: () =>
-        def.component(input, {
-          resolve: (value: unknown) => {
+        modal._def.component(input, {
+          resolve: (value) => {
             resolvePromise(value);
-            options.onResolve?.(value as TOutput);
+            cleanup();
+          },
+          close: () => {
+            resolvePromise(undefined);
+            cleanup();
           },
         }),
-      promise,
-      resolve: resolvePromise!,
-      reject: rejectPromise!,
+      resolve: (value) => {
+        resolvePromise(value);
+        cleanup();
+      },
       close: () => {
-        options.onClose?.();
-        this.dismiss(options);
+        resolvePromise(undefined);
+        cleanup();
       },
     };
 
-    this.modals.set(def, instance);
-
+    this.modals.set(id, instance as ModalInstance);
     this.notify();
 
     return promise;
-  }
-
-  openAsync<TInput, TOutput>(
-    modal: { _def: ModalDef<TInput, TOutput> },
-    inputFn: () => TInput,
-  ): Promise<TOutput> {
-    const def = modal._def as ModalDef<unknown, unknown>;
-    const input = inputFn();
-
-    let resolvePromise: (value: unknown) => void;
-    let rejectPromise: (error: unknown) => void;
-
-    const promise = new Promise<TOutput>((resolve, reject) => {
-      resolvePromise = resolve as (value: unknown) => void;
-      rejectPromise = reject;
-    });
-
-    const closeFn = () => {
-      const currentState = this.modals.get(def);
-      if (currentState) {
-        this.modals.set(def, { ...currentState, open: false });
-        this.notify();
-      }
-    };
-
-    const instance: ModalInstance = {
-      open: true,
-      render: () =>
-        def.component(input, {
-          resolve: (value: unknown) => {
-            resolvePromise(value);
-          },
-        }),
-      promise,
-      resolve: resolvePromise!,
-      reject: rejectPromise!,
-      close: closeFn,
-    };
-
-    this.modals.set(def, instance);
-
-    this.notify();
-
-    return promise;
-  }
-
-  resolve<TInput, TOutput>(
-    options: ModalOptions<TInput, TOutput>,
-    value: TOutput,
-  ): void {
-    const def = options._def as ModalDef<unknown, unknown>;
-    const instance = this.modals.get(def);
-    if (instance) {
-      instance.resolve(value);
-      options.onResolve?.(value);
-      this.modals.delete(def);
-      this.notify();
-    }
-  }
-
-  dismiss<TInput, TOutput>(options: ModalOptions<TInput, TOutput>): void {
-    const def = options._def as ModalDef<unknown, unknown>;
-    const currentState = this.modals.get(def);
-    if (currentState) {
-      this.modals.set(def, { ...currentState, open: false });
-      this.notify();
-    }
-  }
-
-  remove<TInput, TOutput>(options: ModalOptions<TInput, TOutput>): void {
-    const def = options._def as ModalDef<unknown, unknown>;
-
-    const instance = this.modals.get(def);
-    if (instance) {
-      instance.reject(new Error("Modal removed"));
-    }
-
-    this.modals.delete(def);
-
-    this.notify();
   }
 
   getState(): ModalClientState {
@@ -176,8 +107,9 @@ class ModalClient {
 
 export {
   ModalClient,
+  type Modal,
   type ModalDef,
-  type ModalOptions,
   type ModalInstance,
   type ModalComponentOptions,
+  type ModalClientState,
 };

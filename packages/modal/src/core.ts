@@ -1,17 +1,4 @@
-import type {
-  ModalComponentOptions,
-  ModalDef,
-  ModalOptions,
-} from "./modal-client";
-
-type Modal<TInput, TOutput> = {
-  modalOptions: (options?: {
-    input?: TInput;
-    onClose?: () => void;
-    onOpen?: (input: TInput) => void;
-  }) => ModalOptions<TInput, TOutput>;
-  _def: ModalDef<TInput, TOutput>;
-};
+import type { Modal, ModalComponentOptions, ModalDef } from "./modal-client";
 
 type ModalRegistry<TModals extends Record<string, unknown>> = {
   [K in keyof TModals]: TModals[K] extends Modal<infer TInput, infer TOutput>
@@ -48,19 +35,8 @@ function createModalBuilder<TInput, TOutput>(): ModalBuilder<TInput, TOutput> {
       return createModalBuilder<TInput, T>();
     },
     create(component: any): Modal<any, TOutput> {
-      const def: ModalDef<any, TOutput> = {
-        component,
-      };
-
-      return {
-        _def: def,
-        modalOptions: (modalOptions) => ({
-          _def: def,
-          input: modalOptions?.input,
-          onOpen: modalOptions?.onOpen,
-          onClose: modalOptions?.onClose,
-        }),
-      };
+      const def: ModalDef<any, TOutput> = { component };
+      return { _def: def };
     },
   } as ModalBuilder<TInput, TOutput>;
 }
@@ -73,4 +49,4 @@ function createModalRegistry<
   return modals as unknown as ModalRegistry<TModals>;
 }
 
-export { modal, createModalRegistry, type Modal, type ModalRegistry };
+export { modal, createModalRegistry, type ModalRegistry };

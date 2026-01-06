@@ -5,25 +5,27 @@ import type { ModalInstance } from "../modal-client";
 import { InnerModalProvider } from "./inner-modal-context";
 import { useModalClient } from "./modal-client-context";
 
+const emptyState = { modals: [] };
+
 export function ModalOutlet() {
   const client = useModalClient();
 
   const state = useSyncExternalStore(
     (cb) => client.subscribe(cb),
     () => client.getState(),
+    () => emptyState,
   );
 
-  return state.modals.map((modal, index) => (
-    // biome-ignore lint/suspicious/noArrayIndexKey: key
-    <ModalWrapper key={`modal-${index}`} modal={modal} />
+  return state.modals.map((modal) => (
+    <ModalWrapper key={modal.id} modal={modal} />
   ));
 }
 
 function ModalWrapper({ modal }: { modal: ModalInstance }) {
-  const close = useCallback(() => modal.close(), [modal.close]);
+  const close = useCallback(() => modal.close(), [modal]);
   const resolve = useCallback(
     (value: unknown) => modal.resolve(value),
-    [modal.resolve],
+    [modal],
   );
 
   return (
