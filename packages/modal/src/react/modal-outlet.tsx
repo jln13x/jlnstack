@@ -2,7 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 import type { ModalInstance } from "../modal-client";
-import { InnerModalProvider } from "./inner-modal-context";
+import { ActiveModalProvider } from "./active-modal-context";
 import { useModalClient } from "./modal-client-context";
 
 const emptyState = { modals: [] };
@@ -29,8 +29,8 @@ function ModalWrapper({ modal }: { modal: ModalInstance }) {
   );
 
   return (
-    <InnerModalProvider open={modal.open} close={close} resolve={resolve}>
+    <ActiveModalProvider open={modal.open} close={close} resolve={resolve}>
       {modal.render() as React.ReactNode}
-    </InnerModalProvider>
+    </ActiveModalProvider>
   );
 }
