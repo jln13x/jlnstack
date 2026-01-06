@@ -1,5 +1,20 @@
 import type { Modal, ModalComponentOptions, ModalDef } from "./modal-client";
 
+type StandardSchemaV1<T = unknown> = {
+  readonly "~standard": {
+    readonly version: 1;
+    readonly vendor: string;
+    readonly validate: unknown;
+  };
+  readonly "~output": T;
+};
+
+type InferSchema<T> = T extends StandardSchemaV1<infer O>
+  ? O
+  : T extends { _output: infer O }
+    ? O
+    : T;
+
 type ModalRegistry<TModals extends Record<string, unknown>> = {
   [K in keyof TModals]: TModals[K] extends Modal<infer TInput, infer TOutput>
     ? Modal<TInput, TOutput>
@@ -9,8 +24,14 @@ type ModalRegistry<TModals extends Record<string, unknown>> = {
 };
 
 type ModalBuilder<TInput, TOutput> = {
-  input<T>(): ModalBuilder<T, TOutput>;
-  output<T>(): ModalBuilder<TInput, T>;
+  input: {
+    <T>(): ModalBuilder<T, TOutput>;
+    <T extends StandardSchemaV1>(schema: T): ModalBuilder<InferSchema<T>, TOutput>;
+  };
+  output: {
+    <T>(): ModalBuilder<TInput, T>;
+    <T extends StandardSchemaV1>(schema: T): ModalBuilder<TInput, InferSchema<T>>;
+  };
   create: [TInput] extends [never]
     ? <I>(
         component: (
@@ -28,14 +49,14 @@ type ModalBuilder<TInput, TOutput> = {
 
 function createModalBuilder<TInput, TOutput>(): ModalBuilder<TInput, TOutput> {
   return {
-    input<T>(): ModalBuilder<T, TOutput> {
-      return createModalBuilder<T, TOutput>();
+    input(_schema?: unknown) {
+      return createModalBuilder();
     },
-    output<T>(): ModalBuilder<TInput, T> {
-      return createModalBuilder<TInput, T>();
+    output(_schema?: unknown) {
+      return createModalBuilder();
     },
-    create(component: any): Modal<any, TOutput> {
-      const def: ModalDef<any, TOutput> = { component };
+    create(component: any): Modal<any, any> {
+      const def: ModalDef<any, any> = { component };
       return { _def: def };
     },
   } as ModalBuilder<TInput, TOutput>;
@@ -49,4 +70,4 @@ function createModalRegistry<
   return modals as unknown as ModalRegistry<TModals>;
 }
 
-export { modal, createModalRegistry, type ModalRegistry };
+export { modal, createModalRegistry, type ModalRegistry, type StandardSchemaV1 };

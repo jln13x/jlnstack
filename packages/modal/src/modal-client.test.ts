@@ -27,7 +27,7 @@ function createTestModal<TInput, TOutput>(): Modal<TInput, TOutput> & {
 }
 
 function renderModal(client: ModalClient, index = 0) {
-  const instance = client.getState().modals[index];
+  const instance = client.getState().modals[index]!;
   instance.render();
 }
 
@@ -115,7 +115,7 @@ describe("ModalClient", () => {
       client.open(modal, undefined);
 
       const [first, second] = client.getState().modals;
-      expect(first.id).not.toBe(second.id);
+      expect(first!.id).not.toBe(second!.id);
     });
   });
 
@@ -142,8 +142,8 @@ describe("ModalClient", () => {
 
       const state = client.getState();
       for (let i = 1; i < state.modals.length; i++) {
-        expect(state.modals[i].order).toBeGreaterThan(
-          state.modals[i - 1].order,
+        expect(state.modals[i]!.order).toBeGreaterThan(
+          state.modals[i - 1]!.order,
         );
       }
     });
