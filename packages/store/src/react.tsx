@@ -1,12 +1,10 @@
 import { createContext, type ReactNode, useContext, useState } from "react";
+import { type StoreApi, useStore } from "zustand";
 import {
-  type StoreApi,
-  useStore,
-  createStore as zustandCreateStore,
-} from "zustand";
-
-type SetState<TState> = StoreApi<TState>["setState"];
-type GetState<TState> = StoreApi<TState>["getState"];
+  createStore as createCoreStore,
+  type GetState,
+  type SetState,
+} from "./index";
 
 interface StoreConfig<
   TInitialState,
@@ -46,10 +44,10 @@ export function createStore<
     children,
   }: ProviderProps<TInitialState>) => {
     const [value] = useState(() => {
-      const store = zustandCreateStore<TState>(() =>
-        config.state(initialState),
-      );
-      const actions = config.actions(store.setState, store.getState);
+      const { store, actions } = createCoreStore({
+        state: config.state(initialState),
+        actions: config.actions,
+      });
       return { store, actions };
     });
 
