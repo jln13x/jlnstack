@@ -26,11 +26,15 @@ type ModalRegistry<TModals extends Record<string, unknown>> = {
 type ModalBuilder<TInput, TOutput> = {
   input: {
     <T>(): ModalBuilder<T, TOutput>;
-    <T extends StandardSchemaV1>(schema: T): ModalBuilder<InferSchema<T>, TOutput>;
+    <T extends StandardSchemaV1>(
+      schema: T,
+    ): ModalBuilder<InferSchema<T>, TOutput>;
   };
   output: {
     <T>(): ModalBuilder<TInput, T>;
-    <T extends StandardSchemaV1>(schema: T): ModalBuilder<TInput, InferSchema<T>>;
+    <T extends StandardSchemaV1>(
+      schema: T,
+    ): ModalBuilder<TInput, InferSchema<T>>;
   };
   create: [TInput] extends [never]
     ? <I>(
@@ -70,4 +74,9 @@ function createModalRegistry<
   return modals as unknown as ModalRegistry<TModals>;
 }
 
-export { modal, createModalRegistry, type ModalRegistry, type StandardSchemaV1 };
+export {
+  modal,
+  createModalRegistry,
+  type ModalRegistry,
+  type StandardSchemaV1,
+};
