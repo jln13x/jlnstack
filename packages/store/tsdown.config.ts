@@ -2,7 +2,7 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   target: ["node18", "es2017"],
-  entry: ["src/react.tsx"],
+  entry: ["src/index.ts", "src/react.tsx", "src/plugins.ts"],
   dts: {
     sourcemap: true,
   },

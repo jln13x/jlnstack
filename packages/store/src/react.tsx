@@ -5,6 +5,7 @@ import {
   type GetState,
   type SetState,
 } from "./index";
+import type { StorePlugin } from "./plugins";
 
 interface StoreConfig<
   TInitialState,
@@ -14,6 +15,7 @@ interface StoreConfig<
   name: string;
   state: (initialState: TInitialState) => TState;
   actions: (set: SetState<TState>, get: GetState<TState>) => TActions;
+  plugins?: StorePlugin[];
 }
 
 interface ProviderProps<TInitialState> {
@@ -44,10 +46,10 @@ export function createStore<
     children,
   }: ProviderProps<TInitialState>) => {
     const [value] = useState(() => {
-      const { store, actions } = createCoreStore({
-        state: config.state(initialState),
-        actions: config.actions,
-      });
+      const { store, actions } = createCoreStore(
+        { state: config.state(initialState), actions: config.actions },
+        { plugins: config.plugins },
+      );
       return { store, actions };
     });
 

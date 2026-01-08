@@ -3,20 +3,41 @@ import {
   createStore as zustandCreateStore,
   useStore as zustandUseStore,
 } from "zustand";
+import type { StorePlugin } from "./plugins";
 
-export type SetState<TState> = StoreApi<TState>["setState"];
+export type SetState<TState> = (
+  updater:
+    | TState
+    | Partial<TState>
+    | ((state: TState) => TState | Partial<TState> | void),
+  replace?: boolean,
+) => void;
 export type GetState<TState> = StoreApi<TState>["getState"];
 
 interface StoreConfig<TState extends object, TActions extends object> {
   state: TState;
-  actions: (set: SetState<TState>, get: GetState<TState>) => TActions;
+  actions?: (set: SetState<TState>, get: GetState<TState>) => TActions;
 }
 
-export function createStore<TState extends object, TActions extends object>(
-  config: StoreConfig<TState, TActions>,
-) {
-  const store = zustandCreateStore<TState>(() => config.state);
-  const actions = config.actions(store.setState, store.getState);
+interface StoreOptions {
+  plugins?: StorePlugin[];
+}
+
+export function createStore<
+  TState extends object,
+  TActions extends object = Record<string, never>,
+>(config: StoreConfig<TState, TActions>, options?: StoreOptions) {
+  const creator = () => config.state;
+  const wrappedCreator =
+    options?.plugins?.reduce(
+      (acc, plugin) => plugin.middleware(acc) as () => TState,
+      creator,
+    ) ?? creator;
+
+  const store = zustandCreateStore<TState>(wrappedCreator);
+  const actions =
+    config.actions?.(store.setState as SetState<TState>, store.getState) ??
+    ({} as TActions);
 
   return {
     store,
