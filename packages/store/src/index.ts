@@ -67,7 +67,7 @@ export function createPlugin<
 
 // --- Store creation ---
 
-type UnionToIntersection<U> = (
+export type UnionToIntersection<U> = (
   U extends unknown
     ? (k: U) => void
     : never
@@ -75,7 +75,7 @@ type UnionToIntersection<U> = (
   ? I
   : never;
 
-type InferExtensions<
+export type InferExtensions<
   TPlugins extends readonly PluginInstance<string, object>[],
 > = UnionToIntersection<
   {
@@ -88,7 +88,7 @@ type InferExtensions<
   }[number]
 >;
 
-type AnyPluginFactory = PluginFactoryFn<string, object, object>;
+export type AnyPluginFactory = PluginFactoryFn<string, object, object>;
 
 type PluginsCallback<
   TState extends object,
@@ -148,27 +148,27 @@ export function createStore<
 
 // --- Plugin helper for cleaner syntax ---
 
-type InferPluginsResult<TFactories extends readonly AnyPluginFactory[]> = {
-  [K in keyof TFactories]: TFactories[K] extends PluginFactoryFn<
-    infer Id,
-    infer Ext,
-    object
-  >
-    ? PluginInstance<Id, Ext>
-    : never;
+export type InferPluginInstance<T> = T extends PluginFactoryFn<
+  infer Id,
+  infer Ext,
+  object
+>
+  ? PluginInstance<Id, Ext>
+  : never;
+
+export type InferPluginsResult<TInputs extends readonly AnyPluginFactory[]> = {
+  [K in keyof TInputs]: InferPluginInstance<TInputs[K]>;
 };
 
 export function plugins<
   TState extends object,
-  const TFactories extends AnyPluginFactory[],
->(
-  factories: TFactories,
-): PluginsCallback<TState, InferPluginsResult<TFactories>> {
+  const TInputs extends AnyPluginFactory[],
+>(inputs: TInputs): PluginsCallback<TState, InferPluginsResult<TInputs>> {
   const callback = ((store: StoreApi<TState>) =>
-    factories.map((f) => f(store))) as PluginsCallback<
+    inputs.map((f) => f(store))) as PluginsCallback<
     TState,
-    InferPluginsResult<TFactories>
+    InferPluginsResult<TInputs>
   >;
-  callback._factories = factories;
+  callback._factories = inputs;
   return callback;
 }

@@ -1,55 +1,20 @@
 import { createContext, type ReactNode, useContext, useState } from "react";
 import { type StoreApi, useStore } from "zustand";
 import {
-  createStore as createCoreStore,
+  type AnyPluginFactory,
   plugins as corePlugins,
+  createStore as createCoreStore,
   type GetState,
-  type PluginFactoryFn,
-  type PluginInstance,
+  type InferExtensions,
+  type InferPluginsResult,
   type SetState,
 } from "./index";
-
-type UnionToIntersection<U> = (
-  U extends unknown
-    ? (k: U) => void
-    : never
-) extends (k: infer I) => void
-  ? I
-  : never;
-
-type AnyPluginFactory = PluginFactoryFn<string, object, object>;
-
-type InferExtensions<TPlugins extends readonly PluginInstance<string, object>[]> =
-  UnionToIntersection<
-    {
-      [K in keyof TPlugins]: TPlugins[K] extends PluginInstance<
-        infer Id extends string,
-        infer Ext
-      >
-        ? { [P in Id]: Ext }
-        : never;
-    }[number]
-  > extends infer R
-    ? R extends object
-      ? R
-      : object
-    : object;
-
-type InferPluginsResult<TFactories extends readonly AnyPluginFactory[]> = {
-  [K in keyof TFactories]: TFactories[K] extends PluginFactoryFn<
-    infer Id,
-    infer Ext,
-    object
-  >
-    ? PluginInstance<Id, Ext>
-    : never;
-};
 
 interface StoreConfig<
   TInitialState,
   TState extends object,
   TActions extends object,
-  TPlugins extends AnyPluginFactory[],
+  TPlugins extends AnyPluginFactory[] = [],
 > {
   name: string;
   state: (initialState: TInitialState) => TState;
@@ -85,9 +50,13 @@ export function createStore<
   TState,
   TActions,
   TInitialState,
-  InferExtensions<InferPluginsResult<TPlugins>>
+  InferExtensions<InferPluginsResult<TPlugins>> extends object
+    ? InferExtensions<InferPluginsResult<TPlugins>>
+    : object
 > {
-  type Extensions = InferExtensions<InferPluginsResult<TPlugins>>;
+  type Extensions = InferExtensions<InferPluginsResult<TPlugins>> extends object
+    ? InferExtensions<InferPluginsResult<TPlugins>>
+    : object;
 
   const Context = createContext<{
     store: StoreApi<TState>;

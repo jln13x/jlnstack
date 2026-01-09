@@ -38,7 +38,7 @@ describe("reset plugin", () => {
 
     setState({ count: 10, name: "modified" });
     const result = extensions.reset.reset();
-    
+
     expect(result).toEqual({ count: 0, name: "initial" });
   });
 });
