@@ -9,11 +9,9 @@ export type SetState<TState> = (
 ) => void;
 export type GetState<TState> = StoreApi<TState>["getState"];
 
-// --- Plugin definition ---
-
 export type PluginConfig<
   TId extends string = string,
-  TExtension extends object = object,
+  TExtension = unknown,
   TStateConstraint extends object = object,
 > = {
   id: TId;
@@ -39,6 +37,13 @@ export type PluginFactoryFn<
   TExtension extends object = object,
   TStateConstraint extends object = object,
 > = ((store: StoreApi<TStateConstraint>) => PluginInstance<TId, TExtension>) & {
+  _middleware?: (creator: () => unknown) => () => unknown;
+  _onStateChange?: (state: object, prevState: object) => void;
+  _onActionsCreated?: <T extends object>(actions: T) => T;
+};
+
+export type GenericPluginFactoryFn<TId extends string = string> = {
+  <TState extends object>(store: StoreApi<TState>): PluginInstance<TId, object>;
   _middleware?: (creator: () => unknown) => () => unknown;
   _onStateChange?: (state: object, prevState: object) => void;
   _onActionsCreated?: <T extends object>(actions: T) => T;

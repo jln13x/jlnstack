@@ -9,9 +9,20 @@ export type PluginResult = {
   id: LiteralString;
 };
 
-export type PluginsFn = (store: StoreApi<any>) => PluginResult[];
-
 export type Plugin = (store: StoreApi<any>) => PluginResult;
+
+type PluginsReturn<TPlugins extends Plugin[]> = {
+  [K in keyof TPlugins]: TPlugins[K] extends Plugin
+    ? ReturnType<TPlugins[K]>
+    : never;
+};
+
+export function plugins<TPlugins extends Plugin[]>(
+  pluginFactories: [...TPlugins],
+) {
+  return <TState>(store: StoreApi<TState>): PluginsReturn<TPlugins> =>
+    pluginFactories.map((factory) => factory(store)) as PluginsReturn<TPlugins>;
+}
 
 type ExtractExtensions<TPlugins extends PluginResult[]> = {
   [K in TPlugins[number] as K["id"]]: K extends { extend: infer E } ? E : never;

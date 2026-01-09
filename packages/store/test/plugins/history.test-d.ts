@@ -1,15 +1,13 @@
 import { assertType, test } from "vitest";
 import { createStore } from "../../src/core/store";
+import { plugins } from "../../src/core/types";
 import { history } from "../../src/plugins/history";
 
 test("history extension is properly typed", () => {
   const store = createStore({
     state: { count: 0, name: "test" },
     actions: {},
-    plugins: (api) => {
-      const h = history()(api);
-      return [h];
-    },
+    plugins: plugins([history()]),
   });
 
   assertType<() => void>(store.extension.history.undo);
