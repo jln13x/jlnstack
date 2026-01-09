@@ -17,7 +17,7 @@ export type GetState<TState> = StoreApi<TState>["getState"];
 export type Plugin<TState extends object = object> = {
   id: string;
   middleware?: (creator: () => unknown) => () => unknown;
-  onStoreCreated?: (store: StoreApi<TState>) => void;
+  onStateChange?: (state: TState, prevState: TState) => void;
   onActionsCreated?: <T extends object>(actions: T) => T;
   extend?: (store: StoreApi<TState>, initialState: TState) => object;
 };
@@ -55,7 +55,8 @@ type InferExtensions<T> = T extends readonly unknown[]
 type AnyPlugin = {
   id: string;
   middleware?: (creator: () => unknown) => () => unknown;
-  onStoreCreated?: (store: StoreApi<unknown>) => void;
+  // biome-ignore lint/suspicious/noExplicitAny: needed for plugin compatibility
+  onStateChange?: (state: any, prevState: any) => void;
   onActionsCreated?: <T extends object>(actions: T) => T;
   // biome-ignore lint/suspicious/noExplicitAny: needed for inference
   extend?: (store: StoreApi<any>, initialState: any) => object;
@@ -81,8 +82,10 @@ export function createStore<
 
   const plugins = config.plugins as Plugin<TState>[] | undefined;
 
-  plugins?.forEach((plugin) => {
-    plugin.onStoreCreated?.(store);
+  store.subscribe((state, prevState) => {
+    plugins?.forEach((plugin) => {
+      plugin.onStateChange?.(state, prevState);
+    });
   });
 
   let actions =

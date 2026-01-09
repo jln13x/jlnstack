@@ -3,7 +3,7 @@ import type { StoreApi } from "zustand";
 export type StorePlugin<TId extends string = string, TExtensions = object> = {
   id: TId;
   middleware?: (creator: () => unknown) => () => unknown;
-  onStoreCreated?: (store: StoreApi<unknown>) => void;
+  onStateChange?: (state: unknown, prevState: unknown) => void;
   onActionsCreated?: <T extends object>(actions: T) => T;
   extend?: (store: StoreApi<unknown>, initialState: unknown) => TExtensions;
 };

@@ -11,21 +11,19 @@ export function logger(options: LoggerOptions) {
 
   return createPlugin({
     id: "logger",
-    onStoreCreated: (store) => {
+    onStateChange: (state, prevState) => {
       if (!enabled) return;
 
-      store.subscribe((state, prevState) => {
-        const changes = getChanges(prevState as object, state as object);
-        if (Object.keys(changes).length === 0) return;
+      const changes = getChanges(prevState as object, state as object);
+      if (Object.keys(changes).length === 0) return;
 
-        const actionName = currentAction ?? "setState";
-        console.log(
-          `%c ${name} %c ${actionName} `,
-          "background: #a3e635; color: black; padding: 2px;",
-          "background: #65a30d; color: white; padding: 2px; font-weight: bold;",
-          changes,
-        );
-      });
+      const actionName = currentAction ?? "setState";
+      console.log(
+        `%c ${name} %c ${actionName} `,
+        "background: #a3e635; color: black; padding: 2px;",
+        "background: #65a30d; color: white; padding: 2px; font-weight: bold;",
+        changes,
+      );
     },
     onActionsCreated: (actions) => {
       if (!enabled) return actions;

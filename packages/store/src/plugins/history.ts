@@ -13,14 +13,12 @@ export function history(options: HistoryOptions = {}) {
 
   return createPlugin({
     id: "history",
-    onStoreCreated: (store) => {
-      store.subscribe((_state, prevState) => {
-        if (isUndoing) return;
+    onStateChange: (_state, prevState) => {
+      if (isUndoing) return;
 
-        past.push(prevState);
-        if (past.length > limit) past.shift();
-        future.length = 0;
-      });
+      past.push(prevState);
+      if (past.length > limit) past.shift();
+      future.length = 0;
     },
     extend: (store) => ({
       undo: () => {

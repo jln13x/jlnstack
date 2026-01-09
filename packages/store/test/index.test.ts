@@ -65,14 +65,17 @@ describe("actions", () => {
 });
 
 describe("plugins", () => {
-  it("calls onStoreCreated for each plugin", () => {
-    const onStoreCreated = vi.fn();
-    createStore({
+  it("calls onStateChange for each plugin on state change", () => {
+    const onStateChange = vi.fn();
+    const { setState } = createStore({
       state: { count: 0 },
-      plugins: [{ id: "test", onStoreCreated }],
+      plugins: [{ id: "test", onStateChange }],
     });
 
-    expect(onStoreCreated).toHaveBeenCalledTimes(1);
+    expect(onStateChange).not.toHaveBeenCalled();
+    setState({ count: 1 });
+    expect(onStateChange).toHaveBeenCalledTimes(1);
+    expect(onStateChange).toHaveBeenCalledWith({ count: 1 }, { count: 0 });
   });
 
   it("calls onActionsCreated for each plugin", () => {
