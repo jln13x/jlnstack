@@ -1,14 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
-import { createPlugin, createStore } from "../src/index";
+import { createPlugin, createStore, plugins } from "../src/index";
 
 describe("createStore", () => {
   it("creates store with initial state", () => {
-    const { getState } = createStore({ state: { count: 0 } });
+    const { getState } = createStore({
+      state: { count: 0 },
+      plugins: plugins([]),
+    });
     expect(getState()).toEqual({ count: 0 });
   });
 
   it("updates state with setState", () => {
-    const { getState, setState } = createStore({ state: { count: 0 } });
+    const { getState, setState } = createStore({
+      state: { count: 0 },
+      plugins: plugins([]),
+    });
 
     setState({ count: 5 });
     expect(getState().count).toBe(5);
@@ -17,6 +23,7 @@ describe("createStore", () => {
   it("supports partial updates", () => {
     const { getState, setState } = createStore({
       state: { count: 0, name: "test" },
+      plugins: plugins([]),
     });
 
     setState({ count: 5 });
@@ -24,14 +31,20 @@ describe("createStore", () => {
   });
 
   it("supports updater function", () => {
-    const { getState, setState } = createStore({ state: { count: 0 } });
+    const { getState, setState } = createStore({
+      state: { count: 0 },
+      plugins: plugins([]),
+    });
 
     setState((s) => ({ count: s.count + 1 }));
     expect(getState().count).toBe(1);
   });
 
   it("notifies subscribers on state change", () => {
-    const { setState, subscribe } = createStore({ state: { count: 0 } });
+    const { setState, subscribe } = createStore({
+      state: { count: 0 },
+      plugins: plugins([]),
+    });
     const listener = vi.fn();
 
     subscribe(listener);
@@ -41,35 +54,14 @@ describe("createStore", () => {
   });
 });
 
-describe("actions", () => {
-  it("creates actions with set and get", () => {
-    const { actions, getState } = createStore({
-      state: { count: 0 },
-      actions: (set, get) => ({
-        increment: () => set({ count: get().count + 1 }),
-        decrement: () => set((s) => ({ count: s.count - 1 })),
-      }),
-    });
-
-    actions.increment();
-    expect(getState().count).toBe(1);
-
-    actions.decrement();
-    expect(getState().count).toBe(0);
-  });
-
-  it("returns empty object when no actions provided", () => {
-    const { actions } = createStore({ state: { count: 0 } });
-    expect(actions).toEqual({});
-  });
-});
-
 describe("plugins", () => {
   it("calls onStateChange for each plugin on state change", () => {
     const onStateChange = vi.fn();
+    const testPlugin = createPlugin({ id: "test", onStateChange });
+
     const { setState } = createStore({
       state: { count: 0 },
-      plugins: [{ id: "test", onStateChange }],
+      plugins: plugins([testPlugin]),
     });
 
     expect(onStateChange).not.toHaveBeenCalled();
@@ -78,89 +70,47 @@ describe("plugins", () => {
     expect(onStateChange).toHaveBeenCalledWith({ count: 1 }, { count: 0 });
   });
 
-  it("calls onActionsCreated for each plugin", () => {
-    const onActionsCreated = vi.fn((actions) => actions);
-    createStore({
-      state: { count: 0 },
-      actions: () => ({ test: () => {} }),
-      plugins: [{ id: "test", onActionsCreated }],
-    });
-
-    expect(onActionsCreated).toHaveBeenCalledTimes(1);
-  });
-
-  it("allows plugin to wrap actions", () => {
-    const logged: string[] = [];
-
-    const { actions } = createStore({
-      state: { count: 0 },
-      actions: () => ({
-        increment: () => {},
-      }),
-      plugins: [
-        {
-          id: "logger",
-          onActionsCreated: (actions) => {
-            const wrapped = {} as typeof actions;
-            for (const key in actions) {
-              const original = actions[key as keyof typeof actions];
-              if (typeof original === "function") {
-                // @ts-expect-error
-                wrapped[key as keyof typeof actions] = (...args: unknown[]) => {
-                  logged.push(key);
-                  return (original as Function)(...args);
-                };
-              }
-            }
-            return wrapped;
-          },
-        },
-      ],
-    });
-
-    actions.increment();
-    expect(logged).toEqual(["increment"]);
-  });
-
   it("applies middleware in order", () => {
     const order: number[] = [];
 
+    const first = createPlugin({
+      id: "first",
+      middleware: (creator) => () => {
+        order.push(1);
+        return creator();
+      },
+    });
+
+    const second = createPlugin({
+      id: "second",
+      middleware: (creator) => () => {
+        order.push(2);
+        return creator();
+      },
+    });
+
     createStore({
       state: { count: 0 },
-      plugins: [
-        {
-          id: "first",
-          middleware: (creator) => () => {
-            order.push(1);
-            return creator();
-          },
-        },
-        {
-          id: "second",
-          middleware: (creator) => () => {
-            order.push(2);
-            return creator();
-          },
-        },
-      ],
+      plugins: plugins([first, second]),
     });
 
     expect(order).toEqual([2, 1]);
   });
 
   it("adds extensions from plugins", () => {
+    const foo = createPlugin({
+      id: "foo",
+      extend: () => ({ doFoo: () => "foo" }),
+    });
+
+    const bar = createPlugin({
+      id: "bar",
+      extend: () => ({ doBar: () => "bar" }),
+    });
+
     const { extensions } = createStore({
       state: { count: 0 },
-      plugins: [
-        {
-          id: "foo",
-          extend: () => ({ doFoo: () => "foo" }),
-        },
-        {
-          id: "bar",
-          extend: () => ({ doBar: () => "bar" }),
-        },
-      ],
+      plugins: plugins([foo, bar]),
     });
 
     expect(extensions.foo.doFoo()).toBe("foo");
@@ -168,17 +118,20 @@ describe("plugins", () => {
   });
 
   it("passes store and initialState to extend", () => {
+    const test = createPlugin({
+      id: "test",
+      extend: (store, initialState) => ({
+        getInitial: () => initialState,
+        double: () =>
+          store.setState((s) => ({
+            count: (s as { count: number }).count * 2,
+          })),
+      }),
+    });
+
     const { extensions, getState, setState } = createStore({
       state: { count: 5 },
-      plugins: [
-        {
-          id: "test",
-          extend: (store, initialState) => ({
-            getInitial: () => initialState,
-            double: () => store.setState((s) => ({ count: s.count * 2 })),
-          }),
-        },
-      ],
+      plugins: plugins([test]),
     });
 
     expect(extensions.test.getInitial()).toEqual({ count: 5 });
@@ -190,13 +143,12 @@ describe("plugins", () => {
 });
 
 describe("createPlugin", () => {
-  it("returns the plugin as-is", () => {
+  it("returns a factory function", () => {
     const plugin = createPlugin({
       id: "test",
       extend: () => ({ test: true }),
     });
 
-    expect(plugin.id).toBe("test");
-    expect(plugin.extend?.()).toEqual({ test: true });
+    expect(typeof plugin).toBe("function");
   });
 });

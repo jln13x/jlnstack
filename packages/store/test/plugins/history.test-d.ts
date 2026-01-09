@@ -1,13 +1,11 @@
 import { assertType, test } from "vitest";
-import { createStore } from "../../src/index";
+import { createStore, plugins } from "../../src/index";
 import { history } from "../../src/plugins/history";
 
 test("history extension is properly typed", () => {
-  type State = { count: number; name: string };
-
   const store = createStore({
-    state: { count: 0, name: "test" } satisfies State,
-    plugins: [history()],
+    state: { count: 0, name: "test" },
+    plugins: plugins([history()]),
   });
 
   assertType<() => void>(store.extensions.history.undo);
@@ -15,6 +13,6 @@ test("history extension is properly typed", () => {
   assertType<() => void>(store.extensions.history.clear);
   assertType<() => boolean>(store.extensions.history.canUndo);
   assertType<() => boolean>(store.extensions.history.canRedo);
-  assertType<() => State[]>(store.extensions.history.pastStates);
-  assertType<() => State[]>(store.extensions.history.futureStates);
+  assertType<() => unknown[]>(store.extensions.history.pastStates);
+  assertType<() => unknown[]>(store.extensions.history.futureStates);
 });

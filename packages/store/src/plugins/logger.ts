@@ -7,7 +7,6 @@ interface LoggerOptions {
 
 export function logger(options: LoggerOptions) {
   const { enabled = true, name } = options;
-  let currentAction: string | null = null;
 
   return createPlugin({
     id: "logger",
@@ -17,31 +16,12 @@ export function logger(options: LoggerOptions) {
       const changes = getChanges(prevState as object, state as object);
       if (Object.keys(changes).length === 0) return;
 
-      const actionName = currentAction ?? "setState";
       console.log(
-        `%c ${name} %c ${actionName} `,
+        `%c ${name} %c setState `,
         "background: #a3e635; color: black; padding: 2px;",
         "background: #65a30d; color: white; padding: 2px; font-weight: bold;",
         changes,
       );
-    },
-    onActionsCreated: (actions) => {
-      if (!enabled) return actions;
-
-      return new Proxy(actions, {
-        get(target, prop) {
-          const value = target[prop as keyof typeof target];
-          if (typeof value === "function") {
-            return (...args: unknown[]) => {
-              currentAction = String(prop);
-              const result = (value as Function)(...args);
-              currentAction = null;
-              return result;
-            };
-          }
-          return value;
-        },
-      });
     },
   });
 }

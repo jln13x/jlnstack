@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { createStore } from "../../src/index";
+import { createStore, plugins } from "../../src/index";
 import { history } from "../../src/plugins/history";
 
 describe("history plugin", () => {
   it("undoes state changes", () => {
     const { getState, setState, extensions } = createStore({
       state: { count: 0 },
-      plugins: [history()],
+      plugins: plugins([history()]),
     });
 
     setState({ count: 1 });
@@ -22,7 +22,7 @@ describe("history plugin", () => {
   it("redoes undone changes", () => {
     const { getState, setState, extensions } = createStore({
       state: { count: 0 },
-      plugins: [history()],
+      plugins: plugins([history()]),
     });
 
     setState({ count: 1 });
@@ -34,9 +34,9 @@ describe("history plugin", () => {
   });
 
   it("clears future on new change after undo", () => {
-    const { getState, setState, extensions } = createStore({
+    const { setState, extensions } = createStore({
       state: { count: 0 },
-      plugins: [history()],
+      plugins: plugins([history()]),
     });
 
     setState({ count: 1 });
@@ -50,7 +50,7 @@ describe("history plugin", () => {
   it("respects limit option", () => {
     const { setState, extensions } = createStore({
       state: { count: 0 },
-      plugins: [history({ limit: 2 })],
+      plugins: plugins([history({ limit: 2 })]),
     });
 
     setState({ count: 1 });
@@ -63,7 +63,7 @@ describe("history plugin", () => {
   it("canUndo and canRedo return correct values", () => {
     const { setState, extensions } = createStore({
       state: { count: 0 },
-      plugins: [history()],
+      plugins: plugins([history()]),
     });
 
     expect(extensions.history.canUndo()).toBe(false);
@@ -79,7 +79,7 @@ describe("history plugin", () => {
   it("clear removes all history", () => {
     const { setState, extensions } = createStore({
       state: { count: 0 },
-      plugins: [history()],
+      plugins: plugins([history()]),
     });
 
     setState({ count: 1 });

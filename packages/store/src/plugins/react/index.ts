@@ -1,1 +1,1 @@
-export type { ReactPlugin } from "./types";
+export type { ReactPluginConfig } from "./types";

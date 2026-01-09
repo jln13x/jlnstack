@@ -4,7 +4,10 @@ export function reset() {
   return createPlugin({
     id: "reset",
     extend: (store, initialState) => ({
-      reset: () => store.setState(initialState, true),
+      reset: () => {
+        store.setState(initialState, true);
+        return initialState;
+      },
     }),
   });
 }

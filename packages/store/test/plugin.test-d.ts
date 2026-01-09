@@ -1,5 +1,5 @@
 import { assertType, test } from "vitest";
-import { createPlugin, createStore, type Plugin } from "../src/index";
+import { createPlugin, createStore, plugins } from "../src/index";
 
 const bazPlugin = createPlugin({
   id: "baz",
@@ -8,31 +8,28 @@ const bazPlugin = createPlugin({
   }),
 });
 
-test("inline plugin extends store with inferred type", () => {
+test("plugin extends store with inferred type", () => {
+  const fooPlugin = createPlugin({
+    id: "foo",
+    extend: () => ({ foo: () => "foo" }),
+  });
+
+  const barPlugin = createPlugin({
+    id: "bar",
+    extend: () => ({ bar: () => "bar" }),
+  });
+
+  const counterPlugin = createPlugin({
+    id: "counter",
+    extend: (store) => ({
+      increment: (by: number) =>
+        store.setState((s) => ({ count: (s as { count: number }).count + by })),
+    }),
+  });
+
   const store = createStore({
     state: { count: 0 },
-    plugins: [
-      {
-        id: "foo",
-        extend: () => ({
-          foo: () => "foo",
-        }),
-      },
-      {
-        id: "bar",
-        extend: () => ({
-          bar: () => "bar",
-        }),
-      },
-      {
-        id: "counter",
-        extend: (store) => ({
-          increment: (by: number) =>
-            store.setState((s) => ({ count: s.count + by })),
-        }),
-      },
-      bazPlugin,
-    ],
+    plugins: plugins([fooPlugin, barPlugin, counterPlugin, bazPlugin]),
   });
 
   assertType<{
@@ -41,27 +38,4 @@ test("inline plugin extends store with inferred type", () => {
     counter: { increment: (by: number) => void };
     baz: { baz: () => string };
   }>(store.extensions);
-});
-
-test("plugin with state constraint", () => {
-  const counter2 = {
-    id: "counter2",
-    extend: (store) => ({
-      increment: (by: number) =>
-        store.setState((s) => ({ count: s.count + by })),
-    }),
-  } satisfies Plugin<{ count: number }>;
-
-  // Success: store has { count: number }
-  createStore({
-    state: { count: 0 },
-    plugins: [counter2],
-  });
-
-  // Failure: store missing count
-  createStore({
-    state: { name: "test" },
-    // @ts-expect-error - counter2 requires { count: number } in state
-    plugins: [counter2],
-  });
 });

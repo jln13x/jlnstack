@@ -1,4 +1,4 @@
-import { createPlugin, type StateMarker } from "../index";
+import { createPlugin } from "../index";
 
 export interface HistoryOptions {
   limit?: number;
@@ -45,8 +45,8 @@ export function history(options: HistoryOptions = {}) {
       },
       canUndo: () => past.length > 0,
       canRedo: () => future.length > 0,
-      pastStates: () => [...past] as StateMarker[],
-      futureStates: () => [...future] as StateMarker[],
+      pastStates: () => [...past],
+      futureStates: () => [...future],
     }),
   });
 }
