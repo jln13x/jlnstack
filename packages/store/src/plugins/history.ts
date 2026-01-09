@@ -1,4 +1,5 @@
-import { createPlugin } from "../index";
+// import { createPlugin } from "../index";
+import type { Plugin, StoreApi } from "../core/types";
 
 export interface HistoryOptions {
   limit?: number;
@@ -7,46 +8,36 @@ export interface HistoryOptions {
 export function history(options: HistoryOptions = {}) {
   const { limit = 100 } = options;
 
-  const past: unknown[] = [];
-  const future: unknown[] = [];
-  let isUndoing = false;
+  return (<TState>(store: StoreApi<TState>) => {
+    const past: TState[] = [];
+    const future: TState[] = [];
 
-  return createPlugin({
-    id: "history",
-    onStateChange: (_state, prevState) => {
-      if (isUndoing) return;
+    return {
+      id: "history",
+      extend: {
+        undo: () => {
+          const prev = past.pop();
+          if (prev === undefined) return;
 
-      past.push(prevState);
-      if (past.length > limit) past.shift();
-      future.length = 0;
-    },
-    extend: (store) => ({
-      undo: () => {
-        const prev = past.pop();
-        if (prev === undefined) return;
+          future.push(store.getState());
+          store.setState(prev);
+        },
+        redo: () => {
+          const next = future.pop();
+          if (next === undefined) return;
 
-        isUndoing = true;
-        future.push(store.getState());
-        store.setState(prev as object, true);
-        isUndoing = false;
+          past.push(store.getState());
+          store.setState(next);
+        },
+        clear: () => {
+          past.length = 0;
+          future.length = 0;
+        },
+        canUndo: () => past.length > 0,
+        canRedo: () => future.length > 0,
+        pastStates: () => [...(past as TState[])],
+        futureStates: () => [...(future as TState[])],
       },
-      redo: () => {
-        const next = future.pop();
-        if (next === undefined) return;
-
-        isUndoing = true;
-        past.push(store.getState());
-        store.setState(next as object, true);
-        isUndoing = false;
-      },
-      clear: () => {
-        past.length = 0;
-        future.length = 0;
-      },
-      canUndo: () => past.length > 0,
-      canRedo: () => future.length > 0,
-      pastStates: () => [...past],
-      futureStates: () => [...future],
-    }),
-  });
+    };
+  }) satisfies Plugin;
 }
