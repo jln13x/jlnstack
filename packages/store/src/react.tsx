@@ -5,7 +5,7 @@ import {
   type GetState,
   type SetState,
 } from "./index";
-import type { StorePlugin } from "./plugins";
+import type { ReactPlugin } from "./react-plugins";
 
 interface StoreConfig<
   TInitialState,
@@ -15,7 +15,7 @@ interface StoreConfig<
   name: string;
   state: (initialState: TInitialState) => TState;
   actions: (set: SetState<TState>, get: GetState<TState>) => TActions;
-  plugins?: StorePlugin[];
+  plugins?: ReactPlugin[];
 }
 
 interface ProviderProps<TInitialState> {
@@ -51,6 +51,11 @@ export function createStore<
         { plugins: config.plugins },
       );
       return { store, actions };
+    });
+
+    config.plugins?.forEach((plugin) => {
+      // biome-ignore lint/correctness/useHookAtTopLevel: should be fine
+      plugin.useHook?.(value.store);
     });
 
     return <Context.Provider value={value}>{children}</Context.Provider>;

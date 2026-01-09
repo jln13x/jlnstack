@@ -30,14 +30,25 @@ export function createStore<
   const creator = () => config.state;
   const wrappedCreator =
     options?.plugins?.reduce(
-      (acc, plugin) => plugin.middleware(acc) as () => TState,
+      (acc, plugin) => (plugin.middleware?.(acc) ?? acc) as () => TState,
       creator,
     ) ?? creator;
 
   const store = zustandCreateStore<TState>(wrappedCreator);
-  const actions =
+
+  options?.plugins?.forEach((plugin) => {
+    plugin.onStoreCreated?.(store as StoreApi<unknown>);
+  });
+
+  let actions =
     config.actions?.(store.setState as SetState<TState>, store.getState) ??
     ({} as TActions);
+
+  options?.plugins?.forEach((plugin) => {
+    if (plugin.onActionsCreated) {
+      actions = plugin.onActionsCreated(actions);
+    }
+  });
 
   return {
     store,
