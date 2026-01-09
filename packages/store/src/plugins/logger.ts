@@ -1,4 +1,4 @@
-import type { StoreApi } from "zustand";
+import { createPlugin } from "../index";
 
 interface LoggerOptions {
   name: string;
@@ -9,9 +9,9 @@ export function logger(options: LoggerOptions) {
   const { enabled = true, name } = options;
   let currentAction: string | null = null;
 
-  return {
-    id: "logger" as const,
-    onStoreCreated: (store: StoreApi<unknown>) => {
+  return createPlugin({
+    id: "logger",
+    onStoreCreated: (store) => {
       if (!enabled) return;
 
       store.subscribe((state, prevState) => {
@@ -27,7 +27,7 @@ export function logger(options: LoggerOptions) {
         );
       });
     },
-    onActionsCreated: <T extends object>(actions: T): T => {
+    onActionsCreated: (actions) => {
       if (!enabled) return actions;
 
       return new Proxy(actions, {
@@ -45,7 +45,7 @@ export function logger(options: LoggerOptions) {
         },
       });
     },
-  };
+  });
 }
 
 function getChanges(prev: object, next: object): Record<string, unknown> {

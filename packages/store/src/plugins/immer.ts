@@ -1,9 +1,9 @@
 import { immer as zustandImmer } from "zustand/middleware/immer";
-import type { StorePlugin } from "./types";
+import { createPlugin, type Plugin } from "../index";
 
 export function immer() {
-  return {
-    id: "immer" as const,
-    middleware: zustandImmer as unknown as StorePlugin["middleware"],
-  };
+  return createPlugin({
+    id: "immer",
+    middleware: zustandImmer as unknown as Plugin["middleware"],
+  });
 }
