@@ -1,8 +1,4 @@
-import {
-  type StoreApi,
-  createStore as zustandCreateStore,
-  useStore as zustandUseStore,
-} from "zustand";
+import { type StoreApi, createStore as zustandCreateStore } from "zustand";
 import type {
   InferPluginExtension,
   InferPluginId,
@@ -117,7 +113,5 @@ export function createStore<
     getState: store.getState,
     setState: store.setState,
     subscribe: store.subscribe,
-    useStore: <TSelected>(selector: (state: TState) => TSelected) =>
-      zustandUseStore(store, selector),
   };
 }
