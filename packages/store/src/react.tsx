@@ -5,7 +5,7 @@ import {
   type GetState,
   type SetState,
 } from "./index";
-import type { InferPluginExtension, InferPluginId } from "./plugins/types";
+import type { ReactPlugin } from "./plugins/react";
 
 type UnionToIntersection<U> = (
   U extends unknown
@@ -15,13 +15,10 @@ type UnionToIntersection<U> = (
   ? I
   : never;
 
-type ExtractPluginExtension<P> = InferPluginId<P> extends infer Id extends
-  string
-  ? InferPluginExtension<P> extends infer E
-    ? [E] extends [never]
-      ? never
-      : { [K in Id]: E }
-    : never
+type ExtractPluginExtension<P> = P extends ReactPlugin<infer Id, infer E>
+  ? E extends Record<string, never>
+    ? never
+    : { [K in Id]: E }
   : never;
 
 type InferExtensions<T> = T extends readonly unknown[]
@@ -32,18 +29,18 @@ type InferExtensions<T> = T extends readonly unknown[]
     : object
   : object;
 
-type AnyPlugin = { id: string };
-
 interface StoreConfig<
   TInitialState,
   TState extends object,
   TActions extends object,
-  TPlugins extends AnyPlugin[],
+  TPlugins extends ReactPlugin<string, any, TState>[],
 > {
   name: string;
   state: (initialState: TInitialState) => TState;
   actions: (set: SetState<TState>, get: GetState<TState>) => TActions;
-  plugins?: TPlugins;
+  plugins?: {
+    [K in keyof TPlugins]: TPlugins[K] & ReactPlugin<string, any, TState>;
+  };
 }
 
 interface ProviderProps<TInitialState> {
@@ -67,7 +64,7 @@ export function createStore<
   TInitialState,
   TState extends object,
   TActions extends object,
-  const TPlugins extends AnyPlugin[] = [],
+  const TPlugins extends ReactPlugin<string, any, TState>[] = [],
 >(
   config: StoreConfig<TInitialState, TState, TActions, TPlugins>,
 ): Store<TState, TActions, TInitialState, InferExtensions<TPlugins>> {
@@ -82,10 +79,11 @@ export function createStore<
     children,
   }: ProviderProps<TInitialState>) => {
     const [value] = useState(() => {
-      const { store, actions, extensions } = createCoreStore(
-        { state: config.state(initialState), actions: config.actions },
-        { plugins: config.plugins },
-      );
+      const { store, actions, extensions } = createCoreStore({
+        state: config.state(initialState),
+        actions: config.actions,
+        plugins: config.plugins as any,
+      });
       return {
         store,
         actions,
@@ -94,9 +92,8 @@ export function createStore<
     });
 
     config.plugins?.forEach((plugin) => {
-      const p = plugin as { useHook?: (store: StoreApi<TState>) => void };
       // biome-ignore lint/correctness/useHookAtTopLevel: should be fine
-      p.useHook?.(value.store);
+      plugin.useHook?.(value.store);
     });
 
     return <Context.Provider value={value}>{children}</Context.Provider>;
