@@ -1,28 +1,16 @@
-import type { StoreApi } from "zustand";
-import { immer as zustandImmer } from "zustand/middleware/immer";
-
-export type StorePlugin = {
-  middleware?: (creator: () => unknown) => () => unknown;
-  onStoreCreated?: (store: StoreApi<unknown>) => void;
-  onActionsCreated?: <T extends object>(actions: T) => T;
-};
-
-export function immer(): StorePlugin {
-  return {
-    middleware: zustandImmer as unknown as StorePlugin["middleware"],
-  };
-}
+import type { AnyStorePlugin } from "./types";
 
 interface LoggerOptions {
   name: string;
   enabled?: boolean;
 }
 
-export function logger(options: LoggerOptions): StorePlugin {
+export function logger(options: LoggerOptions) {
   const { enabled = true, name } = options;
   let currentAction: string | null = null;
 
   return {
+    id: "logger",
     onStoreCreated: (store) => {
       if (!enabled) return;
 
@@ -57,7 +45,7 @@ export function logger(options: LoggerOptions): StorePlugin {
         },
       });
     },
-  };
+  } satisfies AnyStorePlugin;
 }
 
 function getChanges(prev: object, next: object): Record<string, unknown> {

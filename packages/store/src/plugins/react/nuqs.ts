@@ -1,17 +1,12 @@
 import { type UseQueryStatesKeysMap, useQueryStates } from "nuqs";
 import { useEffect, useState } from "react";
-import type { StoreApi } from "zustand";
-import type { StorePlugin } from "./plugins";
+import type { AnyReactPlugin } from "./types";
 
-export interface ReactPlugin<TState extends object = object>
-  extends StorePlugin {
-  useHook?: (store: StoreApi<TState>) => void;
-}
-
-export function nuqs<T extends UseQueryStatesKeysMap>(parsers: T): ReactPlugin {
+export function nuqs<T extends UseQueryStatesKeysMap>(parsers: T) {
   const keys = Object.keys(parsers);
 
   return {
+    id: "nuqs",
     useHook: (store) => {
       const [queryState, setQueryState] = useQueryStates(parsers);
 
@@ -31,5 +26,5 @@ export function nuqs<T extends UseQueryStatesKeysMap>(parsers: T): ReactPlugin {
         });
       });
     },
-  };
+  } satisfies AnyReactPlugin;
 }

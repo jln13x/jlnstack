@@ -3,7 +3,7 @@ import {
   createStore as zustandCreateStore,
   useStore as zustandUseStore,
 } from "zustand";
-import type { StorePlugin } from "./plugins";
+import type { StorePlugin } from "./plugins/types";
 
 export type SetState<TState> = (
   updater:
@@ -50,9 +50,24 @@ export function createStore<
     }
   });
 
+  const extensions =
+    options?.plugins?.reduce(
+      (acc, plugin) => {
+        if (plugin.extend) {
+          acc[plugin.id] = plugin.extend(
+            store as StoreApi<unknown>,
+            config.state,
+          );
+        }
+        return acc;
+      },
+      {} as Record<string, unknown>,
+    ) ?? {};
+
   return {
     store,
     actions,
+    extensions,
     getState: store.getState,
     setState: store.setState,
     subscribe: store.subscribe,

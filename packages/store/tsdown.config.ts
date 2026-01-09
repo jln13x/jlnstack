@@ -5,8 +5,8 @@ export default defineConfig({
   entry: [
     "src/index.ts",
     "src/react.tsx",
-    "src/plugins.ts",
-    "src/react-plugins.ts",
+    "src/plugins/index.ts",
+    "src/plugins/react/index.ts",
   ],
   dts: {
     sourcemap: true,
