@@ -26,6 +26,19 @@ export function createPlugin<const T extends Plugin>(plugin: T): T {
   return plugin;
 }
 
+declare const STATE_MARKER: unique symbol;
+export type StateMarker = { readonly [STATE_MARKER]: true };
+
+type SubstituteState<T, TState> = T extends StateMarker
+  ? TState
+  : T extends (...args: infer A) => infer R
+    ? (...args: A) => SubstituteState<R, TState>
+    : T extends readonly (infer U)[]
+      ? SubstituteState<U, TState>[]
+      : T extends object
+        ? { [K in keyof T]: SubstituteState<T[K], TState> }
+        : T;
+
 type UnionToIntersection<U> = (
   U extends unknown
     ? (k: U) => void
@@ -34,18 +47,20 @@ type UnionToIntersection<U> = (
   ? I
   : never;
 
-type ExtractPluginExtension<P> = P extends {
+type ExtractPluginExtension<P, TState> = P extends {
   id: infer Id extends string;
   // biome-ignore lint/suspicious/noExplicitAny: needed for inference
   extend?: (...args: any[]) => infer E;
 }
   ? [E] extends [undefined]
     ? never
-    : { [K in Id]: E }
+    : { [K in Id]: SubstituteState<E, TState> }
   : never;
 
-type InferExtensions<T> = T extends readonly unknown[]
-  ? UnionToIntersection<ExtractPluginExtension<T[number]>> extends infer R
+type InferExtensions<T, TState> = T extends readonly unknown[]
+  ? UnionToIntersection<
+      ExtractPluginExtension<T[number], TState>
+    > extends infer R
     ? R extends object
       ? R
       : object
@@ -112,7 +127,7 @@ export function createStore<
   return {
     store,
     actions,
-    extensions: extensions as InferExtensions<TPlugins>,
+    extensions: extensions as InferExtensions<TPlugins, TState>,
     getState: store.getState,
     setState: store.setState as SetState<TState>,
     subscribe: store.subscribe,
