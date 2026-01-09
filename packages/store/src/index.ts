@@ -114,7 +114,7 @@ export function createStore<
     actions,
     extensions: extensions as InferExtensions<TPlugins>,
     getState: store.getState,
-    setState: store.setState,
+    setState: store.setState as SetState<TState>,
     subscribe: store.subscribe,
   };
 }

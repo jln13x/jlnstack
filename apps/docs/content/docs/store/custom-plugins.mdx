@@ -1,0 +1,175 @@
+---
+title: Custom Plugins
+description: Creating custom plugins for Store
+---
+
+# Custom Plugins
+
+Create your own plugins to extend store functionality.
+
+## Plugin Interface
+
+```ts
+import { createPlugin } from "@jlnstack/store"
+
+const myPlugin = createPlugin({
+  id: "my-plugin",
+  middleware: (creator) => creator,
+  onStateChange: (state, prevState) => {},
+  onActionsCreated: (actions) => actions,
+  extend: (store, initialState) => ({}),
+})
+```
+
+## Plugin Hooks
+
+### `id`
+
+Required unique identifier. Extensions are accessed via `extensions[id]`.
+
+### `middleware`
+
+Wraps the store creator. Useful for integrating zustand middleware.
+
+```ts
+createPlugin({
+  id: "custom-middleware",
+  middleware: (creator) => () => {
+    console.log("Store created")
+    return creator()
+  },
+})
+```
+
+### `onStateChange`
+
+Called on every state change.
+
+```ts
+createPlugin({
+  id: "analytics",
+  onStateChange: (state, prevState) => {
+    trackStateChange(state, prevState)
+  },
+})
+```
+
+### `onActionsCreated`
+
+Intercepts and transforms actions. Useful for wrapping or enhancing actions.
+
+```ts
+createPlugin({
+  id: "action-logger",
+  onActionsCreated: (actions) => {
+    return new Proxy(actions, {
+      get(target, prop) {
+        const action = target[prop as keyof typeof target]
+        if (typeof action === "function") {
+          return (...args: unknown[]) => {
+            console.log(`Action: ${String(prop)}`)
+            return action(...args)
+          }
+        }
+        return action
+      },
+    })
+  },
+})
+```
+
+### `extend`
+
+Adds methods accessible via `extensions[id]`. Has access to the store API and initial state.
+
+```ts
+createPlugin({
+  id: "persistence",
+  extend: (store, initialState) => ({
+    save: () => localStorage.setItem("state", JSON.stringify(store.getState())),
+    load: () => {
+      const saved = localStorage.getItem("state")
+      if (saved) store.setState(JSON.parse(saved), true)
+    },
+  }),
+})
+```
+
+## Example: Persistence Plugin
+
+```ts
+import { createPlugin, createStore } from "@jlnstack/store"
+
+function persist(key: string) {
+  return createPlugin({
+    id: "persist",
+    extend: (store) => ({
+      save: () => {
+        localStorage.setItem(key, JSON.stringify(store.getState()))
+      },
+      load: () => {
+        const saved = localStorage.getItem(key)
+        if (saved) store.setState(JSON.parse(saved), true)
+      },
+      clear: () => {
+        localStorage.removeItem(key)
+      },
+    }),
+  })
+}
+
+const { extensions, getState } = createStore({
+  state: { count: 0 },
+  plugins: [persist("my-store")],
+})
+
+extensions.persist.save()
+extensions.persist.load()
+extensions.persist.clear()
+```
+
+## Example: Debounce Plugin
+
+```ts
+import { createPlugin } from "@jlnstack/store"
+
+function debounce(callback: () => void, ms: number) {
+  return createPlugin({
+    id: "debounce",
+    onStateChange: (() => {
+      let timeout: ReturnType<typeof setTimeout>
+      return () => {
+        clearTimeout(timeout)
+        timeout = setTimeout(callback, ms)
+      }
+    })(),
+  })
+}
+
+const { setState } = createStore({
+  state: { query: "" },
+  plugins: [debounce(() => console.log("Debounced!"), 300)],
+})
+```
+
+## Type Safety
+
+Extensions are fully typed based on the `extend` return type:
+
+```ts
+const myPlugin = createPlugin({
+  id: "typed",
+  extend: () => ({
+    foo: () => "bar",
+    count: 42,
+  }),
+})
+
+const { extensions } = createStore({
+  state: {},
+  plugins: [myPlugin],
+})
+
+extensions.typed.foo() // string
+extensions.typed.count // number
+```
