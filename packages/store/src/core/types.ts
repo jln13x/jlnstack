@@ -1,12 +1,14 @@
 export type StoreApi<TState> = {
   setState: (state: TState) => void;
+  setStateSilent: (state: TState) => void;
   getState: () => TState;
 };
 
 type LiteralString = "" | (string & Record<never, never>);
 
-export type PluginResult = {
+export type PluginResult<TState = unknown> = {
   id: LiteralString;
+  onStateChange?: (state: TState, prevState: TState) => void;
 };
 
 export type Plugin = (store: StoreApi<any>) => PluginResult;

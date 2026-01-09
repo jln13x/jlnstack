@@ -14,20 +14,25 @@ export function history(options: HistoryOptions = {}) {
 
     return {
       id: "history",
+      onStateChange: (_state: TState, prevState: TState) => {
+        past.push(prevState);
+        if (past.length > limit) past.shift();
+        future.length = 0;
+      },
       extend: {
         undo: () => {
           const prev = past.pop();
           if (prev === undefined) return;
 
           future.push(store.getState());
-          store.setState(prev);
+          store.setStateSilent(prev);
         },
         redo: () => {
           const next = future.pop();
           if (next === undefined) return;
 
           past.push(store.getState());
-          store.setState(next);
+          store.setStateSilent(next);
         },
         clear: () => {
           past.length = 0;
