@@ -4,7 +4,7 @@ import {
   type PersistOptions as ZustandPersistOptions,
   persist as zustandPersist,
 } from "zustand/middleware";
-import type { AnyStorePlugin, StorePlugin } from "./types";
+import type { StorePlugin } from "./types";
 
 export interface PersistOptions<TState> {
   name: string;
@@ -57,15 +57,15 @@ export function persist<TState extends object>(
   let persistApi: PersistApi<TState> | undefined;
 
   const plugin = {
-    id: "persist",
-    middleware: (creator) => {
+    id: "persist" as const,
+    middleware: (creator: () => unknown) => {
       const wrapped = zustandPersist(
         creator as Parameters<typeof zustandPersist>[0],
         zustandOptions as ZustandPersistOptions<unknown, Partial<TState>>,
       );
       return wrapped as () => unknown;
     },
-    onStoreCreated: (store) => {
+    onStoreCreated: (store: StoreApi<unknown>) => {
       const persistStore = store as StoreApi<TState> & {
         persist: PersistApi<TState>;
       };
@@ -73,7 +73,7 @@ export function persist<TState extends object>(
         persistApi = persistStore.persist;
       }
     },
-  } satisfies AnyStorePlugin as StorePlugin<"persist", {}> & {
+  } as StorePlugin<"persist", object> & {
     persist?: PersistApi<TState>;
   };
 

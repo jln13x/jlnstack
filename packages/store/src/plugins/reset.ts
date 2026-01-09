@@ -1,10 +1,10 @@
-import type { AnyStorePlugin } from "./types";
+import type { StoreApi } from "zustand";
 
 export function reset() {
   return {
-    id: "reset",
-    extend: (store, initialState) => ({
+    id: "reset" as const,
+    extend: (store: StoreApi<unknown>, initialState: unknown) => ({
       reset: () => store.setState(initialState, true),
     }),
-  } satisfies AnyStorePlugin;
+  };
 }

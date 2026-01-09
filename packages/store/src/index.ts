@@ -3,7 +3,11 @@ import {
   createStore as zustandCreateStore,
   useStore as zustandUseStore,
 } from "zustand";
-import type { StorePlugin } from "./plugins/types";
+import type {
+  InferPluginExtension,
+  InferPluginId,
+  StorePlugin,
+} from "./plugins/types";
 
 export type SetState<TState> = (
   updater:
@@ -19,14 +23,52 @@ interface StoreConfig<TState extends object, TActions extends object> {
   actions?: (set: SetState<TState>, get: GetState<TState>) => TActions;
 }
 
-interface StoreOptions {
-  plugins?: StorePlugin[];
+export type AnyPlugin = {
+  id: string;
+  middleware?: (creator: () => unknown) => () => unknown;
+  onStoreCreated?: (store: StoreApi<unknown>) => void;
+  onActionsCreated?: <T extends object>(actions: T) => T;
+  extend?: (store: StoreApi<unknown>, initialState: unknown) => object;
+};
+
+export function createPlugin<const T extends AnyPlugin>(plugin: T): T {
+  return plugin;
 }
+
+interface StoreOptions<TPlugins extends AnyPlugin[]> {
+  plugins?: TPlugins;
+}
+
+type UnionToIntersection<U> = (
+  U extends unknown
+    ? (k: U) => void
+    : never
+) extends (k: infer I) => void
+  ? I
+  : never;
+
+type ExtractPluginExtension<P> = P extends {
+  id: infer Id extends string;
+  extend?: (...args: unknown[]) => infer E;
+}
+  ? [E] extends [undefined]
+    ? never
+    : { [K in Id]: E }
+  : never;
+
+type InferExtensions<T> = T extends readonly unknown[]
+  ? UnionToIntersection<ExtractPluginExtension<T[number]>> extends infer R
+    ? R extends object
+      ? R
+      : object
+    : object
+  : object;
 
 export function createStore<
   TState extends object,
   TActions extends object = Record<string, never>,
->(config: StoreConfig<TState, TActions>, options?: StoreOptions) {
+  const TPlugins extends AnyPlugin[] = [],
+>(config: StoreConfig<TState, TActions>, options?: StoreOptions<TPlugins>) {
   const creator = () => config.state;
   const wrappedCreator =
     options?.plugins?.reduce(
@@ -53,11 +95,9 @@ export function createStore<
   const extensions =
     options?.plugins?.reduce(
       (acc, plugin) => {
-        if (plugin.extend) {
-          acc[plugin.id] = plugin.extend(
-            store as StoreApi<unknown>,
-            config.state,
-          );
+        const p = plugin as StorePlugin;
+        if (p.extend) {
+          acc[p.id] = p.extend(store as StoreApi<unknown>, config.state);
         }
         return acc;
       },
@@ -67,7 +107,7 @@ export function createStore<
   return {
     store,
     actions,
-    extensions,
+    extensions: extensions as InferExtensions<TPlugins>,
     getState: store.getState,
     setState: store.setState,
     subscribe: store.subscribe,

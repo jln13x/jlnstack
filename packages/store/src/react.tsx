@@ -5,7 +5,7 @@ import {
   type GetState,
   type SetState,
 } from "./index";
-import type { ReactPlugin } from "./plugins/react";
+import type { InferPluginExtension, InferPluginId } from "./plugins/types";
 
 type UnionToIntersection<U> = (
   U extends unknown
@@ -15,21 +15,30 @@ type UnionToIntersection<U> = (
   ? I
   : never;
 
-type ExtractPluginExtension<P> = P extends ReactPlugin<infer Id, infer E>
-  ? [E] extends [Record<string, never>]
-    ? never
-    : { [K in Id]: E }
+type ExtractPluginExtension<P> = InferPluginId<P> extends infer Id extends
+  string
+  ? InferPluginExtension<P> extends infer E
+    ? [E] extends [never]
+      ? never
+      : { [K in Id]: E }
+    : never
   : never;
 
 type InferExtensions<T> = T extends readonly unknown[]
-  ? UnionToIntersection<ExtractPluginExtension<T[number]>>
+  ? UnionToIntersection<ExtractPluginExtension<T[number]>> extends infer R
+    ? R extends object
+      ? R
+      : object
+    : object
   : object;
+
+type AnyPlugin = { id: string };
 
 interface StoreConfig<
   TInitialState,
   TState extends object,
   TActions extends object,
-  TPlugins extends ReactPlugin<any, any>[],
+  TPlugins extends AnyPlugin[],
 > {
   name: string;
   state: (initialState: TInitialState) => TState;
@@ -58,7 +67,7 @@ export function createStore<
   TInitialState,
   TState extends object,
   TActions extends object,
-  const TPlugins extends ReactPlugin<any, any>[] = [],
+  const TPlugins extends AnyPlugin[] = [],
 >(
   config: StoreConfig<TInitialState, TState, TActions, TPlugins>,
 ): Store<TState, TActions, TInitialState, InferExtensions<TPlugins>> {
@@ -85,8 +94,9 @@ export function createStore<
     });
 
     config.plugins?.forEach((plugin) => {
+      const p = plugin as { useHook?: (store: StoreApi<TState>) => void };
       // biome-ignore lint/correctness/useHookAtTopLevel: should be fine
-      plugin.useHook?.(value.store);
+      p.useHook?.(value.store);
     });
 
     return <Context.Provider value={value}>{children}</Context.Provider>;

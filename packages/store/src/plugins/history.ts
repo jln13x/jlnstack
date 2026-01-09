@@ -1,4 +1,4 @@
-import type { AnyStorePlugin } from "./types";
+import type { StoreApi } from "zustand";
 
 export interface HistoryOptions {
   limit?: number;
@@ -12,8 +12,8 @@ export function history(options: HistoryOptions = {}) {
   let isUndoing = false;
 
   return {
-    id: "history",
-    onStoreCreated: (store) => {
+    id: "history" as const,
+    onStoreCreated: (store: StoreApi<unknown>) => {
       store.subscribe((_state, prevState) => {
         if (isUndoing) return;
 
@@ -22,7 +22,7 @@ export function history(options: HistoryOptions = {}) {
         future.length = 0;
       });
     },
-    extend: (store) => ({
+    extend: (store: StoreApi<unknown>) => ({
       undo: () => {
         const prev = past.pop();
         if (prev === undefined) return;
@@ -50,5 +50,5 @@ export function history(options: HistoryOptions = {}) {
       pastStates: () => [...past],
       futureStates: () => [...future],
     }),
-  } satisfies AnyStorePlugin;
+  };
 }

@@ -3,4 +3,8 @@ export { immer } from "./immer";
 export { logger } from "./logger";
 export { type PersistApi, type PersistOptions, persist } from "./persist";
 export { reset } from "./reset";
-export type { AnyStorePlugin, StorePlugin } from "./types";
+export type {
+  InferPluginExtension,
+  InferPluginId,
+  StorePlugin,
+} from "./types";
