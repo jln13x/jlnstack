@@ -15,8 +15,11 @@ type UnionToIntersection<U> = (
   ? I
   : never;
 
-type ExtractPluginExtension<P> = P extends ReactPlugin<infer Id, infer E>
-  ? E extends Record<string, never>
+type ExtractPluginExtension<P> = P extends {
+  id: infer Id extends string;
+  extend?: (...args: any[]) => infer E;
+}
+  ? [E] extends [undefined]
     ? never
     : { [K in Id]: E }
   : never;
