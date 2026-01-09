@@ -18,25 +18,16 @@ export type SetState<TState> = (
 ) => void;
 export type GetState<TState> = StoreApi<TState>["getState"];
 
-interface StoreConfig<TState extends object, TActions extends object> {
-  state: TState;
-  actions?: (set: SetState<TState>, get: GetState<TState>) => TActions;
-}
-
-export type AnyPlugin = {
+export type Plugin<TState extends object = object> = {
   id: string;
   middleware?: (creator: () => unknown) => () => unknown;
-  onStoreCreated?: (store: StoreApi<unknown>) => void;
+  onStoreCreated?: (store: StoreApi<TState>) => void;
   onActionsCreated?: <T extends object>(actions: T) => T;
-  extend?: (store: StoreApi<unknown>, initialState: unknown) => object;
+  extend?: (store: StoreApi<TState>, initialState: TState) => object;
 };
 
-export function createPlugin<const T extends AnyPlugin>(plugin: T): T {
+export function createPlugin<const T extends Plugin>(plugin: T): T {
   return plugin;
-}
-
-interface StoreOptions<TPlugins extends AnyPlugin[]> {
-  plugins?: TPlugins;
 }
 
 type UnionToIntersection<U> = (
@@ -49,7 +40,8 @@ type UnionToIntersection<U> = (
 
 type ExtractPluginExtension<P> = P extends {
   id: infer Id extends string;
-  extend?: (...args: unknown[]) => infer E;
+  // biome-ignore lint/suspicious/noExplicitAny: needed for inference
+  extend?: (...args: any[]) => infer E;
 }
   ? [E] extends [undefined]
     ? never
@@ -64,40 +56,54 @@ type InferExtensions<T> = T extends readonly unknown[]
     : object
   : object;
 
+type AnyPlugin = {
+  id: string;
+  middleware?: (creator: () => unknown) => () => unknown;
+  onStoreCreated?: (store: StoreApi<unknown>) => void;
+  onActionsCreated?: <T extends object>(actions: T) => T;
+  // biome-ignore lint/suspicious/noExplicitAny: needed for inference
+  extend?: (store: StoreApi<any>, initialState: any) => object;
+};
+
 export function createStore<
   TState extends object,
   TActions extends object = Record<string, never>,
-  const TPlugins extends AnyPlugin[] = [],
->(config: StoreConfig<TState, TActions>, options?: StoreOptions<TPlugins>) {
+  const TPlugins extends AnyPlugin[] = AnyPlugin[],
+>(config: {
+  state: TState;
+  actions?: (set: SetState<TState>, get: GetState<TState>) => TActions;
+  plugins?: { [K in keyof TPlugins]: TPlugins[K] & Plugin<TState> };
+}) {
   const creator = () => config.state;
   const wrappedCreator =
-    options?.plugins?.reduce(
+    config.plugins?.reduce(
       (acc, plugin) => (plugin.middleware?.(acc) ?? acc) as () => TState,
       creator,
     ) ?? creator;
 
   const store = zustandCreateStore<TState>(wrappedCreator);
 
-  options?.plugins?.forEach((plugin) => {
-    plugin.onStoreCreated?.(store as StoreApi<unknown>);
+  const plugins = config.plugins as Plugin<TState>[] | undefined;
+
+  plugins?.forEach((plugin) => {
+    plugin.onStoreCreated?.(store);
   });
 
   let actions =
     config.actions?.(store.setState as SetState<TState>, store.getState) ??
     ({} as TActions);
 
-  options?.plugins?.forEach((plugin) => {
+  plugins?.forEach((plugin) => {
     if (plugin.onActionsCreated) {
       actions = plugin.onActionsCreated(actions);
     }
   });
 
   const extensions =
-    options?.plugins?.reduce(
+    plugins?.reduce(
       (acc, plugin) => {
-        const p = plugin as StorePlugin;
-        if (p.extend) {
-          acc[p.id] = p.extend(store as StoreApi<unknown>, config.state);
+        if (plugin.extend) {
+          acc[plugin.id] = plugin.extend(store, config.state);
         }
         return acc;
       },
