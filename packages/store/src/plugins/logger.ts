@@ -1,4 +1,4 @@
-import { createPlugin } from "../index";
+import type { Plugin } from "../core/types";
 
 interface LoggerOptions {
   name: string;
@@ -8,7 +8,7 @@ interface LoggerOptions {
 export function logger(options: LoggerOptions) {
   const { enabled = true, name } = options;
 
-  return createPlugin({
+  return ((_store) => ({
     id: "logger",
     onStateChange: (state, prevState) => {
       if (!enabled) return;
@@ -23,7 +23,7 @@ export function logger(options: LoggerOptions) {
         changes,
       );
     },
-  });
+  })) satisfies Plugin;
 }
 
 function getChanges(prev: object, next: object): Record<string, unknown> {
