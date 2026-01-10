@@ -14,20 +14,15 @@ import type {
   StoreApi,
 } from "../core/types";
 
-type PluginFactory<TResult extends PluginResult> = <TState>(
-  store: StoreApi<TState>,
-) => TResult;
-
 type ReactStoreOptions<
   TInitialState,
   TState,
   TActions,
   TResults extends PluginResult[],
 > = {
-  name: string;
   state: (initialState: TInitialState) => TState;
   actions: (store: StoreApi<TState>) => TActions;
-  plugins?: { [K in keyof TResults]: PluginFactory<TResults[K]> };
+  plugins?: { [K in keyof TResults]: (store: StoreApi<TState>) => TResults[K] };
 };
 
 interface ProviderProps<TInitialState> {
@@ -51,7 +46,7 @@ export function createReactStore<
   TInitialState,
   TState extends object,
   TActions extends object,
-  const TResults extends PluginResult[] = [],
+  const TResults extends PluginResult[],
 >(
   config: ReactStoreOptions<TInitialState, TState, TActions, TResults>,
 ): ReactStore<TState, TActions, TInitialState, TResults> {
@@ -80,7 +75,7 @@ export function createReactStore<
 
   const useCtx = () => {
     const ctx = useContext(Context);
-    if (!ctx) throw new Error(`Missing ${config.name} Provider`);
+    if (!ctx) throw new Error(`Missing Store Provider`);
     return ctx;
   };
 

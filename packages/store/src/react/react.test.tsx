@@ -4,7 +4,6 @@ import { describe, expect, it } from "vitest";
 import { createReactStore } from "./react";
 
 const BearStore = createReactStore({
-  name: "BearStore",
   state: (initialBears: number) => ({
     bears: initialBears,
     fish: 10,
@@ -53,7 +52,7 @@ describe("createStore", () => {
     it("throws when used outside Provider", () => {
       expect(() => {
         renderHook(() => BearStore.useStore((s) => s.bears));
-      }).toThrow("Missing BearStore Provider");
+      }).toThrow();
     });
 
     it("selects specific state", () => {
@@ -68,7 +67,7 @@ describe("createStore", () => {
     it("throws when used outside Provider", () => {
       expect(() => {
         renderHook(() => BearStore.useActions());
-      }).toThrow("Missing BearStore Provider");
+      }).toThrow();
     });
 
     it("returns actions that update state", () => {

@@ -14,7 +14,7 @@ export function history(options: HistoryOptions = {}) {
 
     return {
       id: "history",
-      onStateChange: (_state: TState, prevState: TState) => {
+      onStateChange: (_state, prevState) => {
         past.push(prevState);
         if (past.length > limit) past.shift();
         future.length = 0;
