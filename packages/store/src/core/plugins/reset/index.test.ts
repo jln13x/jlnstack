@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { reset } from "./index";
 import { createStore } from "../../store";
 import { plugins } from "../../types";
+import { reset } from "./index";
 
 describe("reset plugin", () => {
   it("resets state to initial value", () => {

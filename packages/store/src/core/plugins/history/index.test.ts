@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { history } from "./index";
 import { createStore } from "../../store";
 import { plugins } from "../../types";
+import { history } from "./index";
 
 describe("history plugin", () => {
   it("undoes state changes", () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { immer } from "./index";
 import { createStore } from "../../store";
 import { plugins } from "../../types";
+import { immer } from "./index";
 
 describe("immer plugin", () => {
   it("allows mutative updates in setState", () => {

@@ -1,5 +1,5 @@
 import type { StoreApi } from "zustand";
-import type { PluginConfig } from "../../index";
+import type { PluginConfig } from "../../_deprecated";
 
 // React plugin extends core PluginConfig with useHook
 export type ReactPluginConfig<

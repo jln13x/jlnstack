@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { logger } from "./index";
 import { createStore } from "../../store";
 import { plugins } from "../../types";
+import { logger } from "./index";
 
 describe("logger plugin", () => {
   it("logs state changes", () => {

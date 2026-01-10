@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createPlugin, createStore, plugins } from "../src/index";
+import { createPlugin, createStore, plugins } from "../src/_deprecated";
 
 describe("createStore", () => {
   it("creates store with initial state", () => {

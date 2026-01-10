@@ -1,5 +1,5 @@
 import { assertType, expectTypeOf, test } from "vitest";
-import { createPlugin, createStore, plugins } from "../src/index";
+import { createPlugin, createStore, plugins } from "../src/_deprecated";
 
 test("infers state type", () => {
   const { getState } = createStore({

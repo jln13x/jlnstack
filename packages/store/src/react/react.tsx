@@ -8,7 +8,7 @@ import {
   type InferExtensions,
   type InferPluginsResult,
   type SetState,
-} from "./index";
+} from "../_deprecated";
 
 interface StoreConfig<
   TInitialState,

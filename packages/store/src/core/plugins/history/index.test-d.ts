@@ -1,7 +1,7 @@
 import { assertType, test } from "vitest";
-import { history } from "./index";
 import { createStore } from "../../store";
 import { plugins } from "../../types";
+import { history } from "./index";
 
 test("history extension is properly typed", () => {
   const store = createStore({
