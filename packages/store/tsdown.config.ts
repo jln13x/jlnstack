@@ -4,7 +4,7 @@ export default defineConfig({
   target: ["node18", "es2017"],
   entry: [
     "src/core/core.ts",
-    "src/plugins/index.ts",
+    "src/core/plugins/index.ts",
     "src/react/react.tsx",
     "src/plugins/react/index.ts",
   ],
