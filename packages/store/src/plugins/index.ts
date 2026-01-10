@@ -1,5 +1,2 @@
-export * from "./history";
-export * from "./immer";
-export * from "./logger";
-export * from "./reset";
-export * from "./types";
+export * from "../core/plugins/history";
+export * from "../core/plugins/logger";
