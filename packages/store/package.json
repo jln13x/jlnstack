@@ -75,12 +75,12 @@
     },
     "./react/plugins": {
       "import": {
-        "types": "./dist/plugins/react/index.d.mts",
-        "default": "./dist/plugins/react/index.mjs"
+        "types": "./dist/react/plugins/index.d.mts",
+        "default": "./dist/react/plugins/index.mjs"
       },
       "require": {
-        "types": "./dist/plugins/react/index.d.cts",
-        "default": "./dist/plugins/react/index.cjs"
+        "types": "./dist/react/plugins/index.d.cts",
+        "default": "./dist/react/plugins/index.cjs"
       }
     }
   }

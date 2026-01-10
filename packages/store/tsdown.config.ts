@@ -6,7 +6,7 @@ export default defineConfig({
     "src/core/core.ts",
     "src/core/plugins/index.ts",
     "src/react/react.tsx",
-    "src/plugins/react/index.ts",
+    "src/react/plugins/index.ts",
   ],
   dts: {
     sourcemap: true,

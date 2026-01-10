@@ -14,7 +14,7 @@ export type PluginShape = {
   middleware?: Middleware;
 };
 
-export type PluginResult = PluginShape & { id: LiteralString };
+export type PluginResult = PluginShape;
 
 export function definePlugin<
   TResult extends PluginShape,
