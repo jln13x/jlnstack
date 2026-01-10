@@ -15,6 +15,10 @@ export type PluginResult = {
 
 export type Plugin = (store: StoreApi<any>) => PluginResult;
 
+export type PluginGen<Store extends StoreApi<any>> = (
+  store: Store,
+) => PluginResult;
+
 export type PluginsReturn<TPlugins extends Plugin[]> = {
   [K in keyof TPlugins]: TPlugins[K] extends Plugin
     ? ReturnType<TPlugins[K]>

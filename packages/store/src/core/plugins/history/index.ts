@@ -1,4 +1,5 @@
-import type { Plugin, StoreApi } from "../../types";
+import type { StoreApi } from "../../types";
+import { definePlugin } from "../v2";
 
 export interface HistoryOptions {
   limit?: number;
@@ -7,7 +8,7 @@ export interface HistoryOptions {
 export function history(options: HistoryOptions = {}) {
   const { limit = 100 } = options;
 
-  return (<TState>(store: StoreApi<TState>) => {
+  return definePlugin(<TState>(store: StoreApi<TState>) => {
     const past: TState[] = [];
     const future: TState[] = [];
 
@@ -39,9 +40,9 @@ export function history(options: HistoryOptions = {}) {
         },
         canUndo: () => past.length > 0,
         canRedo: () => future.length > 0,
-        pastStates: () => [...(past as TState[])],
-        futureStates: () => [...(future as TState[])],
+        pastStates: () => [...past],
+        futureStates: () => [...future],
       },
     };
-  }) satisfies Plugin;
+  });
 }
