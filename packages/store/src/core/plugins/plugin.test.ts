@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { createStore } from "./store";
-import { type Plugin, plugins } from "./types";
+import { createStore } from "../store";
+import { type Plugin, plugins } from "../types";
 
 test("plugins with duplicate ids use the last one", () => {
   const first = ((_store) => ({

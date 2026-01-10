@@ -1,14 +1,24 @@
+export type SetState<TState> = (
+  updater: TState | ((state: TState) => TState | void),
+) => void;
+
 export type StoreApi<TState> = {
-  setState: (state: TState) => void;
+  setState: SetState<TState>;
   setStateSilent: (state: TState) => void;
   getState: () => TState;
 };
 
 type LiteralString = "" | (string & Record<never, never>);
 
-export type PluginResult<TState = unknown> = {
+export type Middleware = (
+  setState: SetState<any>,
+  getState: () => any,
+) => SetState<any>;
+
+export type PluginResult = {
   id: LiteralString;
-  onStateChange?: (state: TState, prevState: TState) => void;
+  middleware?: Middleware;
+  onStateChange?: (state: any, prevState: any) => void;
 };
 
 export type Plugin = (store: StoreApi<any>) => PluginResult;

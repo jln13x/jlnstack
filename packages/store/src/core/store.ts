@@ -1,4 +1,4 @@
-import type { PluginResult, Store, StoreApi } from "./types";
+import type { PluginResult, SetState, Store, StoreApi } from "./types";
 
 export type StoreOptions<TState, TActions, TPlugins extends PluginResult[]> = {
   state: TState;
@@ -10,22 +10,39 @@ export function createStore<TState, TActions, TPlugins extends PluginResult[]>(
   options: StoreOptions<TState, TActions, TPlugins>,
 ): Store<TState, TActions, TPlugins> {
   let state = options.state;
+  let pluginResults: TPlugins;
+
+  const baseSetState: SetState<TState> = (updater) => {
+    const prevState = state;
+    state =
+      typeof updater === "function"
+        ? (updater as (s: TState) => TState)(state)
+        : updater;
+    for (const plugin of pluginResults) {
+      plugin.onStateChange?.(state, prevState);
+    }
+  };
+
+  let currentSetState = baseSetState;
 
   const store: StoreApi<TState> = {
     getState: () => state,
     setStateSilent: (newState) => {
       state = newState;
     },
-    setState: (newState) => {
-      const prevState = state;
-      state = newState;
-      for (const plugin of pluginResults) {
-        plugin.onStateChange?.(state, prevState);
-      }
-    },
+    setState: (updater) => currentSetState(updater),
   };
 
-  const pluginResults = options.plugins(store);
+  pluginResults = options.plugins(store);
+
+  const middlewares = pluginResults
+    .map((p) => p.middleware)
+    .filter((m): m is NonNullable<typeof m> => m != null);
+
+  currentSetState = middlewares.reduce<SetState<TState>>(
+    (setState, middleware) => middleware(setState, store.getState),
+    baseSetState,
+  );
 
   const extension = {} as Store<TState, TActions, TPlugins>["extension"];
   for (const plugin of pluginResults) {
