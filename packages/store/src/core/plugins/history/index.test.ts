@@ -7,7 +7,7 @@ describe("history plugin", () => {
   it("undoes state changes", () => {
     const { store, extension } = createStore({
       state: { count: 0 },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([history()]),
     });
 
@@ -24,7 +24,7 @@ describe("history plugin", () => {
   it("redoes undone changes", () => {
     const { store, extension } = createStore({
       state: { count: 0 },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([history()]),
     });
 
@@ -39,7 +39,7 @@ describe("history plugin", () => {
   it("clears future on new change after undo", () => {
     const { store, extension } = createStore({
       state: { count: 0 },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([history()]),
     });
 
@@ -54,7 +54,7 @@ describe("history plugin", () => {
   it("respects limit option", () => {
     const { store, extension } = createStore({
       state: { count: 0 },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([history({ limit: 2 })]),
     });
 
@@ -68,7 +68,7 @@ describe("history plugin", () => {
   it("canUndo and canRedo return correct values", () => {
     const { store, extension } = createStore({
       state: { count: 0 },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([history()]),
     });
 
@@ -85,7 +85,7 @@ describe("history plugin", () => {
   it("clear removes all history", () => {
     const { store, extension } = createStore({
       state: { count: 0 },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([history()]),
     });
 

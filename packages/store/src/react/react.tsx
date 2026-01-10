@@ -1,39 +1,26 @@
-import { createContext, type ReactNode, useContext, useState } from "react";
 import {
-  useStore,
-  type StoreApi as ZustandStoreApi,
-  createStore as zustandCreateStore,
-} from "zustand";
-import type { StoreOptions } from "../core/core";
+  createContext,
+  type ReactNode,
+  useContext,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import { createStore, type StoreOptions } from "../core/core";
 import type {
-  StoreApi as CoreStoreApi,
+  Store as CoreStore,
+  ExtractExtensions,
   PluginResult,
-  SetState,
 } from "../core/types";
-
-type ReactPluginResult = PluginResult & {
-  useHook?: () => unknown;
-};
-
-type ReactPlugin = (store: CoreStoreApi<any>) => ReactPluginResult;
-
-type ExtractExtensions<TPlugins extends ReactPluginResult[]> = {
-  [K in TPlugins[number] as K["id"]]: K extends { extend: infer E } ? E : never;
-};
 
 type ReactStoreOptions<
   TInitialState,
   TState,
   TActions,
-  TPlugins extends ReactPluginResult[],
-> = Omit<
-  StoreOptions<TState, TActions, TPlugins>,
-  "state" | "actions" | "plugins"
-> & {
+  TPlugins extends PluginResult[],
+> = Omit<StoreOptions<TState, TActions, TPlugins>, "state"> & {
   name: string;
   state: (initialState: TInitialState) => TState;
-  actions: (set: SetState<TState>, get: () => TState) => TActions;
-  plugins?: (store: CoreStoreApi<TState>) => TPlugins;
 };
 
 interface ProviderProps<TInitialState> {
@@ -41,84 +28,43 @@ interface ProviderProps<TInitialState> {
   children: ReactNode;
 }
 
-interface Store<
+interface ReactStore<
   TState extends object,
   TActions extends object,
   TInitialState,
-  TExtensions extends object,
+  TPlugins extends PluginResult[],
 > {
   Provider: (props: ProviderProps<TInitialState>) => ReactNode;
   useStore: <TSelected>(selector: (state: TState) => TSelected) => TSelected;
   useActions: () => TActions;
-  useExtensions: () => TExtensions;
+  useExtensions: () => ExtractExtensions<TPlugins>;
 }
 
-export function createStore<
+export function createReactStore<
   TInitialState,
   TState extends object,
   TActions extends object,
-  const TPlugins extends ReactPluginResult[] = [],
+  const TPlugins extends PluginResult[] = [],
 >(
   config: ReactStoreOptions<TInitialState, TState, TActions, TPlugins>,
-): Store<TState, TActions, TInitialState, ExtractExtensions<TPlugins>> {
-  type Extensions = ExtractExtensions<TPlugins>;
+): ReactStore<TState, TActions, TInitialState, TPlugins> {
+  type StoreInstance = CoreStore<TState, TActions, TPlugins>;
 
-  const Context = createContext<{
-    zustandStore: ZustandStoreApi<TState>;
-    actions: TActions;
-    extensions: Extensions;
-  } | null>(null);
+  const Context = createContext<StoreInstance | null>(null);
 
   const Provider = ({
     initialState,
     children,
   }: ProviderProps<TInitialState>) => {
-    const [value] = useState(() => {
-      const state = config.state(initialState);
+    const [store] = useState(() =>
+      createStore({
+        state: config.state(initialState),
+        actions: config.actions,
+        plugins: config.plugins,
+      }),
+    );
 
-      const zustandStore = zustandCreateStore<TState>(() => state);
-
-      const coreStoreApi: CoreStoreApi<TState> = {
-        getState: zustandStore.getState,
-        setState: zustandStore.setState as SetState<TState>,
-        setStateSilent: (newState) => zustandStore.setState(newState, true),
-      };
-
-      const pluginResults =
-        config.plugins?.(coreStoreApi) ?? ([] as unknown as TPlugins);
-
-      const stateChangeCallbacks = pluginResults
-        .map((p) => p.onStateChange)
-        .filter((cb): cb is NonNullable<typeof cb> => cb != null);
-
-      if (stateChangeCallbacks.length > 0) {
-        zustandStore.subscribe((state, prevState) => {
-          for (const cb of stateChangeCallbacks) {
-            cb(state, prevState);
-          }
-        });
-      }
-
-      const extensions = {} as Extensions;
-      for (const plugin of pluginResults) {
-        if ("extend" in plugin && plugin.extend) {
-          (extensions as Record<string, unknown>)[plugin.id] = plugin.extend;
-        }
-      }
-
-      const actions = config.actions(
-        coreStoreApi.setState,
-        coreStoreApi.getState,
-      );
-
-      return {
-        zustandStore,
-        actions,
-        extensions,
-      };
-    });
-
-    return <Context.Provider value={value}>{children}</Context.Provider>;
+    return <Context.Provider value={store}>{children}</Context.Provider>;
   };
 
   const useCtx = () => {
@@ -129,11 +75,19 @@ export function createStore<
 
   const useStoreHook = <TSelected,>(
     selector: (state: TState) => TSelected,
-  ): TSelected => useStore(useCtx().zustandStore, selector);
+  ): TSelected => {
+    const { store } = useCtx();
+    const selectorRef = useRef(selector);
+    selectorRef.current = selector;
+
+    return useSyncExternalStore(store.subscribe, () =>
+      selectorRef.current(store.getState()),
+    );
+  };
 
   const useActionsHook = (): TActions => useCtx().actions;
 
-  const useExtensionsHook = () => useCtx().extensions;
+  const useExtensionsHook = () => useCtx().extension;
 
   return {
     Provider,
@@ -142,5 +96,3 @@ export function createStore<
     useExtensions: useExtensionsHook,
   };
 }
-
-export type { ReactPlugin, ReactPluginResult };

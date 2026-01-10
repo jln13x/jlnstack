@@ -1,9 +1,9 @@
 import { act, renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
-import { createStore } from "./react";
+import { createReactStore } from "./react";
 
-const BearStore = createStore({
+const BearStore = createReactStore({
   name: "BearStore",
   state: (initialBears: number) => ({
     bears: initialBears,
@@ -71,20 +71,19 @@ describe("createStore", () => {
     });
 
     it("returns actions that update state", () => {
-      const { result: storeResult } = renderHook(
-        () => BearStore.useStore((s) => s.bears),
-        { wrapper: wrapper(5) },
-      );
-      const { result: actionsResult } = renderHook(
-        () => BearStore.useActions(),
+      const { result } = renderHook(
+        () => ({
+          bears: BearStore.useStore((s) => s.bears),
+          actions: BearStore.useActions(),
+        }),
         { wrapper: wrapper(5) },
       );
 
       act(() => {
-        actionsResult.current.increasePopulation(3);
+        result.current.actions.increasePopulation(3);
       });
 
-      expect(storeResult.current).toBe(5);
+      expect(result.current.bears).toBe(8);
     });
 
     it("returns stable reference across renders", () => {

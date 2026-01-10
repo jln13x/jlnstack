@@ -7,7 +7,7 @@ describe("reset plugin", () => {
   it("resets state to initial value", () => {
     const { store, extension } = createStore({
       state: { count: 0, name: "initial" },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([reset()]),
     });
 
@@ -21,7 +21,7 @@ describe("reset plugin", () => {
   it("works after multiple state changes", () => {
     const { store, extension } = createStore({
       state: { value: 1 },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([reset()]),
     });
 
@@ -36,7 +36,7 @@ describe("reset plugin", () => {
   it("returns the initial state", () => {
     const { store, extension } = createStore({
       state: { count: 0, name: "initial" },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([reset()]),
     });
 

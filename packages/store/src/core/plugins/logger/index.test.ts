@@ -9,7 +9,7 @@ describe("logger plugin", () => {
 
     const { store } = createStore({
       state: { count: 0 },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([logger({ name: "TestStore" })]),
     });
 
@@ -28,7 +28,7 @@ describe("logger plugin", () => {
 
     const { store } = createStore({
       state: { count: 0 },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([logger({ name: "TestStore", enabled: false })]),
     });
 
@@ -44,7 +44,7 @@ describe("logger plugin", () => {
 
     const { store } = createStore({
       state: { count: 0 },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([logger({ name: "TestStore" })]),
     });
 

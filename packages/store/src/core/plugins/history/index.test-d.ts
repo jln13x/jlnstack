@@ -6,7 +6,7 @@ import { history } from "./index";
 test("history extension is properly typed", () => {
   const store = createStore({
     state: { count: 0, name: "test" },
-    actions: {},
+    actions: () => ({}),
     plugins: plugins([history()]),
   });
 

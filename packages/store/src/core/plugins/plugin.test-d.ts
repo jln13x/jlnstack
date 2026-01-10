@@ -33,7 +33,7 @@ test("plugin extends store with inferred type", () => {
 
   const store = createStore({
     state: { count: 0 },
-    actions: {},
+    actions: () => ({}),
     plugins: plugins([fooPlugin(), barPlugin(), counterPlugin(), bazPlugin()]),
   });
 

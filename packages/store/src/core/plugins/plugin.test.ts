@@ -16,7 +16,7 @@ test("plugins with duplicate ids use the last one", () => {
 
   const { extension } = createStore({
     state: { count: 0 },
-    actions: {},
+    actions: () => ({}),
     plugins: plugins([first, last]),
   });
 
@@ -42,7 +42,7 @@ test("duplicate plugin ids - onStateChange runs for all", () => {
 
   const { store } = createStore({
     state: { count: 0 },
-    actions: {},
+    actions: () => ({}),
     plugins: plugins([first, last]),
   });
 
@@ -54,14 +54,14 @@ test("duplicate plugin ids - onStateChange runs for all", () => {
 test("plugin receives store api", () => {
   const { store, extension } = createStore({
     state: { count: 0 },
-    actions: {},
+    actions: () => ({}),
     plugins: plugins([
-      (api) => ({
+      ((api) => ({
         id: "getter",
         extend: {
           getCount: () => api.getState().count,
         },
-      }),
+      })) satisfies Plugin,
     ]),
   });
 
@@ -74,7 +74,7 @@ test("plugin can use setStateSilent to avoid onStateChange", () => {
 
   const { store } = createStore({
     state: { count: 0 },
-    actions: {},
+    actions: () => ({}),
     plugins: plugins([
       (_store) => ({
         id: "tracker",
@@ -95,7 +95,7 @@ test("plugin can use setStateSilent to avoid onStateChange", () => {
 test("multiple plugins with different ids", () => {
   const { extension } = createStore({
     state: { count: 0 },
-    actions: {},
+    actions: () => ({}),
     plugins: plugins([
       (_store) => ({
         id: "alpha",

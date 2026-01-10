@@ -6,6 +6,7 @@ export type StoreApi<TState> = {
   setState: SetState<TState>;
   setStateSilent: (state: TState) => void;
   getState: () => TState;
+  subscribe: (listener: () => void) => () => void;
 };
 
 export type {
@@ -14,6 +15,8 @@ export type {
   Plugin,
   PluginResult,
 } from "./plugins/types";
+
+export { plugins } from "./plugins/utils";
 
 export type Store<
   TState,

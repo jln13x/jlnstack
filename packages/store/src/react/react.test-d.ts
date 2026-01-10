@@ -1,8 +1,8 @@
 import { describe, expectTypeOf, it } from "vitest";
-import { createStore } from "./react";
+import { createReactStore } from "./react";
 
 describe("createStore types", () => {
-  const BearStore = createStore({
+  const BearStore = createReactStore({
     name: "BearStore",
     state: (initial: { bears: number; name: string }) => ({
       bears: initial.bears,

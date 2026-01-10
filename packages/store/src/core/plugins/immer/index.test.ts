@@ -7,7 +7,7 @@ describe("immer plugin", () => {
   it("allows mutative updates in setState", () => {
     const { store } = createStore({
       state: { count: 0 },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([immer()]),
     });
 
@@ -21,7 +21,7 @@ describe("immer plugin", () => {
   it("allows nested object mutations", () => {
     const { store } = createStore({
       state: { user: { name: "Alice", age: 30 } },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([immer()]),
     });
 
@@ -35,7 +35,7 @@ describe("immer plugin", () => {
   it("allows array mutations", () => {
     const { store } = createStore({
       state: { items: [] as string[] },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([immer()]),
     });
 
@@ -52,7 +52,7 @@ describe("immer plugin", () => {
   it("works with direct state replacement", () => {
     const { store } = createStore({
       state: { count: 0 },
-      actions: {},
+      actions: () => ({}),
       plugins: plugins([immer()]),
     });
 
