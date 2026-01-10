@@ -22,3 +22,18 @@ test("history extension is properly typed", () => {
     store.extension.history.futureStates,
   );
 });
+
+test("futureStates is not any", () => {
+  type IsAny<T> = 0 extends 1 & T ? true : false;
+
+  const store = createStore({
+    state: { count: 0 },
+    actions: () => ({}),
+    plugins: plugins([history()]),
+  });
+
+  type FutureStatesItem = ReturnType<
+    typeof store.extension.history.futureStates
+  >[number];
+  assertType<false>({} as IsAny<FutureStatesItem>);
+});
