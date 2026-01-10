@@ -1,0 +1,6 @@
+{
+  "title": "Store",
+  "description": "Type-safe store",
+  "root": true,
+  "pages": ["index", "installation", "usage", "plugins", "custom-plugins"]
+}

@@ -1,0 +1,62 @@
+---
+title: Usage
+description: How to use Store
+---
+
+# Usage
+
+## createStore
+
+Creates a store with a Provider, `useStore` hook, and `useActions` hook.
+
+```tsx
+import { createStore } from "@jlnstack/store/react"
+
+const CounterStore = createStore({
+  name: "CounterStore",
+  state: (initial: number) => ({ count: initial }),
+  actions: (set) => ({
+    increment: () => set((s) => ({ ...s, count: s.count + 1 })),
+    decrement: () => set((s) => ({ ...s, count: s.count - 1 })),
+  }),
+})
+
+export const { Provider, useStore, useActions } = CounterStore
+```
+
+## Provider
+
+Wraps your component tree and accepts an `initialState` prop.
+
+```tsx
+<Provider initialState={0}>
+  <Counter />
+</Provider>
+```
+
+## useStore
+
+Subscribes to state using a selector.
+
+```tsx
+function Counter() {
+  const count = useStore((state) => state.count)
+  return <div>{count}</div>
+}
+```
+
+## useActions
+
+Returns actions with a stable reference.
+
+```tsx
+function Controls() {
+  const { increment, decrement } = useActions()
+  return (
+    <>
+      <button onClick={increment}>+</button>
+      <button onClick={decrement}>-</button>
+    </>
+  )
+}
+```
