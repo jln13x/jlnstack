@@ -11,7 +11,7 @@ export function logger(options: LoggerOptions) {
 
   return definePlugin(<TState>(_store: StoreApi<TState>) => ({
     id: "logger",
-    onStateChange: (state: TState, prevState: TState) => {
+    onStateChange: (state, prevState) => {
       if (!enabled) return;
 
       const changes = getChanges(prevState as object, state as object);
