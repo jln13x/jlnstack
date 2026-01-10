@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { createStore } from "../../core";
-import { plugins } from "../../types";
 import { immer } from "./index";
 
 describe("immer plugin", () => {
@@ -8,7 +7,7 @@ describe("immer plugin", () => {
     const { store } = createStore({
       state: { count: 0 },
       actions: () => ({}),
-      plugins: plugins([immer()]),
+      plugins: [immer()],
     });
 
     store.setState((s) => {
@@ -22,7 +21,7 @@ describe("immer plugin", () => {
     const { store } = createStore({
       state: { user: { name: "Alice", age: 30 } },
       actions: () => ({}),
-      plugins: plugins([immer()]),
+      plugins: [immer()],
     });
 
     store.setState((s) => {
@@ -36,7 +35,7 @@ describe("immer plugin", () => {
     const { store } = createStore({
       state: { items: [] as string[] },
       actions: () => ({}),
-      plugins: plugins([immer()]),
+      plugins: [immer()],
     });
 
     store.setState((s) => {
@@ -53,7 +52,7 @@ describe("immer plugin", () => {
     const { store } = createStore({
       state: { count: 0 },
       actions: () => ({}),
-      plugins: plugins([immer()]),
+      plugins: [immer()],
     });
 
     store.setState({ count: 10 });

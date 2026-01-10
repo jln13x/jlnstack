@@ -9,10 +9,11 @@ const BearStore = createReactStore({
     bears: initialBears,
     fish: 10,
   }),
-  actions: (set) => ({
+  actions: (store) => ({
     increasePopulation: (by: number) =>
-      set((state) => ({ ...state, bears: state.bears + by })),
-    eatFish: () => set((state) => ({ ...state, fish: state.fish - 1 })),
+      store.setState((state) => ({ ...state, bears: state.bears + by })),
+    eatFish: () =>
+      store.setState((state) => ({ ...state, fish: state.fish - 1 })),
   }),
 });
 

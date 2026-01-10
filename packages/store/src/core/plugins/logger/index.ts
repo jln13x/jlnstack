@@ -1,4 +1,5 @@
-import type { Plugin } from "../../types";
+import type { StoreApi } from "../../types";
+import { definePlugin } from "../plugin";
 
 interface LoggerOptions {
   name: string;
@@ -8,9 +9,9 @@ interface LoggerOptions {
 export function logger(options: LoggerOptions) {
   const { enabled = true, name } = options;
 
-  return ((_store) => ({
+  return definePlugin(<TState>(_store: StoreApi<TState>) => ({
     id: "logger",
-    onStateChange: (state, prevState) => {
+    onStateChange: (state: TState, prevState: TState) => {
       if (!enabled) return;
 
       const changes = getChanges(prevState as object, state as object);
@@ -23,7 +24,7 @@ export function logger(options: LoggerOptions) {
         changes,
       );
     },
-  })) satisfies Plugin;
+  }));
 }
 
 function getChanges(prev: object, next: object): Record<string, unknown> {

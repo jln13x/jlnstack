@@ -1,7 +1,8 @@
-import type { Plugin } from "../../types";
+import type { StoreApi } from "../../types";
+import { definePlugin } from "../plugin";
 
 export function reset() {
-  return ((store) => {
+  return definePlugin(<TState>(store: StoreApi<TState>) => {
     const initialState = store.getState();
     return {
       id: "reset",
@@ -12,5 +13,5 @@ export function reset() {
         },
       },
     };
-  }) satisfies Plugin;
+  });
 }

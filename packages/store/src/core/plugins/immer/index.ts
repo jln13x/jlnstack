@@ -1,8 +1,9 @@
 import { produce } from "immer";
-import type { Plugin } from "../../types";
+import type { StoreApi } from "../../types";
+import { definePlugin } from "../plugin";
 
 export function immer() {
-  return ((_store) => ({
+  return definePlugin(<TState>(_store: StoreApi<TState>) => ({
     id: "immer",
     middleware: (setState, getState) => (updater: unknown) => {
       if (typeof updater === "function") {
@@ -11,5 +12,5 @@ export function immer() {
         setState(updater);
       }
     },
-  })) satisfies Plugin;
+  }));
 }

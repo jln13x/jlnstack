@@ -12,8 +12,11 @@ export type StoreApi<TState> = {
 export type {
   ExtractExtensions,
   Middleware,
-  Plugin,
   PluginResult,
+} from "./plugins/plugin";
+
+export type {
+  Plugin,
 } from "./plugins/types";
 
 export { plugins } from "./plugins/utils";
@@ -21,10 +24,10 @@ export { plugins } from "./plugins/utils";
 export type Store<
   TState,
   TActions,
-  TPlugins extends import("./plugins/types").PluginResult[],
+  TResults extends import("./plugins/plugin").PluginResult[],
 > = {
   state: TState;
   actions: TActions;
   store: StoreApi<TState>;
-  extension: import("./plugins/types").ExtractExtensions<TPlugins>;
+  extension: import("./plugins/plugin").ExtractExtensions<TResults>;
 };

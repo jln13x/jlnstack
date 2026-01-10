@@ -45,12 +45,12 @@
     "./package.json": "./package.json",
     ".": {
       "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
+        "types": "./dist/core/core.d.mts",
+        "default": "./dist/core/core.mjs"
       },
       "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
+        "types": "./dist/core/core.d.cts",
+        "default": "./dist/core/core.cjs"
       }
     },
     "./plugins": {

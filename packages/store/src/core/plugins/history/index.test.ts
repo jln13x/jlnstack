@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { createStore } from "../../core";
-import { plugins } from "../../types";
 import { history } from "./index";
 
 describe("history plugin", () => {
@@ -8,7 +7,7 @@ describe("history plugin", () => {
     const { store, extension } = createStore({
       state: { count: 0 },
       actions: () => ({}),
-      plugins: plugins([history()]),
+      plugins: [history()],
     });
 
     store.setState({ count: 1 });
@@ -25,7 +24,7 @@ describe("history plugin", () => {
     const { store, extension } = createStore({
       state: { count: 0 },
       actions: () => ({}),
-      plugins: plugins([history()]),
+      plugins: [history()],
     });
 
     store.setState({ count: 1 });
@@ -40,7 +39,7 @@ describe("history plugin", () => {
     const { store, extension } = createStore({
       state: { count: 0 },
       actions: () => ({}),
-      plugins: plugins([history()]),
+      plugins: [history()],
     });
 
     store.setState({ count: 1 });
@@ -55,7 +54,7 @@ describe("history plugin", () => {
     const { store, extension } = createStore({
       state: { count: 0 },
       actions: () => ({}),
-      plugins: plugins([history({ limit: 2 })]),
+      plugins: [history({ limit: 2 })],
     });
 
     store.setState({ count: 1 });
@@ -69,7 +68,7 @@ describe("history plugin", () => {
     const { store, extension } = createStore({
       state: { count: 0 },
       actions: () => ({}),
-      plugins: plugins([history()]),
+      plugins: [history()],
     });
 
     expect(extension.history.canUndo()).toBe(false);
@@ -86,7 +85,7 @@ describe("history plugin", () => {
     const { store, extension } = createStore({
       state: { count: 0 },
       actions: () => ({}),
-      plugins: plugins([history()]),
+      plugins: [history()],
     });
 
     store.setState({ count: 1 });

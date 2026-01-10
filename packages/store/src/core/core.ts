@@ -1,17 +1,18 @@
 import { createStore as zustandCreateStore } from "zustand/vanilla";
-import type { PluginResult, SetState, Store, StoreApi } from "./types";
+import type { ExtractExtensions, PluginResult } from "./plugins/plugin";
+import type { SetState, Store, StoreApi } from "./types";
 
-export type StoreOptions<TState, TActions, TPlugins extends PluginResult[]> = {
+export type StoreOptions<TState, TActions, TResults extends PluginResult[]> = {
   state: TState;
-  actions: (set: SetState<TState>, get: () => TState) => TActions;
-  plugins?: (store: StoreApi<TState>) => TPlugins;
+  actions: (store: StoreApi<TState>) => TActions;
+  plugins?: { [K in keyof TResults]: (store: StoreApi<TState>) => TResults[K] };
 };
 
-export function createStore<TState, TActions, TPlugins extends PluginResult[]>(
-  options: StoreOptions<TState, TActions, TPlugins>,
-): Store<TState, TActions, TPlugins> {
+export function createStore<TState, TActions, TResults extends PluginResult[]>(
+  options: StoreOptions<TState, TActions, TResults>,
+): Store<TState, TActions, TResults> {
   const zustandStore = zustandCreateStore<TState>(() => options.state);
-  let pluginResults: TPlugins;
+  let pluginResults: TResults;
   let silent = false;
 
   const baseSetState: SetState<TState> = (updater) => {
@@ -44,7 +45,8 @@ export function createStore<TState, TActions, TPlugins extends PluginResult[]>(
       }),
   };
 
-  pluginResults = (options.plugins?.(store) ?? []) as TPlugins;
+  pluginResults = (options.plugins?.map((factory) => factory(store)) ??
+    []) as TResults;
 
   const middlewares = pluginResults
     .map((p) => p.middleware)
@@ -55,14 +57,14 @@ export function createStore<TState, TActions, TPlugins extends PluginResult[]>(
     baseSetState,
   );
 
-  const extension = {} as Store<TState, TActions, TPlugins>["extension"];
+  const extension = {} as ExtractExtensions<TResults>;
   for (const plugin of pluginResults) {
     if ("extend" in plugin && plugin.extend) {
       (extension as Record<string, unknown>)[plugin.id] = plugin.extend;
     }
   }
 
-  const actions = options.actions(store.setState, store.getState);
+  const actions = options.actions(store);
 
   return {
     state: options.state,

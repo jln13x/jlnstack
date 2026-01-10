@@ -9,10 +9,10 @@ describe("createStore types", () => {
       name: initial.name,
       fish: 10,
     }),
-    actions: (set, get) => ({
+    actions: (store) => ({
       increasePopulation: (by: number) =>
-        set((state) => ({ ...state, bears: state.bears + by })),
-      getName: () => get().name,
+        store.setState((state) => ({ ...state, bears: state.bears + by })),
+      getName: () => store.getState().name,
     }),
   });
 

@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 import { createStore } from "../../core";
-import { plugins } from "../../types";
 import { logger } from "./index";
 
 describe("logger plugin", () => {
@@ -10,7 +9,7 @@ describe("logger plugin", () => {
     const { store } = createStore({
       state: { count: 0 },
       actions: () => ({}),
-      plugins: plugins([logger({ name: "TestStore" })]),
+      plugins: [logger({ name: "TestStore" })],
     });
 
     store.setState({ count: 5 });
@@ -29,7 +28,7 @@ describe("logger plugin", () => {
     const { store } = createStore({
       state: { count: 0 },
       actions: () => ({}),
-      plugins: plugins([logger({ name: "TestStore", enabled: false })]),
+      plugins: [logger({ name: "TestStore", enabled: false })],
     });
 
     store.setState({ count: 5 });
@@ -45,7 +44,7 @@ describe("logger plugin", () => {
     const { store } = createStore({
       state: { count: 0 },
       actions: () => ({}),
-      plugins: plugins([logger({ name: "TestStore" })]),
+      plugins: [logger({ name: "TestStore" })],
     });
 
     store.setState({ count: 0 });

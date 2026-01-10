@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { createStore } from "../../core";
-import { plugins } from "../../types";
 import { reset } from "./index";
 
 describe("reset plugin", () => {
@@ -8,7 +7,7 @@ describe("reset plugin", () => {
     const { store, extension } = createStore({
       state: { count: 0, name: "initial" },
       actions: () => ({}),
-      plugins: plugins([reset()]),
+      plugins: [reset()],
     });
 
     store.setState({ count: 10, name: "modified" });
@@ -22,7 +21,7 @@ describe("reset plugin", () => {
     const { store, extension } = createStore({
       state: { value: 1 },
       actions: () => ({}),
-      plugins: plugins([reset()]),
+      plugins: [reset()],
     });
 
     store.setState({ value: 2 });
@@ -37,7 +36,7 @@ describe("reset plugin", () => {
     const { store, extension } = createStore({
       state: { count: 0, name: "initial" },
       actions: () => ({}),
-      plugins: plugins([reset()]),
+      plugins: [reset()],
     });
 
     store.setState({ count: 10, name: "modified" });

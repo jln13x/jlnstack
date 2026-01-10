@@ -1,5 +1,5 @@
 import type { StoreApi } from "../../types";
-import { definePlugin } from "../v2";
+import { definePlugin } from "../plugin";
 
 export interface HistoryOptions {
   limit?: number;
