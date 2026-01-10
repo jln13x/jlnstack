@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createStore } from "../../store";
+import { createStore } from "../../core";
 import { plugins } from "../../types";
 import { logger } from "./index";
 

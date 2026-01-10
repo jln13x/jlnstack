@@ -4,7 +4,7 @@ import {
   type StoreApi as ZustandStoreApi,
   createStore as zustandCreateStore,
 } from "zustand";
-import type { StoreOptions } from "../core/store";
+import type { StoreOptions } from "../core/core";
 import type {
   StoreApi as CoreStoreApi,
   PluginResult,

@@ -1,7 +1,7 @@
 import { assertType, test } from "vitest";
-import { createStore } from "../store";
+import { createStore } from "../core";
 import type { Plugin } from "../types";
-import { plugins } from "../types";
+import { plugins } from "./utils";
 
 const bazPlugin = () =>
   (() => ({

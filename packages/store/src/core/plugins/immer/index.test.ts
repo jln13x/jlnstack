@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createStore } from "../../store";
+import { createStore } from "../../core";
 import { plugins } from "../../types";
 import { immer } from "./index";
 

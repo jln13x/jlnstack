@@ -1,5 +1,5 @@
 import { assertType, test } from "vitest";
-import { createStore } from "../../store";
+import { createStore } from "../../core";
 import { plugins } from "../../types";
 import { history } from "./index";
 
