@@ -1,5 +1,5 @@
 export type {
   FormContextValue,
-  FormRegistration,
+  FormProps,
   FormSubmitHandler,
 } from "./types";

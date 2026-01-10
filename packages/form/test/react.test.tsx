@@ -1,6 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { FormProvider, useFormContext } from "../src/react";
+import type { FormProps } from "../src/types";
 
 describe("useFormContext", () => {
   it("throws when used outside FormProvider", () => {
@@ -19,7 +20,6 @@ describe("FormProvider", () => {
     const { result } = renderHook(() => useFormContext(), { wrapper });
     expect(result.current).toBeDefined();
     expect(result.current.registerForm).toBeInstanceOf(Function);
-    expect(result.current.unregisterForm).toBeInstanceOf(Function);
     expect(result.current.submitForm).toBeInstanceOf(Function);
   });
 
@@ -35,59 +35,69 @@ describe("registerForm", () => {
     <FormProvider>{children}</FormProvider>
   );
 
-  it("returns a form id", () => {
+  it("returns form props with id and ref", () => {
     const { result } = renderHook(() => useFormContext(), { wrapper });
-    let id: string;
+    let formProps: FormProps;
 
     act(() => {
-      id = result.current.registerForm(() => {});
+      formProps = result.current.registerForm(() => {});
     });
 
-    expect(id!).toBeDefined();
-    expect(typeof id!).toBe("string");
-    expect(id!.startsWith("form-")).toBe(true);
+    expect(formProps!).toBeDefined();
+    expect(formProps!.id).toBeDefined();
+    expect(typeof formProps!.id).toBe("string");
+    expect(formProps!.id.startsWith("form-")).toBe(true);
+    expect(formProps!.ref).toBeInstanceOf(Function);
   });
 
-  it("sets isFormRegistered to true", () => {
+  it("sets isFormRegistered to true when ref is called with a node", () => {
     const { result } = renderHook(() => useFormContext(), { wrapper });
 
     expect(result.current.isFormRegistered).toBe(false);
 
+    let formProps: FormProps;
     act(() => {
-      result.current.registerForm(() => {});
+      formProps = result.current.registerForm(() => {});
+    });
+
+    act(() => {
+      formProps.ref(document.createElement("form"));
     });
 
     expect(result.current.isFormRegistered).toBe(true);
   });
 
-  it("sets formId to the registered id", () => {
+  it("sets formId when form is registered", () => {
     const { result } = renderHook(() => useFormContext(), { wrapper });
-    let id: string;
+    let formProps: FormProps;
 
     act(() => {
-      id = result.current.registerForm(() => {});
+      formProps = result.current.registerForm(() => {});
     });
 
-    expect(result.current.formId).toBe(id!);
+    act(() => {
+      formProps.ref(document.createElement("form"));
+    });
+
+    expect(result.current.formId).toBe(formProps!.id);
   });
-});
 
-describe("unregisterForm", () => {
-  const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <FormProvider>{children}</FormProvider>
-  );
-
-  it("clears the registration", () => {
+  it("unregisters when ref is called with null", () => {
     const { result } = renderHook(() => useFormContext(), { wrapper });
+    let formProps: FormProps;
 
     act(() => {
-      result.current.registerForm(() => {});
+      formProps = result.current.registerForm(() => {});
+    });
+
+    act(() => {
+      formProps.ref(document.createElement("form"));
     });
 
     expect(result.current.isFormRegistered).toBe(true);
 
     act(() => {
-      result.current.unregisterForm();
+      formProps.ref(null);
     });
 
     expect(result.current.isFormRegistered).toBe(false);
@@ -111,9 +121,14 @@ describe("submitForm", () => {
   it("calls the registered submit handler", () => {
     const { result } = renderHook(() => useFormContext(), { wrapper });
     const onSubmit = vi.fn();
+    let formProps: FormProps;
 
     act(() => {
-      result.current.registerForm(onSubmit);
+      formProps = result.current.registerForm(onSubmit);
+    });
+
+    act(() => {
+      formProps.ref(document.createElement("form"));
     });
 
     act(() => {
@@ -126,9 +141,14 @@ describe("submitForm", () => {
   it("handles async submit handlers", async () => {
     const { result } = renderHook(() => useFormContext(), { wrapper });
     const onSubmit = vi.fn().mockResolvedValue(undefined);
+    let formProps: FormProps;
 
     act(() => {
-      result.current.registerForm(onSubmit);
+      formProps = result.current.registerForm(onSubmit);
+    });
+
+    act(() => {
+      formProps.ref(document.createElement("form"));
     });
 
     await act(async () => {
