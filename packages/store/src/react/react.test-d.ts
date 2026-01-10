@@ -42,8 +42,7 @@ describe("createReactStore with plugins", () => {
       name: "test",
     }),
     actions: (store) => ({
-      increment: () =>
-        store.setState((s) => ({ ...s, count: s.count + 1 })),
+      increment: () => store.setState((s) => ({ ...s, count: s.count + 1 })),
     }),
     plugins: [history()],
   });
@@ -55,16 +54,16 @@ describe("createReactStore with plugins", () => {
   });
 
   it("history extension has correct methods", () => {
-    expectTypeOf(
-      StoreWithHistory.useExtensions,
-    ).returns.toHaveProperty("history").toMatchTypeOf<{
-      undo: () => void;
-      redo: () => void;
-      clear: () => void;
-      canUndo: () => boolean;
-      canRedo: () => boolean;
-      pastStates: () => { count: number; name: string }[];
-      futureStates: () => { count: number; name: string }[];
-    }>();
+    expectTypeOf(StoreWithHistory.useExtensions)
+      .returns.toHaveProperty("history")
+      .toMatchTypeOf<{
+        undo: () => void;
+        redo: () => void;
+        clear: () => void;
+        canUndo: () => boolean;
+        canRedo: () => boolean;
+        pastStates: () => { count: number; name: string }[];
+        futureStates: () => { count: number; name: string }[];
+      }>();
   });
 });
