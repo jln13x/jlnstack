@@ -53,16 +53,6 @@
         "default": "./dist/index.cjs"
       }
     },
-    "./react": {
-      "import": {
-        "types": "./dist/react.d.mts",
-        "default": "./dist/react.mjs"
-      },
-      "require": {
-        "types": "./dist/react.d.cts",
-        "default": "./dist/react.cjs"
-      }
-    },
     "./plugins": {
       "import": {
         "types": "./dist/plugins/index.d.mts",
@@ -71,6 +61,16 @@
       "require": {
         "types": "./dist/plugins/index.d.cts",
         "default": "./dist/plugins/index.cjs"
+      }
+    },
+    "./react": {
+      "import": {
+        "types": "./dist/react.d.mts",
+        "default": "./dist/react.mjs"
+      },
+      "require": {
+        "types": "./dist/react.d.cts",
+        "default": "./dist/react.cjs"
       }
     },
     "./react/plugins": {
