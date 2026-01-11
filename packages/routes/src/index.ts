@@ -88,6 +88,7 @@ type ExtractParamType<T> = T extends StandardSchemaV1
   ? StandardSchemaV1.InferOutput<T>
   : T;
 
+// Find param in current path, children, or parent routes
 type FindParamInMap<
   Routes extends string,
   CurrentPath extends string,
@@ -103,15 +104,37 @@ type FindParamInMap<
     : never;
 }[Routes];
 
+// Find param schema in parent routes (for inheritance)
+type FindParamInParentRoutes<
+  Routes extends string,
+  CurrentPath extends string,
+  ParamName extends string,
+  ParamMap extends ParamMapConstraint<Routes>,
+> = {
+  [R in Routes]: CurrentPath extends `${R}/${string}`
+    ? R extends keyof ParamMap
+      ? ParamName extends keyof NonNullable<ParamMap[R]>
+        ? ExtractParamType<NonNullable<ParamMap[R]>[ParamName]>
+        : never
+      : never
+    : never;
+}[Routes];
+
 type GetParamType<
   Routes extends string,
   CurrentPath extends string,
   ParamName extends string,
   ParamMap extends ParamMapConstraint<Routes>,
   DefaultType,
-> = [FindParamInMap<Routes, CurrentPath, ParamName, ParamMap>] extends [never]
-  ? DefaultType
-  : FindParamInMap<Routes, CurrentPath, ParamName, ParamMap>;
+> =
+  // First try to find in current path and children (existing behavior)
+  [FindParamInMap<Routes, CurrentPath, ParamName, ParamMap>] extends [never]
+    ? // If not found, try parent routes (inheritance)
+      [FindParamInParentRoutes<Routes, CurrentPath, ParamName, ParamMap>] extends
+        [never]
+      ? DefaultType
+      : FindParamInParentRoutes<Routes, CurrentPath, ParamName, ParamMap>
+    : FindParamInMap<Routes, CurrentPath, ParamName, ParamMap>;
 
 type SegmentName<S extends string> = S extends `[...${infer N}]`
   ? N
@@ -412,6 +435,37 @@ function findMatchingRoute(
   return undefined;
 }
 
+function getInheritedParamSchemas(
+  segments: string[],
+  paramSchemas: Record<string, Record<string, unknown>>,
+): Record<string, unknown> {
+  const inherited: Record<string, unknown> = {};
+
+  // Check progressively longer prefixes for matching parent routes
+  // Start from 1 segment up to (length - 1) to exclude exact match
+  for (let prefixLen = 1; prefixLen < segments.length; prefixLen++) {
+    const prefixSegments = segments.slice(0, prefixLen);
+
+    for (const routePattern of Object.keys(paramSchemas)) {
+      const patternSegments = routePattern.split("/").filter(Boolean);
+      if (patternSegments.length !== prefixLen) continue;
+
+      const matches = patternSegments.every((pattern, j) => {
+        if (pattern.startsWith("[") && pattern.endsWith("]")) return true;
+        if (pattern.startsWith("[[") && pattern.endsWith("]]")) return true;
+        return pattern === prefixSegments[j];
+      });
+
+      if (matches) {
+        // Later (more specific) parents override earlier ones
+        Object.assign(inherited, paramSchemas[routePattern]);
+      }
+    }
+  }
+
+  return inherited;
+}
+
 function validateParams(
   params: Record<string, unknown>,
   schemas: Record<string, unknown>,
@@ -486,13 +540,18 @@ function createRoutesWithConfig<
 
     let params = rawParams;
     if (Object.keys(paramSchemas).length > 0) {
+      // Get inherited schemas from parent routes
+      const inheritedSchemas = getInheritedParamSchemas(segments, paramSchemas);
+
+      // Get current route's schemas (if any)
       const matchingRoute = findMatchingRoute(segments, paramSchemas);
-      if (matchingRoute && matchingRoute in paramSchemas) {
-        const routeSchemas = paramSchemas[matchingRoute] as Record<
-          string,
-          unknown
-        >;
-        params = validateParams(rawParams, routeSchemas) as typeof rawParams;
+      const routeSchemas = matchingRoute ? paramSchemas[matchingRoute] ?? {} : {};
+
+      // Route-level schemas override inherited ones
+      const mergedSchemas = { ...inheritedSchemas, ...routeSchemas };
+
+      if (Object.keys(mergedSchemas).length > 0) {
+        params = validateParams(rawParams, mergedSchemas) as typeof rawParams;
       }
     }
 

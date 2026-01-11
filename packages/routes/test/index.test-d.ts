@@ -360,3 +360,98 @@ describe("search params", () => {
     expectTypeOf(route).toEqualTypeOf<"/items?tags=a&tags=b&tags=c">();
   });
 });
+
+describe("param schema inheritance", () => {
+  test("child route inherits param type from parent", () => {
+    type Routes =
+      | "/app/[locale]"
+      | "/app/[locale]/dashboard"
+      | "/app/[locale]/settings";
+
+    const routes = createRoutes<Routes>()({
+      "/app/[locale]": { params: { locale: "en" as "en" | "de" } },
+      "/app/[locale]/dashboard": {},
+      "/app/[locale]/settings": {},
+    });
+
+    // Child routes should accept the inherited type
+    routes.app.locale.dashboard.getRoute({ locale: "en" });
+    routes.app.locale.dashboard.getRoute({ locale: "de" });
+    // @ts-expect-error - locale should be "en" | "de", not arbitrary string
+    routes.app.locale.dashboard.getRoute({ locale: "fr" });
+  });
+
+  // Note: Override at child route is supported at RUNTIME but not at the type level.
+  // The type system uses accumulated params from parent levels, so narrowing doesn't work.
+  // If you need strict type narrowing, define separate route types or use explicit casts.
+
+  test("multi-level inheritance works", () => {
+    type Routes =
+      | "/[locale]"
+      | "/[locale]/app"
+      | "/[locale]/app/[id]"
+      | "/[locale]/app/[id]/edit";
+
+    const routes = createRoutes<Routes>()({
+      "/[locale]": { params: { locale: "en" as "en" | "de" } },
+      "/[locale]/app": {},
+      "/[locale]/app/[id]": { params: { id: 42 as number } },
+      "/[locale]/app/[id]/edit": {},
+    });
+
+    // edit inherits both locale (from grandparent) and id (from parent)
+    routes.locale.app.id.edit.getRoute({ locale: "en", id: 42 });
+    // @ts-expect-error - locale should be "en" | "de"
+    routes.locale.app.id.edit.getRoute({ locale: "fr", id: 42 });
+    // @ts-expect-error - id should be number
+    routes.locale.app.id.edit.getRoute({ locale: "en", id: "invalid" });
+  });
+
+  test("different branches can have different types for same param name", () => {
+    type Routes =
+      | "/app/[locale]"
+      | "/app/[locale]/dashboard"
+      | "/landing/[locale]"
+      | "/landing/[locale]/home";
+
+    const routes = createRoutes<Routes>()({
+      "/app/[locale]": { params: { locale: "en" as "en" | "de" | "fr" } },
+      "/app/[locale]/dashboard": {},
+      "/landing/[locale]": { params: { locale: "en" as "en" | "de" } },
+      "/landing/[locale]/home": {},
+    });
+
+    // app branch accepts 3 languages
+    routes.app.locale.dashboard.getRoute({ locale: "fr" });
+
+    // landing branch only accepts 2
+    // @ts-expect-error - landing only supports "en" | "de"
+    routes.landing.locale.home.getRoute({ locale: "fr" });
+  });
+
+  test("schema inheritance works with StandardSchema", () => {
+    type Routes = "/users/[id]" | "/users/[id]/posts";
+
+    const routes = createRoutes<Routes>()({
+      "/users/[id]": { params: { id: numberSchema } },
+      "/users/[id]/posts": {},
+    });
+
+    // Posts inherits number type from parent
+    routes.users.id.posts.getRoute({ id: 42 });
+    // @ts-expect-error - id should be number from inherited schema
+    routes.users.id.posts.getRoute({ id: "invalid" });
+  });
+
+  test("return type reflects inherited param types", () => {
+    type Routes = "/app/[locale]" | "/app/[locale]/dashboard";
+
+    const routes = createRoutes<Routes>()({
+      "/app/[locale]": { params: { locale: "en" as "en" | "de" } },
+      "/app/[locale]/dashboard": {},
+    });
+
+    const route = routes.app.locale.dashboard.getRoute({ locale: "en" });
+    expectTypeOf(route).toEqualTypeOf<"/app/en/dashboard">();
+  });
+});
