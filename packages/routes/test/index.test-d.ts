@@ -18,6 +18,11 @@ test("root route returns literal '/'", () => {
   expectTypeOf(route).toEqualTypeOf<"/">();
 });
 
+test("empty string index is not valid", () => {
+  // @ts-expect-error - routes[""] should not be valid, only routes.getRoute() for root
+  routes[""].getRoute();
+});
+
 test("static segment returns literal path", () => {
   const route = routes.dashboard.getRoute();
   expectTypeOf(route).toEqualTypeOf<"/dashboard">();
