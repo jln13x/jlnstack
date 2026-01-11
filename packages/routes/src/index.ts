@@ -121,14 +121,14 @@ type SegmentName<S extends string> = S extends `[...${infer N}]`
       ? N
       : S;
 
-type ChildSegments<
-  Routes extends string,
-  Path extends string,
-> = Routes extends `${Path}/${infer Next}/${string}`
-  ? SegmentName<Next>
-  : Routes extends `${Path}/${infer Next}`
+type ChildSegments<Routes extends string, Path extends string> = Exclude<
+  Routes extends `${Path}/${infer Next}/${string}`
     ? SegmentName<Next>
-    : never;
+    : Routes extends `${Path}/${infer Next}`
+      ? SegmentName<Next>
+      : never,
+  ""
+>;
 
 type IsDynamicSegment<S extends string> = S extends
   | `[${string}]`
