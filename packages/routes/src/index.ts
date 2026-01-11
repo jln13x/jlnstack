@@ -126,15 +126,14 @@ type GetParamType<
   ParamName extends string,
   ParamMap extends ParamMapConstraint<Routes>,
   DefaultType,
-> =
-  // First try to find in current path and children (existing behavior)
-  [FindParamInMap<Routes, CurrentPath, ParamName, ParamMap>] extends [never]
-    ? // If not found, try parent routes (inheritance)
-      [FindParamInParentRoutes<Routes, CurrentPath, ParamName, ParamMap>] extends
-        [never]
-      ? DefaultType
-      : FindParamInParentRoutes<Routes, CurrentPath, ParamName, ParamMap>
-    : FindParamInMap<Routes, CurrentPath, ParamName, ParamMap>;
+> = [FindParamInMap<Routes, CurrentPath, ParamName, ParamMap>] extends [never] // First try to find in current path and children (existing behavior)
+  ? // If not found, try parent routes (inheritance)
+    [
+      FindParamInParentRoutes<Routes, CurrentPath, ParamName, ParamMap>,
+    ] extends [never]
+    ? DefaultType
+    : FindParamInParentRoutes<Routes, CurrentPath, ParamName, ParamMap>
+  : FindParamInMap<Routes, CurrentPath, ParamName, ParamMap>;
 
 type SegmentName<S extends string> = S extends `[...${infer N}]`
   ? N
@@ -545,7 +544,9 @@ function createRoutesWithConfig<
 
       // Get current route's schemas (if any)
       const matchingRoute = findMatchingRoute(segments, paramSchemas);
-      const routeSchemas = matchingRoute ? paramSchemas[matchingRoute] ?? {} : {};
+      const routeSchemas = matchingRoute
+        ? (paramSchemas[matchingRoute] ?? {})
+        : {};
 
       // Route-level schemas override inherited ones
       const mergedSchemas = { ...inheritedSchemas, ...routeSchemas };

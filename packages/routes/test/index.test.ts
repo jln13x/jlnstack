@@ -344,7 +344,7 @@ describe("param schema inheritance", () => {
   it("works when only some params are inherited", () => {
     type Routes = "/app/[locale]/users/[id]";
 
-    const localeSchema = createMockSchema((v) => String(v).toUpperCase());
+    const _localeSchema = createMockSchema((v) => String(v).toUpperCase());
 
     const routes = createRoutes<Routes>()({
       // Only locale has a schema, id doesn't

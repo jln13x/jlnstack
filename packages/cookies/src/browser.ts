@@ -43,10 +43,12 @@ function setCookie(name: string, value: string, options?: CookieOptions): void {
     parts.push(`samesite=${options.sameSite}`);
   }
 
+  // biome-ignore lint/suspicious/noDocumentCookie: Intentional use of document.cookie for cookie management
   document.cookie = parts.join("; ");
 }
 
 function deleteCookie(name: string): void {
+  // biome-ignore lint/suspicious/noDocumentCookie: Intentional use of document.cookie for cookie deletion
   document.cookie = `${encodeURIComponent(name)}=; max-age=0`;
 }
 
