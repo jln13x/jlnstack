@@ -2,7 +2,6 @@ import {
   createContext,
   type ReactNode,
   useContext,
-  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -17,6 +16,11 @@ import type {
 
 export type ReactPluginResult = PluginResult & {
   useHook?: () => void;
+};
+
+const PluginHookRunner = ({ hook }: { hook: () => void }) => {
+  hook();
+  return null;
 };
 
 type ReactStoreOptions<
@@ -45,6 +49,12 @@ interface ReactStore<
   useStore: <TSelected>(selector: (state: TState) => TSelected) => TSelected;
   useActions: () => TActions;
   useExtensions: () => ExtractExtensions<TResults>;
+  usePlugins: {
+    (): ExtractExtensions<TResults>;
+    <TSelected>(
+      selector: (plugins: ExtractExtensions<TResults>) => TSelected,
+    ): TSelected;
+  };
 }
 
 type ContextValue<
@@ -80,19 +90,21 @@ export function createReactStore<
 
       return store as ContextValue<TState, TActions, TResults>;
     });
+    const pluginResults = value.plugins;
 
-    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-    const pluginResults = useMemo(
-      () => config.plugins?.map((factory) => factory(value.store)) ?? [],
-      [value.store],
+    return (
+      <Context.Provider value={value}>
+        {pluginResults.map((plugin, index) =>
+          plugin.useHook ? (
+            <PluginHookRunner
+              key={`${plugin.id}-${index}`}
+              hook={plugin.useHook}
+            />
+          ) : null,
+        )}
+        {children}
+      </Context.Provider>
     );
-
-    for (const plugin of pluginResults) {
-      // biome-ignore lint/correctness/useHookAtTopLevel: <explanation>
-      plugin.useHook?.();
-    }
-
-    return <Context.Provider value={value}>{children}</Context.Provider>;
   };
 
   const useCtx = () => {
@@ -117,10 +129,30 @@ export function createReactStore<
 
   const useExtensionsHook = () => useCtx().extension;
 
+  function usePluginsHook(): ExtractExtensions<TResults>;
+  function usePluginsHook<TSelected>(
+    selector: (plugins: ExtractExtensions<TResults>) => TSelected,
+  ): TSelected;
+  function usePluginsHook<TSelected>(
+    selector?: (plugins: ExtractExtensions<TResults>) => TSelected,
+  ): ExtractExtensions<TResults> | TSelected {
+    const { store, extension } = useCtx();
+
+    // Subscribe to state changes - triggers re-render so plugin getters return fresh values
+    useSyncExternalStore(
+      store.subscribe,
+      () => ({}),
+      () => ({}),
+    );
+
+    return selector ? selector(extension) : extension;
+  }
+
   return {
     Provider,
     useStore: useStoreHook,
     useActions: useActionsHook,
     useExtensions: useExtensionsHook,
+    usePlugins: usePluginsHook,
   };
 }

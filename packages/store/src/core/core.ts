@@ -13,7 +13,6 @@ export function createStore<TState, TActions, TResults extends PluginResult[]>(
 ): Store<TState, TActions, TResults> {
   const zustandStore = zustandCreateStore<TState>(() => options.state);
   let pluginResults: TResults;
-  let silent = false;
 
   const baseSetState: SetState<TState> = (updater) => {
     const prevState = zustandStore.getState();
@@ -34,15 +33,10 @@ export function createStore<TState, TActions, TResults extends PluginResult[]>(
   const store: StoreApi<TState> = {
     getState: zustandStore.getState,
     setStateSilent: (newState) => {
-      silent = true;
       zustandStore.setState(newState, true);
-      silent = false;
     },
     setState: (updater) => currentSetState(updater),
-    subscribe: (listener) =>
-      zustandStore.subscribe(() => {
-        if (!silent) listener();
-      }),
+    subscribe: zustandStore.subscribe,
   };
 
   pluginResults = (options.plugins?.map((factory) => factory(store)) ??
@@ -71,5 +65,6 @@ export function createStore<TState, TActions, TResults extends PluginResult[]>(
     actions,
     store,
     extension,
+    plugins: pluginResults,
   };
 }

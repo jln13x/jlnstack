@@ -26,4 +26,5 @@ export type Store<TState, TActions, TResults extends PluginResult[]> = {
   actions: TActions;
   store: StoreApi<TState>;
   extension: ExtractExtensions<TResults>;
+  plugins: TResults;
 };
