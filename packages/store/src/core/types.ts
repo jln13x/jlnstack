@@ -1,5 +1,7 @@
+import type { ExtractExtensions, PluginResult } from "./plugins/plugin";
+
 export type SetState<TState> = (
-  updater: TState | ((state: TState) => TState | void),
+  updater: TState | ((state: TState) => TState),
 ) => void;
 
 export type StoreApi<TState> = {
@@ -19,13 +21,9 @@ export type { Plugin } from "./plugins/types";
 
 export { plugins } from "./plugins/utils";
 
-export type Store<
-  TState,
-  TActions,
-  TResults extends import("./plugins/plugin").PluginResult[],
-> = {
+export type Store<TState, TActions, TResults extends PluginResult[]> = {
   state: TState;
   actions: TActions;
   store: StoreApi<TState>;
-  extension: import("./plugins/plugin").ExtractExtensions<TResults>;
+  extension: ExtractExtensions<TResults>;
 };
