@@ -59,7 +59,7 @@
         "default": "./dist/core/plugins/index.mjs"
       },
       "require": {
-        "types": "./dist/plugins/index.d.cts",
+        "types": "./dist/core/plugins/index.d.cts",
         "default": "./dist/plugins/index.cjs"
       }
     },
