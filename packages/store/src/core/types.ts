@@ -15,9 +15,7 @@ export type {
   PluginResult,
 } from "./plugins/plugin";
 
-export type {
-  Plugin,
-} from "./plugins/types";
+export type { Plugin } from "./plugins/types";
 
 export { plugins } from "./plugins/utils";
 
