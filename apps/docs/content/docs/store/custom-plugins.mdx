@@ -9,167 +9,168 @@ Create your own plugins to extend store functionality.
 
 ## Plugin Interface
 
-```ts
-import { createPlugin } from "@jlnstack/store"
+Plugins are functions that receive the store API and return a plugin result.
 
-const myPlugin = createPlugin({
+```ts
+import type { Plugin } from "@jlnstack/store/plugins"
+
+const myPlugin = ((store) => ({
   id: "my-plugin",
-  middleware: (creator) => creator,
+  middleware: (setState, getState) => (updater) => {
+    setState(updater)
+  },
   onStateChange: (state, prevState) => {},
-  onActionsCreated: (actions) => actions,
-  extend: (store, initialState) => ({}),
-})
+  extend: {
+    hello: () => "world",
+  },
+})) satisfies Plugin
 ```
 
 ## Plugin Hooks
 
 ### `id`
 
-Required unique identifier. Extensions are accessed via `extensions[id]`.
+Required unique identifier. Extensions are accessed via `extension[id]`.
 
 ### `middleware`
 
-Wraps the store creator. Useful for integrating zustand middleware.
+Wraps `setState`. Receives `(setState, getState)` and returns a new `setState`.
+Useful for logging, immer-style updates, or other behaviors.
 
 ```ts
-createPlugin({
-  id: "custom-middleware",
-  middleware: (creator) => () => {
-    console.log("Store created")
-    return creator()
+import type { Plugin } from "@jlnstack/store/plugins"
+
+const debug = ((_) => ({
+  id: "debug",
+  middleware: (setState, getState) => (updater) => {
+    const prev = getState()
+    setState(updater)
+    const next = getState()
+    console.log({ prev, next })
   },
-})
+})) satisfies Plugin
 ```
 
 ### `onStateChange`
 
-Called on every state change.
+Called after `setState` runs (not triggered by `setStateSilent`).
 
 ```ts
-createPlugin({
+import type { Plugin } from "@jlnstack/store/plugins"
+
+const analytics = ((_) => ({
   id: "analytics",
   onStateChange: (state, prevState) => {
     trackStateChange(state, prevState)
   },
-})
-```
-
-### `onActionsCreated`
-
-Intercepts and transforms actions. Useful for wrapping or enhancing actions.
-
-```ts
-createPlugin({
-  id: "action-logger",
-  onActionsCreated: (actions) => {
-    return new Proxy(actions, {
-      get(target, prop) {
-        const action = target[prop as keyof typeof target]
-        if (typeof action === "function") {
-          return (...args: unknown[]) => {
-            console.log(`Action: ${String(prop)}`)
-            return action(...args)
-          }
-        }
-        return action
-      },
-    })
-  },
-})
+})) satisfies Plugin
 ```
 
 ### `extend`
 
-Adds methods accessible via `extensions[id]`. Has access to the store API and initial state.
+Adds methods or values accessible via `extension[id]` (or `useExtensions()` in React).
+`extend` is an object, not a function.
 
 ```ts
-createPlugin({
-  id: "persistence",
-  extend: (store, initialState) => ({
-    save: () => localStorage.setItem("state", JSON.stringify(store.getState())),
-    load: () => {
-      const saved = localStorage.getItem("state")
-      if (saved) store.setState(JSON.parse(saved), true)
-    },
-  }),
-})
+import type { Plugin } from "@jlnstack/store/plugins"
+
+const timestamps = ((store) => ({
+  id: "timestamps",
+  extend: {
+    now: () => Date.now(),
+    getState: store.getState,
+  },
+})) satisfies Plugin
 ```
 
 ## Example: Persistence Plugin
 
 ```ts
-import { createPlugin, createStore } from "@jlnstack/store"
+import { createStore } from "@jlnstack/store"
+import { plugins } from "@jlnstack/store/plugins"
+import type { Plugin } from "@jlnstack/store/plugins"
 
 function persist(key: string) {
-  return createPlugin({
+  return ((store) => ({
     id: "persist",
-    extend: (store) => ({
+    extend: {
       save: () => {
         localStorage.setItem(key, JSON.stringify(store.getState()))
       },
       load: () => {
         const saved = localStorage.getItem(key)
-        if (saved) store.setState(JSON.parse(saved), true)
+        if (saved) store.setState(JSON.parse(saved))
       },
       clear: () => {
         localStorage.removeItem(key)
       },
-    }),
-  })
+    },
+  })) satisfies Plugin
 }
 
-const { extensions, getState } = createStore({
+const { extension } = createStore({
   state: { count: 0 },
-  plugins: [persist("my-store")],
+  actions: () => ({}),
+  plugins: plugins([persist("my-store")]),
 })
 
-extensions.persist.save()
-extensions.persist.load()
-extensions.persist.clear()
+extension.persist.save()
+extension.persist.load()
+extension.persist.clear()
 ```
 
 ## Example: Debounce Plugin
 
 ```ts
-import { createPlugin } from "@jlnstack/store"
+import { createStore } from "@jlnstack/store"
+import { plugins } from "@jlnstack/store/plugins"
+import type { Plugin } from "@jlnstack/store/plugins"
 
 function debounce(callback: () => void, ms: number) {
-  return createPlugin({
-    id: "debounce",
-    onStateChange: (() => {
-      let timeout: ReturnType<typeof setTimeout>
-      return () => {
+  return ((_) => {
+    let timeout: ReturnType<typeof setTimeout>
+    return {
+      id: "debounce",
+      onStateChange: () => {
         clearTimeout(timeout)
         timeout = setTimeout(callback, ms)
-      }
-    })(),
-  })
+      },
+    }
+  }) satisfies Plugin
 }
 
-const { setState } = createStore({
+const { store } = createStore({
   state: { query: "" },
-  plugins: [debounce(() => console.log("Debounced!"), 300)],
+  actions: () => ({}),
+  plugins: plugins([debounce(() => console.log("Debounced!"), 300)]),
 })
+
+store.setState((s) => ({ ...s, query: "hello" }))
 ```
 
 ## Type Safety
 
-Extensions are fully typed based on the `extend` return type:
+Extensions are fully typed based on the `extend` object:
 
 ```ts
-const myPlugin = createPlugin({
+import { createStore } from "@jlnstack/store"
+import { plugins } from "@jlnstack/store/plugins"
+import type { Plugin } from "@jlnstack/store/plugins"
+
+const typed = ((_) => ({
   id: "typed",
-  extend: () => ({
+  extend: {
     foo: () => "bar",
     count: 42,
-  }),
-})
+  },
+})) satisfies Plugin
 
-const { extensions } = createStore({
+const { extension } = createStore({
   state: {},
-  plugins: [myPlugin],
+  actions: () => ({}),
+  plugins: plugins([typed]),
 })
 
-extensions.typed.foo() // string
-extensions.typed.count // number
+extension.typed.foo() // string
+extension.typed.count // number
 ```

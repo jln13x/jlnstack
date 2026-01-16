@@ -12,9 +12,9 @@ Inspired by [TkDodo's Zustand best practices](https://tkdodo.eu/blog/working-wit
 ## Quick Example
 
 ```tsx
-import { createStore } from "@jlnstack/store/react"
+import { createReactStore } from "@jlnstack/store/react"
 
-const BearStore = createStore({
+const BearStore = createReactStore({
   name: "BearStore",
   state: (initialBears: number) => ({
     bears: initialBears,

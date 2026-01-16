@@ -9,10 +9,33 @@ Store comes with several built-in plugins that extend functionality.
 
 ## Installation
 
-Plugins are exported from `@jlnstack/store`:
+Plugins are exported from `@jlnstack/store/plugins`:
 
 ```ts
-import { history, immer, logger, reset } from "@jlnstack/store"
+import { history, logger, reset, plugins } from "@jlnstack/store/plugins"
+```
+
+`createStore` is exported from `@jlnstack/store`:
+
+```ts
+import { createStore } from "@jlnstack/store"
+```
+
+## Using Plugins
+
+`createStore` expects `plugins` as a function that receives the store API and
+returns plugin results. Use the `plugins(...)` helper to pass a list of plugin
+factories.
+
+```ts
+const { extension } = createStore({
+  state: { count: 0 },
+  actions: () => ({}),
+  plugins: plugins([reset(), history()]),
+})
+
+extension.reset.reset()
+extension.history.undo()
 ```
 
 ## reset
@@ -20,16 +43,18 @@ import { history, immer, logger, reset } from "@jlnstack/store"
 Adds a `reset()` method to restore the store to its initial state.
 
 ```ts
-import { createStore, reset } from "@jlnstack/store"
+import { createStore } from "@jlnstack/store"
+import { reset, plugins } from "@jlnstack/store/plugins"
 
-const { extensions, setState, getState } = createStore({
+const { extension, store } = createStore({
   state: { count: 0 },
-  plugins: [reset()],
+  actions: () => ({}),
+  plugins: plugins([reset()]),
 })
 
-setState({ count: 10 })
-extensions.reset.reset()
-getState() // { count: 0 }
+store.setState({ count: 10 })
+extension.reset.reset()
+store.getState() // { count: 0 }
 ```
 
 ## history
@@ -37,21 +62,23 @@ getState() // { count: 0 }
 Adds undo/redo functionality to your store.
 
 ```ts
-import { createStore, history } from "@jlnstack/store"
+import { createStore } from "@jlnstack/store"
+import { history, plugins } from "@jlnstack/store/plugins"
 
-const { extensions, setState, getState } = createStore({
+const { extension, store } = createStore({
   state: { count: 0 },
-  plugins: [history()],
+  actions: () => ({}),
+  plugins: plugins([history()]),
 })
 
-setState({ count: 1 })
-setState({ count: 2 })
+store.setState({ count: 1 })
+store.setState({ count: 2 })
 
-extensions.history.undo()
-getState() // { count: 1 }
+extension.history.undo()
+store.getState() // { count: 1 }
 
-extensions.history.redo()
-getState() // { count: 2 }
+extension.history.redo()
+store.getState() // { count: 2 }
 ```
 
 ### Options
@@ -72,46 +99,24 @@ getState() // { count: 2 }
 | `pastStates()` | Returns array of past states |
 | `futureStates()` | Returns array of future states |
 
-## immer
-
-Enables mutative state updates using [Immer](https://immerjs.github.io/immer/).
-
-```ts
-import { createStore, immer } from "@jlnstack/store"
-
-const { setState, actions } = createStore({
-  state: { items: [] as string[] },
-  actions: (set) => ({
-    addItem: (item: string) =>
-      set((s) => {
-        s.items.push(item) // mutative update
-      }),
-  }),
-  plugins: [immer()],
-})
-
-setState((s) => {
-  s.items.push("hello")
-})
-```
-
 ## logger
 
-Logs state changes to the console with action names.
+Logs state changes to the console.
 
 ```ts
-import { createStore, logger } from "@jlnstack/store"
+import { createStore } from "@jlnstack/store"
+import { logger, plugins } from "@jlnstack/store/plugins"
 
 const { actions } = createStore({
   state: { count: 0 },
   actions: (set) => ({
     increment: () => set((s) => ({ count: s.count + 1 })),
   }),
-  plugins: [logger({ name: "CounterStore" })],
+  plugins: plugins([logger({ name: "CounterStore" })]),
 })
 
 actions.increment()
-// Console: CounterStore increment { count: 1 }
+// Console: CounterStore setState { count: 1 }
 ```
 
 ### Options
@@ -126,20 +131,22 @@ actions.increment()
 Use multiple plugins together:
 
 ```ts
-const { extensions, actions } = createStore({
+import { createStore } from "@jlnstack/store"
+import { history, logger, reset, plugins } from "@jlnstack/store/plugins"
+
+const { extension, actions } = createStore({
   state: { count: 0 },
   actions: (set) => ({
     increment: () => set((s) => ({ count: s.count + 1 })),
   }),
-  plugins: [
-    immer(),
+  plugins: plugins([
     history(),
     reset(),
     logger({ name: "MyStore" }),
-  ],
+  ]),
 })
 
 actions.increment()
-extensions.history.undo()
-extensions.reset.reset()
+extension.history.undo()
+extension.reset.reset()
 ```

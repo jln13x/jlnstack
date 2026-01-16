@@ -5,14 +5,14 @@ description: How to use Store
 
 # Usage
 
-## createStore
+## createReactStore
 
-Creates a store with a Provider, `useStore` hook, and `useActions` hook.
+Creates a store with a Provider, `useStore` hook, `useActions` hook, and `useExtensions` hook.
 
 ```tsx
-import { createStore } from "@jlnstack/store/react"
+import { createReactStore } from "@jlnstack/store/react"
 
-const CounterStore = createStore({
+const CounterStore = createReactStore({
   name: "CounterStore",
   state: (initial: number) => ({ count: initial }),
   actions: (set) => ({
@@ -21,7 +21,7 @@ const CounterStore = createStore({
   }),
 })
 
-export const { Provider, useStore, useActions } = CounterStore
+export const { Provider, useStore, useActions, useExtensions } = CounterStore
 ```
 
 ## Provider
@@ -56,6 +56,28 @@ function Controls() {
     <>
       <button onClick={increment}>+</button>
       <button onClick={decrement}>-</button>
+    </>
+  )
+}
+```
+
+## useExtensions
+
+Returns plugin extensions keyed by plugin id (empty object if no plugins are configured).
+Assumes the `history()` plugin is enabled.
+
+```tsx
+function HistoryControls() {
+  const { history } = useExtensions()
+
+  return (
+    <>
+      <button onClick={history.undo} disabled={!history.canUndo()}>
+        Undo
+      </button>
+      <button onClick={history.redo} disabled={!history.canRedo()}>
+        Redo
+      </button>
     </>
   )
 }
