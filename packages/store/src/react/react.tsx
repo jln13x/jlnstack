@@ -9,7 +9,7 @@ import {
 import { createStore } from "../core/core";
 import type {
   Store as CoreStore,
-  ExtractExtensions,
+  ExtractPlugins,
   PluginResult,
   StoreApi,
 } from "../core/types";
@@ -48,11 +48,10 @@ interface ReactStore<
   Provider: (props: ProviderProps<TInitialState>) => ReactNode;
   useStore: <TSelected>(selector: (state: TState) => TSelected) => TSelected;
   useActions: () => TActions;
-  useExtensions: () => ExtractExtensions<TResults>;
   usePlugins: {
-    (): ExtractExtensions<TResults>;
+    (): ExtractPlugins<TResults>;
     <TSelected>(
-      selector: (plugins: ExtractExtensions<TResults>) => TSelected,
+      selector: (plugins: ExtractPlugins<TResults>) => TSelected,
     ): TSelected;
   };
 }
@@ -90,7 +89,7 @@ export function createReactStore<
 
       return store as ContextValue<TState, TActions, TResults>;
     });
-    const pluginResults = value.plugins;
+    const { pluginResults } = value;
 
     return (
       <Context.Provider value={value}>
@@ -127,32 +126,31 @@ export function createReactStore<
 
   const useActionsHook = (): TActions => useCtx().actions;
 
-  const useExtensionsHook = () => useCtx().extension;
-
-  function usePluginsHook(): ExtractExtensions<TResults>;
+  function usePluginsHook(): ExtractPlugins<TResults>;
   function usePluginsHook<TSelected>(
-    selector: (plugins: ExtractExtensions<TResults>) => TSelected,
+    selector: (plugins: ExtractPlugins<TResults>) => TSelected,
   ): TSelected;
   function usePluginsHook<TSelected>(
-    selector?: (plugins: ExtractExtensions<TResults>) => TSelected,
-  ): ExtractExtensions<TResults> | TSelected {
-    const { store, extension } = useCtx();
+    selector?: (plugins: ExtractPlugins<TResults>) => TSelected,
+  ): ExtractPlugins<TResults> | TSelected {
+    const { store, plugins } = useCtx();
+    const selectorRef = useRef(selector);
+    selectorRef.current = selector;
 
-    // Subscribe to state changes - triggers re-render so plugin getters return fresh values
+    // Subscribe to state changes - re-render when state changes so plugin getters return fresh values
     useSyncExternalStore(
       store.subscribe,
-      () => ({}),
-      () => ({}),
+      () => store.getState(),
+      () => store.getState(),
     );
 
-    return selector ? selector(extension) : extension;
+    return selectorRef.current ? selectorRef.current(plugins) : plugins;
   }
 
   return {
     Provider,
     useStore: useStoreHook,
     useActions: useActionsHook,
-    useExtensions: useExtensionsHook,
     usePlugins: usePluginsHook,
   };
 }

@@ -44,7 +44,7 @@ test("plugin extends store with inferred type", () => {
     bar: { bar: () => string };
     counter: { increment: (by: number) => void };
     baz: { baz: () => string };
-  }>(store.extension);
+  }>(store.plugins);
 });
 
 // ============================================
@@ -58,16 +58,16 @@ test("history plugin preserves TState with definePlugin", () => {
     plugins: [history()],
   });
 
-  assertType<() => void>(store.extension.history.undo);
-  assertType<() => void>(store.extension.history.redo);
-  assertType<() => void>(store.extension.history.clear);
-  assertType<() => boolean>(store.extension.history.canUndo);
-  assertType<() => boolean>(store.extension.history.canRedo);
+  assertType<() => void>(store.plugins.history.undo);
+  assertType<() => void>(store.plugins.history.redo);
+  assertType<() => void>(store.plugins.history.clear);
+  assertType<() => boolean>(store.plugins.history.canUndo);
+  assertType<() => boolean>(store.plugins.history.canRedo);
   assertType<() => { count: number; name: string }[]>(
-    store.extension.history.pastStates,
+    store.plugins.history.pastStates,
   );
   assertType<() => { count: number; name: string }[]>(
-    store.extension.history.futureStates,
+    store.plugins.history.futureStates,
   );
 });
 
@@ -79,7 +79,7 @@ test("futureStates is not any with new plugin system", () => {
   });
 
   type FutureStatesItem = ReturnType<
-    typeof store.extension.history.futureStates
+    typeof store.plugins.history.futureStates
   >[number];
   assertType<false>({} as IsAny<FutureStatesItem>);
 });
@@ -125,17 +125,17 @@ test("multiple plugins preserve types", () => {
   });
 
   // History extension
-  type HistoryFuture = ReturnType<typeof store.extension.history.futureStates>;
+  type HistoryFuture = ReturnType<typeof store.plugins.history.futureStates>;
   assertType<{ count: number; items: string[] }[]>({} as HistoryFuture);
   assertType<false>({} as IsAny<HistoryFuture[number]>);
 
   // Reset extension
-  type ResetInitial = ReturnType<typeof store.extension.reset.getInitial>;
+  type ResetInitial = ReturnType<typeof store.plugins.reset.getInitial>;
   assertType<{ count: number; items: string[] }>({} as ResetInitial);
   assertType<false>({} as IsAny<ResetInitial>);
 
   // Logger extension
-  type LoggerLogs = ReturnType<typeof store.extension.logger.getLogs>;
+  type LoggerLogs = ReturnType<typeof store.plugins.logger.getLogs>;
   assertType<
     {
       state: { count: number; items: string[] };
@@ -157,7 +157,7 @@ test("actual usage without type casts", () => {
   });
 
   // Access future states - should be { count: number; name: string }[]
-  const futures = store.extension.history.futureStates();
+  const futures = store.plugins.history.futureStates();
   const firstFuture = futures[0];
   if (firstFuture) {
     const count: number = firstFuture.count;
@@ -167,17 +167,17 @@ test("actual usage without type casts", () => {
   }
 
   // Access initial state from reset - should be { count: number; name: string }
-  const initial = store.extension.reset.getInitial();
+  const initial = store.plugins.reset.getInitial();
   const initialCount: number = initial.count;
   const initialName: string = initial.name;
   // @ts-expect-error - missing doesn't exist
   const missing = initial.missing;
 
   // Call reset - should accept no args
-  store.extension.reset.reset();
+  store.plugins.reset.reset();
 
   // Access past states
-  const pasts = store.extension.history.pastStates();
+  const pasts = store.plugins.history.pastStates();
   pasts.forEach((state) => {
     const c: number = state.count;
     const n: string = state.name;

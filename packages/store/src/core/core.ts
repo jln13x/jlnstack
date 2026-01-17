@@ -1,5 +1,5 @@
 import { createStore as zustandCreateStore } from "zustand/vanilla";
-import type { ExtractExtensions, PluginResult } from "./plugins/plugin";
+import type { ExtractPlugins, PluginResult } from "./plugins/plugin";
 import type { SetState, Store, StoreApi } from "./types";
 
 export type StoreOptions<TState, TActions, TResults extends PluginResult[]> = {
@@ -51,10 +51,10 @@ export function createStore<TState, TActions, TResults extends PluginResult[]>(
     baseSetState,
   );
 
-  const extension = {} as ExtractExtensions<TResults>;
+  const plugins = {} as ExtractPlugins<TResults>;
   for (const plugin of pluginResults) {
     if ("extend" in plugin && plugin.extend) {
-      (extension as Record<string, unknown>)[plugin.id] = plugin.extend;
+      (plugins as Record<string, unknown>)[plugin.id] = plugin.extend;
     }
   }
 
@@ -64,7 +64,7 @@ export function createStore<TState, TActions, TResults extends PluginResult[]>(
     state: options.state,
     actions,
     store,
-    extension,
-    plugins: pluginResults,
+    plugins,
+    pluginResults,
   };
 }

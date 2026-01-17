@@ -23,6 +23,6 @@ export function definePlugin<
   return factory;
 }
 
-export type ExtractExtensions<TResults extends PluginResult[]> = {
+export type ExtractPlugins<TResults extends PluginResult[]> = {
   [K in TResults[number] as K["id"]]: K extends { extend: infer E } ? E : never;
 };

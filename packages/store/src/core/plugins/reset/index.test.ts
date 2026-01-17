@@ -4,7 +4,7 @@ import { reset } from "./index";
 
 describe("reset plugin", () => {
   it("resets state to initial value", () => {
-    const { store, extension } = createStore({
+    const { store, plugins } = createStore({
       state: { count: 0, name: "initial" },
       actions: () => ({}),
       plugins: [reset()],
@@ -13,12 +13,12 @@ describe("reset plugin", () => {
     store.setState({ count: 10, name: "modified" });
     expect(store.getState()).toEqual({ count: 10, name: "modified" });
 
-    extension.reset.reset();
+    plugins.reset.reset();
     expect(store.getState()).toEqual({ count: 0, name: "initial" });
   });
 
   it("works after multiple state changes", () => {
-    const { store, extension } = createStore({
+    const { store, plugins } = createStore({
       state: { value: 1 },
       actions: () => ({}),
       plugins: [reset()],
@@ -28,19 +28,19 @@ describe("reset plugin", () => {
     store.setState({ value: 3 });
     store.setState({ value: 4 });
 
-    extension.reset.reset();
+    plugins.reset.reset();
     expect(store.getState().value).toBe(1);
   });
 
   it("returns the initial state", () => {
-    const { store, extension } = createStore({
+    const { store, plugins } = createStore({
       state: { count: 0, name: "initial" },
       actions: () => ({}),
       plugins: [reset()],
     });
 
     store.setState({ count: 10, name: "modified" });
-    const result = extension.reset.reset();
+    const result = plugins.reset.reset();
 
     expect(result).toEqual({ count: 0, name: "initial" });
   });

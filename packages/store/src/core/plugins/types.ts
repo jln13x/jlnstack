@@ -25,6 +25,6 @@ export type PluginsReturn<TPlugins extends Plugin[]> = {
     : never;
 };
 
-export type ExtractExtensions<TPlugins extends PluginResult[]> = {
+export type ExtractPlugins<TPlugins extends PluginResult[]> = {
   [K in TPlugins[number] as K["id"]]: K extends { extend: infer E } ? E : never;
 };

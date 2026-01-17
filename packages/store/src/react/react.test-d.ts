@@ -47,23 +47,24 @@ describe("createReactStore with plugins", () => {
     plugins: [history()],
   });
 
-  it("infers useExtensions return type with history plugin", () => {
-    expectTypeOf(StoreWithHistory.useExtensions).returns.toHaveProperty(
-      "history",
-    );
+  // Extract the plugins type from the selector parameter
+  type PluginsType = Parameters<
+    Parameters<typeof StoreWithHistory.usePlugins>[0]
+  >[0];
+
+  it("infers usePlugins return type with history plugin", () => {
+    expectTypeOf<PluginsType>().toHaveProperty("history");
   });
 
-  it("history extension has correct methods", () => {
-    expectTypeOf(StoreWithHistory.useExtensions)
-      .returns.toHaveProperty("history")
-      .toMatchTypeOf<{
-        undo: () => void;
-        redo: () => void;
-        clear: () => void;
-        canUndo: () => boolean;
-        canRedo: () => boolean;
-        pastStates: () => { count: number; name: string }[];
-        futureStates: () => { count: number; name: string }[];
-      }>();
+  it("history plugin has correct methods", () => {
+    expectTypeOf<PluginsType["history"]>().toMatchTypeOf<{
+      undo: () => void;
+      redo: () => void;
+      clear: () => void;
+      canUndo: () => boolean;
+      canRedo: () => boolean;
+      pastStates: () => { count: number; name: string }[];
+      futureStates: () => { count: number; name: string }[];
+    }>();
   });
 });

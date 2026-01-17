@@ -9,16 +9,16 @@ test("history extension is properly typed", () => {
     plugins: [history()],
   });
 
-  assertType<() => void>(store.extension.history.undo);
-  assertType<() => void>(store.extension.history.redo);
-  assertType<() => void>(store.extension.history.clear);
-  assertType<() => boolean>(store.extension.history.canUndo);
-  assertType<() => boolean>(store.extension.history.canRedo);
+  assertType<() => void>(store.plugins.history.undo);
+  assertType<() => void>(store.plugins.history.redo);
+  assertType<() => void>(store.plugins.history.clear);
+  assertType<() => boolean>(store.plugins.history.canUndo);
+  assertType<() => boolean>(store.plugins.history.canRedo);
   assertType<() => { count: number; name: string }[]>(
-    store.extension.history.pastStates,
+    store.plugins.history.pastStates,
   );
   assertType<() => { count: number; name: string }[]>(
-    store.extension.history.futureStates,
+    store.plugins.history.futureStates,
   );
 });
 
@@ -32,7 +32,7 @@ test("futureStates is not any", () => {
   });
 
   type FutureStatesItem = ReturnType<
-    typeof store.extension.history.futureStates
+    typeof store.plugins.history.futureStates
   >[number];
   assertType<false>({} as IsAny<FutureStatesItem>);
 });

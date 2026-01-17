@@ -13,13 +13,13 @@ test("plugins with duplicate ids use the last one", () => {
     extend: { value: "last" },
   }));
 
-  const { extension } = createStore({
+  const { plugins } = createStore({
     state: { count: 0 },
     actions: () => ({}),
     plugins: [first, last],
   });
 
-  expect(extension.counter.value).toBe("last");
+  expect(plugins.counter.value).toBe("last");
 });
 
 test("duplicate plugin ids - onStateChange runs for all", () => {
@@ -51,7 +51,7 @@ test("duplicate plugin ids - onStateChange runs for all", () => {
 });
 
 test("plugin receives store api", () => {
-  const { store, extension } = createStore({
+  const { store, plugins } = createStore({
     state: { count: 0 },
     actions: () => ({}),
     plugins: [
@@ -65,7 +65,7 @@ test("plugin receives store api", () => {
   });
 
   store.setState({ count: 42 });
-  expect(extension.getter.getCount()).toBe(42);
+  expect(plugins.getter.getCount()).toBe(42);
 });
 
 test("plugin can use setStateSilent to avoid onStateChange", () => {
@@ -92,7 +92,7 @@ test("plugin can use setStateSilent to avoid onStateChange", () => {
 });
 
 test("multiple plugins with different ids", () => {
-  const { extension } = createStore({
+  const { plugins } = createStore({
     state: { count: 0 },
     actions: () => ({}),
     plugins: [
@@ -107,6 +107,6 @@ test("multiple plugins with different ids", () => {
     ],
   });
 
-  expect(extension.alpha.name).toBe("Alpha");
-  expect(extension.beta.name).toBe("Beta");
+  expect(plugins.alpha.name).toBe("Alpha");
+  expect(plugins.beta.name).toBe("Beta");
 });

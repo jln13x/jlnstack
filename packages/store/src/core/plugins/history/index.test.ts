@@ -4,7 +4,7 @@ import { history } from "./index";
 
 describe("history plugin", () => {
   it("undoes state changes", () => {
-    const { store, extension } = createStore({
+    const { store, plugins } = createStore({
       state: { count: 0 },
       actions: () => ({}),
       plugins: [history()],
@@ -13,30 +13,30 @@ describe("history plugin", () => {
     store.setState({ count: 1 });
     store.setState({ count: 2 });
 
-    extension.history.undo();
+    plugins.history.undo();
     expect(store.getState().count).toBe(1);
 
-    extension.history.undo();
+    plugins.history.undo();
     expect(store.getState().count).toBe(0);
   });
 
   it("redoes undone changes", () => {
-    const { store, extension } = createStore({
+    const { store, plugins } = createStore({
       state: { count: 0 },
       actions: () => ({}),
       plugins: [history()],
     });
 
     store.setState({ count: 1 });
-    extension.history.undo();
+    plugins.history.undo();
     expect(store.getState().count).toBe(0);
 
-    extension.history.redo();
+    plugins.history.redo();
     expect(store.getState().count).toBe(1);
   });
 
   it("clears future on new change after undo", () => {
-    const { store, extension } = createStore({
+    const { store, plugins } = createStore({
       state: { count: 0 },
       actions: () => ({}),
       plugins: [history()],
@@ -44,14 +44,14 @@ describe("history plugin", () => {
 
     store.setState({ count: 1 });
     store.setState({ count: 2 });
-    extension.history.undo();
+    plugins.history.undo();
 
     store.setState({ count: 99 });
-    expect(extension.history.canRedo()).toBe(false);
+    expect(plugins.history.canRedo()).toBe(false);
   });
 
   it("respects limit option", () => {
-    const { store, extension } = createStore({
+    const { store, plugins } = createStore({
       state: { count: 0 },
       actions: () => ({}),
       plugins: [history({ limit: 2 })],
@@ -61,28 +61,28 @@ describe("history plugin", () => {
     store.setState({ count: 2 });
     store.setState({ count: 3 });
 
-    expect(extension.history.pastStates()).toHaveLength(2);
+    expect(plugins.history.pastStates()).toHaveLength(2);
   });
 
   it("canUndo and canRedo return correct values", () => {
-    const { store, extension } = createStore({
+    const { store, plugins } = createStore({
       state: { count: 0 },
       actions: () => ({}),
       plugins: [history()],
     });
 
-    expect(extension.history.canUndo()).toBe(false);
-    expect(extension.history.canRedo()).toBe(false);
+    expect(plugins.history.canUndo()).toBe(false);
+    expect(plugins.history.canRedo()).toBe(false);
 
     store.setState({ count: 1 });
-    expect(extension.history.canUndo()).toBe(true);
+    expect(plugins.history.canUndo()).toBe(true);
 
-    extension.history.undo();
-    expect(extension.history.canRedo()).toBe(true);
+    plugins.history.undo();
+    expect(plugins.history.canRedo()).toBe(true);
   });
 
   it("clear removes all history", () => {
-    const { store, extension } = createStore({
+    const { store, plugins } = createStore({
       state: { count: 0 },
       actions: () => ({}),
       plugins: [history()],
@@ -90,10 +90,10 @@ describe("history plugin", () => {
 
     store.setState({ count: 1 });
     store.setState({ count: 2 });
-    extension.history.undo();
+    plugins.history.undo();
 
-    extension.history.clear();
-    expect(extension.history.canUndo()).toBe(false);
-    expect(extension.history.canRedo()).toBe(false);
+    plugins.history.clear();
+    expect(plugins.history.canUndo()).toBe(false);
+    expect(plugins.history.canRedo()).toBe(false);
   });
 });
