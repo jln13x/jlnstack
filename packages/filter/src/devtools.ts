@@ -53,7 +53,11 @@ function toBase64(str: string): string {
     return Buffer.from(str, "utf-8").toString("base64");
   }
   const bytes = new TextEncoder().encode(str);
-  return btoa(String.fromCharCode(...bytes));
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]!);
+  }
+  return btoa(binary);
 }
 
 function getMermaidLiveUrl<Schema extends FilterSchemaConstraint>(

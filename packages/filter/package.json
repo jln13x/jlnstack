@@ -38,9 +38,11 @@
   "devDependencies": {
     "@standard-schema/spec": "^1.0.0",
     "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
     "@types/react": "^19.0.0",
     "@vitest/ui": "^2.1.8",
     "drizzle-orm": "^0.38.3",
+    "jsdom": "^27.4.0",
     "react": "^19.0.0",
     "tsdown": "^0.15.4",
     "typescript": "^5.9.3",
@@ -90,9 +92,6 @@
     }
   },
   "dependencies": {
-    "@jlnstack/store": "workspace:*",
-    "@tanstack/react-form": "^1.27.7",
-    "@testing-library/react": "^16.1.0",
-    "jsdom": "^27.4.0"
+    "@jlnstack/store": "workspace:*"
   }
 }

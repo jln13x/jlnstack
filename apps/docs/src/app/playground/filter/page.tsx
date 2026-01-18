@@ -1353,14 +1353,15 @@ export default function FilterPlaygroundPage() {
               >
                 Reset
               </button>
-              <button
-                type="button"
-                onClick={() => window.open(getMermaidLiveUrl(currentFilter), "_blank")}
+              <a
+                href={getMermaidLiveUrl(currentFilter)}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 bg-neutral-800 hover:bg-neutral-700 rounded transition-colors"
               >
                 <ExternalLink size={14} />
                 View Diagram
-              </button>
+              </a>
               <div className="w-px h-4 bg-neutral-700" />
               <button
                 type="button"
