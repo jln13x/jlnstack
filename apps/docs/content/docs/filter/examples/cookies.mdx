@@ -1,0 +1,132 @@
+---
+title: Cookies Integration
+description: Persist filter state in cookies using @jlnstack/cookies
+---
+
+# Cookies Integration
+
+Use [@jlnstack/cookies](/docs/cookies) to persist filter state across sessions.
+
+## Setup
+
+Make sure you have both packages installed:
+
+```bash
+pnpm add @jlnstack/filter @jlnstack/cookies
+```
+
+## Define the Cookie
+
+Create a cookie to store filter values:
+
+```ts title="cookies.ts"
+import { createCookie } from "@jlnstack/cookies/next"
+import { z } from "zod"
+
+export const userFiltersCookie = createCookie(
+  "user-filters",
+  z.record(z.any()).optional()
+)
+```
+
+## Server Component
+
+Load initial filters from the cookie:
+
+```tsx title="page.tsx"
+import { userFiltersCookie } from "./cookies"
+import { UsersTable } from "./users-table"
+
+export default async function UsersPage() {
+  const savedFilters = await userFiltersCookie.get()
+
+  return <UsersTable initialFilters={savedFilters ?? {}} />
+}
+```
+
+## Client Component
+
+Sync filter changes to the cookie:
+
+```tsx title="users-table.tsx"
+"use client"
+
+import { createFilterHooks, FilterProvider } from "@jlnstack/filter/react"
+import { userFilters } from "./filters"
+
+const hooks = createFilterHooks(userFilters)
+
+interface Props {
+  initialFilters: Record<string, unknown>
+}
+
+export function UsersTable({ initialFilters }: Props) {
+  const filter = hooks.useFilter({
+    defaultValues: initialFilters,
+    onFilterChange: async (values) => {
+      await fetch("/api/save-filters", {
+        method: "POST",
+        body: JSON.stringify(values),
+      })
+    },
+  })
+
+  return (
+    <FilterProvider {...filter}>
+      <FilterToolbar />
+      <DataTable />
+    </FilterProvider>
+  )
+}
+```
+
+## API Route
+
+Create an API route to save filters:
+
+```ts title="app/api/save-filters/route.ts"
+import { userFiltersCookie } from "@/cookies"
+import { NextResponse } from "next/server"
+
+export async function POST(request: Request) {
+  const filters = await request.json()
+  await userFiltersCookie.set(filters)
+  return NextResponse.json({ ok: true })
+}
+```
+
+## Alternative: Server Action
+
+Use a Server Action instead of an API route:
+
+```ts title="actions.ts"
+"use server"
+
+import { userFiltersCookie } from "./cookies"
+
+export async function saveFilters(filters: Record<string, unknown>) {
+  await userFiltersCookie.set(filters)
+}
+```
+
+```tsx title="users-table.tsx"
+"use client"
+
+import { saveFilters } from "./actions"
+
+export function UsersTable({ initialFilters }: Props) {
+  const filter = hooks.useFilter({
+    defaultValues: initialFilters,
+    onFilterChange: saveFilters,
+  })
+
+  // ...
+}
+```
+
+## Benefits
+
+- **Persistent preferences** — Filters survive browser restarts
+- **No URL clutter** — Keep URLs clean while maintaining state
+- **Server-side access** — Read filters in Server Components
+- **Type-safe** — Full validation with Zod schemas

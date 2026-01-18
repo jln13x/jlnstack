@@ -1,0 +1,21 @@
+{
+  "title": "Filter",
+  "description": "Type-safe filter state management",
+  "root": true,
+  "pages": [
+    "---Getting Started---",
+    "index",
+    "installation",
+    "---React---",
+    "usage",
+    "grouping",
+    "context",
+    "---Filters---",
+    "built-in",
+    "custom-filters",
+    "---Integrations---",
+    "drizzle",
+    "devtools",
+    "examples"
+  ]
+}

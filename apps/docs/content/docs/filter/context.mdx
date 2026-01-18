@@ -1,0 +1,223 @@
+---
+title: Context & Typed Hooks
+description: Share filter state with FilterProvider and createFilterHooks
+---
+
+# Context & Typed Hooks
+
+When building complex filter UIs, you often need to access filter state from multiple components. The recommended approach is to use `createFilterHooks` to create type-safe hooks scoped to your filter schema.
+
+## createFilterHooks
+
+Create type-safe hooks for your filter schema:
+
+```ts title="filters.ts"
+import { defineFilters, stringFilter, booleanFilter } from "@jlnstack/filter"
+import { createFilterHooks } from "@jlnstack/filter/react"
+
+export const userFilters = defineFilters({
+  name: stringFilter({ label: "Name" }),
+  verified: booleanFilter({ label: "Verified" }),
+})
+
+export const userFilterHooks = createFilterHooks(userFilters)
+```
+
+### Available Hooks
+
+The `createFilterHooks` function returns an object with these hooks:
+
+| Hook | Description |
+|------|-------------|
+| `useFilter(options?)` | Create a filter store (same as `useFilter(schema, options)`) |
+| `useFilterContext()` | Get the filter store from context |
+| `useFilterValues()` | Subscribe to all filter values |
+| `useFilterValue(key)` | Subscribe to a single filter value |
+| `useFilterDefinitions()` | Get filter definitions |
+
+## FilterProvider
+
+Share filter state across your component tree:
+
+```tsx title="users-page.tsx"
+import { FilterProvider } from "@jlnstack/filter/react"
+import { userFilterHooks } from "./filters"
+
+export function UsersPage() {
+  const filter = userFilterHooks.useFilter({
+    onFilterChange: (filters) => {
+      // Sync to URL, cookies, etc.
+    },
+  })
+
+  return (
+    <FilterProvider {...filter}>
+      <FilterToolbar />
+      <UsersTable />
+    </FilterProvider>
+  )
+}
+```
+
+Then access the filter from any child component:
+
+```tsx title="filter-toolbar.tsx"
+import { userFilterHooks } from "./filters"
+
+function FilterToolbar() {
+  const filter = userFilterHooks.useFilterContext()
+  const values = filter.useFilterValues()
+
+  const activeCount = Object.values(values).filter(Boolean).length
+
+  return (
+    <div>
+      <span>{activeCount} filters active</span>
+      <button onClick={filter.reset}>Clear all</button>
+    </div>
+  )
+}
+```
+
+```tsx title="users-table.tsx"
+import { userFilterHooks } from "./filters"
+
+function UsersTable() {
+  const verified = userFilterHooks.useFilterValue("verified")
+  
+  // Filter your data based on verified value
+  return (
+    <table>
+      {/* ... */}
+    </table>
+  )
+}
+```
+
+## Complete Example
+
+Here's a full example showing the recommended pattern:
+
+```tsx
+// filters.ts
+import { defineFilters, stringFilter, booleanFilter } from "@jlnstack/filter"
+import { createFilterHooks, FilterProvider } from "@jlnstack/filter/react"
+
+export const userFilters = defineFilters({
+  name: stringFilter({ label: "Name", operators: ["eq", "contains"] }),
+  verified: booleanFilter({ label: "Verified" }),
+})
+
+export const hooks = createFilterHooks(userFilters)
+```
+
+```tsx
+// users-page.tsx
+import { hooks, userFilters } from "./filters"
+import { FilterProvider } from "@jlnstack/filter/react"
+
+export function UsersPage({ users }) {
+  const filter = hooks.useFilter()
+
+  return (
+    <FilterProvider {...filter}>
+      <AddFilterDropdown />
+      <ActiveFilters />
+      <UsersTable users={users} />
+    </FilterProvider>
+  )
+}
+
+function AddFilterDropdown() {
+  const definitions = hooks.useFilterDefinitions()
+  const filter = hooks.useFilterContext()
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger>Add filter</DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {definitions.map((def) => (
+          <DropdownMenuItem key={def.name}>
+            <filter.Filter
+              name={def.name}
+              render={({ onValueChange }) => (
+                <FilterDialog
+                  definition={def}
+                  onApply={onValueChange}
+                />
+              )}
+            />
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+function ActiveFilters() {
+  const filter = hooks.useFilterContext()
+  const values = filter.useFilterValues()
+
+  return (
+    <div className="flex gap-2">
+      {Object.entries(values)
+        .filter(([, v]) => v !== undefined)
+        .map(([key]) => (
+          <Badge key={key}>
+            {key}
+            <button onClick={() => filter.clear(key)}>×</button>
+          </Badge>
+        ))}
+    </div>
+  )
+}
+
+function UsersTable({ users }) {
+  const values = hooks.useFilterValues()
+  
+  const filteredUsers = users.filter((user) => {
+    if (values.verified !== undefined && user.verified !== values.verified) {
+      return false
+    }
+    if (values.name?.value && !user.name.includes(values.name.value)) {
+      return false
+    }
+    return true
+  })
+
+  return (
+    <table>
+      <tbody>
+        {filteredUsers.map((user) => (
+          <tr key={user.id}>
+            <td>{user.name}</td>
+            <td>{user.verified ? "Yes" : "No"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+```
+
+## Without createFilterHooks
+
+You can also use the context hooks directly, but you'll need to provide type parameters:
+
+```tsx
+import { 
+  useFilterContext, 
+  useFilterValues, 
+  useFilterValue 
+} from "@jlnstack/filter/react"
+import { userFilters } from "./filters"
+
+function MyComponent() {
+  // Need to pass the schema type
+  const filter = useFilterContext<typeof userFilters>()
+  const values = useFilterValues<typeof userFilters>()
+  const name = useFilterValue<typeof userFilters, "name">("name")
+}
+```
+
+Using `createFilterHooks` is recommended as it infers types automatically and keeps your code cleaner.

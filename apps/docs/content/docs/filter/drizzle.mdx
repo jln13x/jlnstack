@@ -1,0 +1,164 @@
+---
+title: Drizzle Integration
+description: Convert filter values to Drizzle ORM where conditions
+---
+
+# Drizzle Integration
+
+The `@jlnstack/filter/drizzle` entry point provides utilities for converting filter values to Drizzle ORM SQL conditions.
+
+## toWhere
+
+Convert filter values to a Drizzle `where` clause:
+
+```ts
+import { toWhere } from "@jlnstack/filter/drizzle"
+import { eq, like, and, sql } from "drizzle-orm"
+import { users } from "./schema"
+
+const conditions = toWhere(userFilters, filterValues, {
+  name: (value) => like(users.name, `%${value.value}%`),
+  verified: (value) => eq(users.emailVerified, value),
+  age: (value) => {
+    switch (value.operator) {
+      case "eq": return eq(users.age, value.value)
+      case "gt": return sql`${users.age} > ${value.value}`
+      case "lt": return sql`${users.age} < ${value.value}`
+      default: return undefined
+    }
+  },
+})
+
+// Use in query
+const results = await db
+  .select()
+  .from(users)
+  .where(conditions)
+```
+
+## API
+
+```ts
+function toWhere<Schema>(
+  schema: Schema,
+  filters: FilterInput<Schema>,
+  handlers: FilterHandlers<Schema>
+): SQL | undefined
+```
+
+### Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `schema` | `Schema` | Your filter schema |
+| `filters` | `FilterInput<Schema>` | Current filter values |
+| `handlers` | `FilterHandlers<Schema>` | Object mapping filter keys to SQL generators |
+
+### Return Value
+
+Returns a combined SQL condition using `and()`, or `undefined` if no filters are active.
+
+## Handler Functions
+
+Each handler receives the filter value and should return a SQL condition or `undefined`:
+
+```ts
+type FilterHandlers<Schema> = {
+  [K in keyof Schema]?: (value: FilterValue<Schema[K]>) => SQL | undefined
+}
+```
+
+Return `undefined` to skip a filter:
+
+```ts
+const handlers = {
+  name: (value) => {
+    if (!value.value.trim()) return undefined // Skip empty strings
+    return like(users.name, `%${value.value}%`)
+  },
+}
+```
+
+## Complete Example
+
+```ts
+// filters.ts
+import { defineFilters, stringFilter, booleanFilter, dateFilter } from "@jlnstack/filter"
+
+export const userFilters = defineFilters({
+  name: stringFilter({ label: "Name" }),
+  verified: booleanFilter({ label: "Verified" }),
+  createdAfter: dateFilter({ label: "Created After", operators: ["gte"] }),
+})
+```
+
+```ts
+// page.tsx (Server Component)
+import { db } from "@/db"
+import { users } from "@/db/schema"
+import { toWhere } from "@jlnstack/filter/drizzle"
+import { eq, like, gte } from "drizzle-orm"
+import { userFilters } from "./filters"
+
+export default async function UsersPage({ searchParams }) {
+  const filters = parseFiltersFromSearchParams(searchParams)
+
+  const conditions = toWhere(userFilters, filters, {
+    name: (v) => like(users.name, `%${v.value}%`),
+    verified: (v) => eq(users.emailVerified, v),
+    createdAfter: (v) => gte(users.createdAt, new Date(v.value)),
+  })
+
+  const data = await db
+    .select()
+    .from(users)
+    .where(conditions)
+
+  return <UsersTable data={data} />
+}
+```
+
+## Tips
+
+### Handle All Operators
+
+For filters with multiple operators, handle each case:
+
+```ts
+import { eq, ne, gt, gte, lt, lte, like } from "drizzle-orm"
+
+const handlers = {
+  age: (value) => {
+    const ops = { eq, neq: ne, gt, gte, lt, lte }
+    const op = ops[value.operator]
+    return op?.(users.age, value.value)
+  },
+  
+  name: (value) => {
+    switch (value.operator) {
+      case "eq": return eq(users.name, value.value)
+      case "neq": return ne(users.name, value.value)
+      case "contains": return like(users.name, `%${value.value}%`)
+      case "startsWith": return like(users.name, `${value.value}%`)
+      case "endsWith": return like(users.name, `%${value.value}`)
+      default: return undefined
+    }
+  },
+}
+```
+
+### Combine with Other Conditions
+
+The result can be combined with other conditions:
+
+```ts
+const filterConditions = toWhere(userFilters, filters, handlers)
+
+const results = await db
+  .select()
+  .from(users)
+  .where(and(
+    eq(users.deletedAt, null), // Always exclude deleted
+    filterConditions,
+  ))
+```

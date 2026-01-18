@@ -1,0 +1,289 @@
+---
+title: Built-in Filters
+description: Ready-to-use filter types for common data types
+---
+
+# Built-in Filters
+
+The package includes built-in filter definitions for common data types. Each filter comes with sensible defaults and configurable options.
+
+## String Filter
+
+Filter text values with various operators.
+
+```ts
+import { stringFilter } from "@jlnstack/filter"
+
+const filters = defineFilters({
+  name: stringFilter({
+    label: "Name",
+    placeholder: "Enter name...",
+    operators: ["eq", "contains", "startsWith", "endsWith"],
+  }),
+})
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `label` | `string` | — | Display label for the filter |
+| `placeholder` | `string` | — | Input placeholder text |
+| `operators` | `StringOperators[]` | All | Allowed operators |
+
+### Operators
+
+| Operator | Description |
+|----------|-------------|
+| `eq` | Equals |
+| `neq` | Not equals |
+| `contains` | Contains substring |
+| `startsWith` | Starts with |
+| `endsWith` | Ends with |
+
+### Value Type
+
+```ts
+type StringValue = {
+  operator: "eq" | "neq" | "contains" | "startsWith" | "endsWith"
+  value: string
+}
+```
+
+### Usage
+
+```tsx
+<filter.Filter
+  name="name"
+  render={({ value, onValueChange }) => (
+    <input
+      value={value?.value ?? ""}
+      onChange={(e) =>
+        onValueChange({ operator: "contains", value: e.target.value })
+      }
+    />
+  )}
+/>
+```
+
+---
+
+## Number Filter
+
+Filter numeric values with comparison operators.
+
+```ts
+import { numberFilter } from "@jlnstack/filter"
+
+const filters = defineFilters({
+  age: numberFilter({
+    label: "Age",
+    min: 0,
+    max: 120,
+    operators: ["eq", "gt", "lt"],
+  }),
+})
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `label` | `string` | — | Display label for the filter |
+| `min` | `number` | — | Minimum allowed value |
+| `max` | `number` | — | Maximum allowed value |
+| `operators` | `NumberOperators[]` | All | Allowed operators |
+
+### Operators
+
+| Operator | Description |
+|----------|-------------|
+| `eq` | Equals |
+| `neq` | Not equals |
+| `gt` | Greater than |
+| `gte` | Greater than or equal |
+| `lt` | Less than |
+| `lte` | Less than or equal |
+
+### Value Type
+
+```ts
+type NumberValue = {
+  operator: "eq" | "neq" | "gt" | "gte" | "lt" | "lte"
+  value: number
+}
+```
+
+### Usage
+
+```tsx
+<filter.Filter
+  name="age"
+  render={({ value, onValueChange, definition }) => (
+    <div>
+      <select
+        value={value?.operator ?? "eq"}
+        onChange={(e) =>
+          onValueChange({ ...value, operator: e.target.value })
+        }
+      >
+        <option value="eq">Equals</option>
+        <option value="gt">Greater than</option>
+        <option value="lt">Less than</option>
+      </select>
+      <input
+        type="number"
+        min={definition.min}
+        max={definition.max}
+        value={value?.value ?? ""}
+        onChange={(e) =>
+          onValueChange({ 
+            operator: value?.operator ?? "eq", 
+            value: Number(e.target.value) 
+          })
+        }
+      />
+    </div>
+  )}
+/>
+```
+
+---
+
+## Date Filter
+
+Filter date values with comparison operators.
+
+```ts
+import { dateFilter } from "@jlnstack/filter"
+
+const filters = defineFilters({
+  createdAt: dateFilter({
+    label: "Created At",
+    operators: ["gte", "lte"],
+  }),
+})
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `label` | `string` | — | Display label for the filter |
+| `operators` | `DateOperators[]` | All | Allowed operators |
+
+### Operators
+
+| Operator | Description |
+|----------|-------------|
+| `eq` | Equals |
+| `neq` | Not equals |
+| `gt` | After |
+| `gte` | On or after |
+| `lt` | Before |
+| `lte` | On or before |
+
+### Value Type
+
+```ts
+type DateValue = {
+  operator: "eq" | "neq" | "gt" | "gte" | "lt" | "lte"
+  value: Date | string
+}
+```
+
+### Usage
+
+```tsx
+<filter.Filter
+  name="createdAt"
+  render={({ value, onValueChange }) => (
+    <input
+      type="date"
+      value={value?.value instanceof Date 
+        ? value.value.toISOString().split("T")[0] 
+        : value?.value ?? ""
+      }
+      onChange={(e) =>
+        onValueChange({ operator: "gte", value: e.target.value })
+      }
+    />
+  )}
+/>
+```
+
+---
+
+## Boolean Filter
+
+Filter boolean values.
+
+```ts
+import { booleanFilter } from "@jlnstack/filter"
+
+const filters = defineFilters({
+  verified: booleanFilter({
+    label: "Verified",
+    trueLabel: "Verified only",
+    falseLabel: "Unverified only",
+  }),
+})
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `label` | `string` | — | Display label for the filter |
+| `trueLabel` | `string` | — | Label for true option |
+| `falseLabel` | `string` | — | Label for false option |
+
+### Value Type
+
+```ts
+type BooleanValue = boolean
+```
+
+### Usage
+
+```tsx
+<filter.Filter
+  name="verified"
+  render={({ value, onValueChange, definition }) => (
+    <select
+      value={value === undefined ? "" : String(value)}
+      onChange={(e) =>
+        onValueChange(
+          e.target.value === "" ? undefined : e.target.value === "true"
+        )
+      }
+    >
+      <option value="">All</option>
+      <option value="true">{definition.trueLabel ?? "Yes"}</option>
+      <option value="false">{definition.falseLabel ?? "No"}</option>
+    </select>
+  )}
+/>
+```
+
+---
+
+## Restricting Operators
+
+You can restrict which operators are available for a filter:
+
+```ts
+const filters = defineFilters({
+  // Only allow exact match
+  status: stringFilter({ 
+    label: "Status", 
+    operators: ["eq"] 
+  }),
+  
+  // Only allow range comparisons
+  price: numberFilter({ 
+    label: "Price", 
+    operators: ["gte", "lte"] 
+  }),
+})
+```
