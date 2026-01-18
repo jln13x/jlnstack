@@ -38,13 +38,13 @@ export function FormProvider({ children }: FormProviderProps) {
       onSubmitRef.current = onSubmit;
       return { id: formId, ref };
     },
-    [formId, ref]
+    [formId, ref],
   );
 
   const submitForm = useCallback(() => {
     if (!isFormRegistered) {
       throw new Error(
-        "Cannot submit form: no form is registered. Call registerForm first."
+        "Cannot submit form: no form is registered. Call registerForm first.",
       );
     }
     return onSubmitRef.current();
@@ -57,7 +57,7 @@ export function FormProvider({ children }: FormProviderProps) {
       submitForm,
       formId: isFormRegistered ? formId : undefined,
     }),
-    [registerForm, isFormRegistered, submitForm, formId]
+    [registerForm, isFormRegistered, submitForm, formId],
   );
 
   return <FormContext value={value}>{children}</FormContext>;

@@ -135,6 +135,7 @@ const _contextInvalid = contextForm.register("invalid");
 // ============================================================================
 
 // Valid defaultValues
+// biome-ignore lint/correctness/useHookAtTopLevel: Type-level test, not a React component
 userFormReturn.useForm({
   defaultValues: {
     name: "test",
@@ -143,6 +144,7 @@ userFormReturn.useForm({
 });
 
 // Partial defaultValues should also work
+// biome-ignore lint/correctness/useHookAtTopLevel: Type-level test, not a React component
 userFormReturn.useForm({
   defaultValues: {
     name: "test",
@@ -160,6 +162,4 @@ type _TestNoResolver = Expect<Equal<HasResolver, false>>;
 // Schema property preservation
 // ============================================================================
 
-type _TestSchemaPreserved = Expect<
-  Equal<UserFormReturn["schema"], UserSchema>
->;
+type _TestSchemaPreserved = Expect<Equal<UserFormReturn["schema"], UserSchema>>;

@@ -1,9 +1,5 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type {
-  FieldValues,
-  UseFormProps,
-  UseFormReturn,
-} from "react-hook-form";
+import type { FieldValues, UseFormProps, UseFormReturn } from "react-hook-form";
 
 /**
  * Ensures a type is compatible with react-hook-form's FieldValues
@@ -38,7 +34,7 @@ export interface CreateFormReturn<
    * handleSubmit receives the schema's output type (after validation/transformation).
    */
   useForm: <TContext = any>(
-    props?: TypedUseFormProps<TFieldValues, TContext, TTransformedValues>
+    props?: TypedUseFormProps<TFieldValues, TContext, TTransformedValues>,
   ) => UseFormReturn<TFieldValues, TContext, TTransformedValues>;
 
   /**
@@ -114,5 +110,5 @@ export interface CreateFormReturn<
  * @returns An object with typed useForm and useFormContext hooks
  */
 export declare function createForm<TSchema extends StandardSchemaV1>(
-  schema: TSchema
+  schema: TSchema,
 ): CreateFormReturn<TSchema>;
