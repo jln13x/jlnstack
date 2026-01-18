@@ -43,10 +43,12 @@ function setCookie(name: string, value: string, options?: CookieOptions): void {
     parts.push(`samesite=${options.sameSite}`);
   }
 
+  // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
   document.cookie = parts.join("; ");
 }
 
 function deleteCookie(name: string): void {
+  // biome-ignore lint/suspicious/noDocumentCookie: Cookie Store API has limited browser support
   document.cookie = `${encodeURIComponent(name)}=; max-age=0`;
 }
 

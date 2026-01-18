@@ -160,18 +160,18 @@ test("actual usage without type casts", () => {
   const futures = store.plugins.history.futureStates();
   const firstFuture = futures[0];
   if (firstFuture) {
-    const count: number = firstFuture.count;
-    const name: string = firstFuture.name;
+    const _count: number = firstFuture.count;
+    const _name: string = firstFuture.name;
     // @ts-expect-error - nope doesn't exist
-    const nope = firstFuture.nope;
+    const _nope = firstFuture.nope;
   }
 
   // Access initial state from reset - should be { count: number; name: string }
   const initial = store.plugins.reset.getInitial();
-  const initialCount: number = initial.count;
-  const initialName: string = initial.name;
+  const _initialCount: number = initial.count;
+  const _initialName: string = initial.name;
   // @ts-expect-error - missing doesn't exist
-  const missing = initial.missing;
+  const _missing = initial.missing;
 
   // Call reset - should accept no args
   store.plugins.reset.reset();
@@ -179,8 +179,8 @@ test("actual usage without type casts", () => {
   // Access past states
   const pasts = store.plugins.history.pastStates();
   pasts.forEach((state) => {
-    const c: number = state.count;
-    const n: string = state.name;
+    const _c: number = state.count;
+    const _n: string = state.name;
   });
 });
 
@@ -190,7 +190,7 @@ test("actual usage without type casts", () => {
 
 test("definePlugin validates plugin shape", () => {
   // Valid plugin
-  const validPlugin = definePlugin(<TState>(store: StoreApi<TState>) => ({
+  const _validPlugin = definePlugin(<TState>(store: StoreApi<TState>) => ({
     id: "valid",
     extend: {
       doSomething: () => store.getState(),
@@ -198,12 +198,12 @@ test("definePlugin validates plugin shape", () => {
   }));
 
   // @ts-expect-error - missing id
-  const missingId = definePlugin(<TState>(store: StoreApi<TState>) => ({
+  const _missingId = definePlugin(<TState>(_store: StoreApi<TState>) => ({
     extend: {},
   }));
 
   // Plugin with middleware
-  const withMiddleware = definePlugin(<TState>(_store: StoreApi<TState>) => ({
+  const _withMiddleware = definePlugin(<TState>(_store: StoreApi<TState>) => ({
     id: "middleware",
     middleware: (setState: SetState<TState>, getState: () => TState) => {
       return (updater: TState | ((s: TState) => TState)) => {
