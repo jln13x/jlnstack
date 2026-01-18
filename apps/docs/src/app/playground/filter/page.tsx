@@ -14,8 +14,9 @@ import {
   type NumberValue,
   type StringValue,
 } from "@jlnstack/filter";
+import { getMermaidLiveUrl } from "@jlnstack/filter/devtools";
 import { useFilterHook } from "@jlnstack/filter/react";
-import { ChevronDown, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, ExternalLink, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
 // ============================================================================
@@ -537,6 +538,14 @@ export default function FilterPlaygroundPage() {
             className="px-3 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 bg-neutral-800 hover:bg-neutral-700 rounded transition-colors"
           >
             Reset
+          </button>
+          <button
+            type="button"
+            onClick={() => window.open(getMermaidLiveUrl(currentFilter), "_blank")}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 bg-neutral-800 hover:bg-neutral-700 rounded transition-colors"
+          >
+            <ExternalLink size={14} />
+            View Diagram
           </button>
         </div>
 
