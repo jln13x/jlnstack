@@ -109,6 +109,9 @@ importers:
 
   packages/modal:
     dependencies:
+      '@jlnstack/store':
+        specifier: workspace:*
+        version: link:../store
       react:
         specifier: '>=19'
         version: 19.2.3

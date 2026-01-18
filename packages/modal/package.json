@@ -20,6 +20,9 @@
     "test:run": "vitest run",
     "test:ui": "vitest --ui"
   },
+  "dependencies": {
+    "@jlnstack/store": "workspace:*"
+  },
   "peerDependencies": {
     "react": ">=19",
     "react-dom": ">=19"
