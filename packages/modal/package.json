@@ -1,6 +1,6 @@
 {
   "name": "@jlnstack/modal",
-  "description": "",
+  "description": "Type-safe modal management",
   "version": "0.0.1",
   "license": "MIT",
   "author": "jln13x",
