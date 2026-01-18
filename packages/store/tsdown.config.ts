@@ -1,12 +1,13 @@
 import { defineConfig } from "tsdown";
 
+const plugins = ["history", "immer", "logger", "reset"];
+
 export default defineConfig({
   target: ["node18", "es2017"],
   entry: [
     "src/core/core.ts",
-    "src/core/plugins/index.ts",
+    ...plugins.map((plugin) => `src/core/plugins/${plugin}/index.ts`),
     "src/react/react.tsx",
-    "src/react/plugins/index.ts",
   ],
   dts: {
     sourcemap: true,

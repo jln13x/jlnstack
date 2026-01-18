@@ -48,12 +48,7 @@ interface ReactStore<
   Provider: (props: ProviderProps<TInitialState>) => ReactNode;
   useStore: <TSelected>(selector: (state: TState) => TSelected) => TSelected;
   useActions: () => TActions;
-  usePlugins: {
-    (): ExtractPlugins<TResults>;
-    <TSelected>(
-      selector: (plugins: ExtractPlugins<TResults>) => TSelected,
-    ): TSelected;
-  };
+  usePlugins: () => ExtractPlugins<TResults>;
 }
 
 type ContextValue<
@@ -119,33 +114,24 @@ export function createReactStore<
     const selectorRef = useRef(selector);
     selectorRef.current = selector;
 
-    return useSyncExternalStore(store.subscribe, () =>
-      selectorRef.current(store.getState()),
-    );
+    const getSnapshot = () => selectorRef.current(store.getState());
+
+    return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
   };
 
   const useActionsHook = (): TActions => useCtx().actions;
 
-  function usePluginsHook(): ExtractPlugins<TResults>;
-  function usePluginsHook<TSelected>(
-    selector: (plugins: ExtractPlugins<TResults>) => TSelected,
-  ): TSelected;
-  function usePluginsHook<TSelected>(
-    selector?: (plugins: ExtractPlugins<TResults>) => TSelected,
-  ): ExtractPlugins<TResults> | TSelected {
+  const usePluginsHook = (): ExtractPlugins<TResults> => {
     const { store, plugins } = useCtx();
-    const selectorRef = useRef(selector);
-    selectorRef.current = selector;
 
-    // Subscribe to state changes - re-render when state changes so plugin getters return fresh values
     useSyncExternalStore(
       store.subscribe,
       () => store.getState(),
       () => store.getState(),
     );
 
-    return selectorRef.current ? selectorRef.current(plugins) : plugins;
-  }
+    return plugins;
+  };
 
   return {
     Provider,

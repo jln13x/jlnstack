@@ -26,9 +26,19 @@
   },
   "peerDependencies": {
     "immer": ">=10",
-    "nuqs": ">=2",
     "react": ">=18",
     "zustand": ">=5"
+  },
+  "peerDependenciesMeta": {
+    "immer": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "zustand": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
@@ -53,14 +63,44 @@
         "default": "./dist/core/core.cjs"
       }
     },
-    "./plugins": {
+    "./plugins/history": {
       "import": {
-        "types": "./dist/core/plugins/index.d.mts",
-        "default": "./dist/core/plugins/index.mjs"
+        "types": "./dist/core/plugins/history/index.d.mts",
+        "default": "./dist/core/plugins/history/index.mjs"
       },
       "require": {
-        "types": "./dist/core/plugins/index.d.cts",
-        "default": "./dist/plugins/index.cjs"
+        "types": "./dist/core/plugins/history/index.d.cts",
+        "default": "./dist/core/plugins/history/index.cjs"
+      }
+    },
+    "./plugins/immer": {
+      "import": {
+        "types": "./dist/core/plugins/immer/index.d.mts",
+        "default": "./dist/core/plugins/immer/index.mjs"
+      },
+      "require": {
+        "types": "./dist/core/plugins/immer/index.d.cts",
+        "default": "./dist/core/plugins/immer/index.cjs"
+      }
+    },
+    "./plugins/logger": {
+      "import": {
+        "types": "./dist/core/plugins/logger/index.d.mts",
+        "default": "./dist/core/plugins/logger/index.mjs"
+      },
+      "require": {
+        "types": "./dist/core/plugins/logger/index.d.cts",
+        "default": "./dist/core/plugins/logger/index.cjs"
+      }
+    },
+    "./plugins/reset": {
+      "import": {
+        "types": "./dist/core/plugins/reset/index.d.mts",
+        "default": "./dist/core/plugins/reset/index.mjs"
+      },
+      "require": {
+        "types": "./dist/core/plugins/reset/index.d.cts",
+        "default": "./dist/core/plugins/reset/index.cjs"
       }
     },
     "./react": {
@@ -71,16 +111,6 @@
       "require": {
         "types": "./dist/react/react.d.cts",
         "default": "./dist/react/react.cjs"
-      }
-    },
-    "./react/plugins": {
-      "import": {
-        "types": "./dist/react/plugins/index.d.mts",
-        "default": "./dist/react/plugins/index.mjs"
-      },
-      "require": {
-        "types": "./dist/react/plugins/index.d.cts",
-        "default": "./dist/react/plugins/index.cjs"
       }
     }
   }
