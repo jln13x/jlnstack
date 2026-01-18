@@ -55,18 +55,22 @@ export type ModalStoreOptions = {
 export function createModalStore(options: ModalStoreOptions = {}): ModalStore {
   const idPrefix = options.idPrefix ?? "m";
   let idCounter = 0;
-  let orderCounter = 0;
 
   function generateId(): string {
     return `${idPrefix}-${++idCounter}`;
   }
 
-  function generateOrder(): number {
-    return ++orderCounter;
-  }
+  let cachedSortedModals: ModalInstanceState[] = [];
+  let cachedModalsRef: Record<string, ModalInstanceState> | null = null;
 
   function getSortedModals(state: ModalStoreState): ModalInstanceState[] {
-    return Object.values(state.modals).sort((a, b) => a.order - b.order);
+    if (state.modals !== cachedModalsRef) {
+      cachedSortedModals = Object.values(state.modals).sort(
+        (a, b) => a.order - b.order,
+      );
+      cachedModalsRef = state.modals;
+    }
+    return cachedSortedModals;
   }
 
   function normalizeOrders(
@@ -95,17 +99,19 @@ export function createModalStore(options: ModalStoreOptions = {}): ModalStore {
     } as ModalStoreState,
     actions: (s): ModalStoreActions => ({
       add: (id: string) => {
-        if (s.getState().modals[id]) {
-          error(`Modal with id "${id}" already exists`);
-        }
-        const order = generateOrder();
-        s.setState((state) => ({
-          ...state,
-          modals: {
-            ...state.modals,
-            [id]: { id, order, open: true },
-          },
-        }));
+        s.setState((state) => {
+          if (state.modals[id]) {
+            error(`Modal with id "${id}" already exists`);
+          }
+          const count = Object.keys(state.modals).length;
+          return {
+            ...state,
+            modals: {
+              ...state.modals,
+              [id]: { id, order: count + 1, open: true },
+            },
+          };
+        });
       },
 
       remove: (id: string) => {
@@ -250,7 +256,6 @@ export function createModalStore(options: ModalStoreOptions = {}): ModalStore {
 
       closeAll: () => {
         s.setState({ modals: {} });
-        orderCounter = 0;
       },
     }),
   });
