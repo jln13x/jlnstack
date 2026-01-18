@@ -5,8 +5,8 @@ export type ModalInstanceState = {
   id: string;
   order: number;
   open: boolean;
-  position: Position;
-  size: Size;
+  position?: Position;
+  size?: Size;
 };
 
 type ModalStoreState = {
@@ -124,8 +124,8 @@ export function createModalStore(options: ModalStoreOptions = {}): ModalStore {
                 id,
                 order: count + 1,
                 open: true,
-                position: options?.position ?? { x: 0, y: 0 },
-                size: options?.size ?? { width: 400, height: 300 },
+                position: options?.position,
+                size: options?.size,
               },
             },
           };
@@ -272,6 +272,7 @@ export function createModalStore(options: ModalStoreOptions = {}): ModalStore {
       updatePosition: (id: string, delta: Position) => {
         s.setState((state) => {
           const modal = assertExists(state, id);
+          if (!modal.position) return state;
           return {
             ...state,
             modals: {

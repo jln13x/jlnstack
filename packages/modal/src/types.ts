@@ -39,8 +39,8 @@ export type WithDefaults<T, TDefaults> = Omit<T, keyof TDefaults> &
 export type ModalInstance<TOutput = unknown> = {
   id: string;
   order: number;
-  position: Position;
-  size: Size;
+  position?: Position;
+  size?: Size;
   render: () => unknown;
   resolve: (value: TOutput) => void;
   close: () => void;
