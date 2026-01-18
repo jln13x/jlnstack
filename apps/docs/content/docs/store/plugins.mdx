@@ -1,0 +1,152 @@
+---
+title: Plugins
+description: Built-in plugins for Store
+---
+
+# Built-in Plugins
+
+Store comes with several built-in plugins that extend functionality.
+
+## Installation
+
+Plugins are exported from `@jlnstack/store/plugins`:
+
+```ts
+import { history, logger, reset, plugins } from "@jlnstack/store/plugins"
+```
+
+`createStore` is exported from `@jlnstack/store`:
+
+```ts
+import { createStore } from "@jlnstack/store"
+```
+
+## Using Plugins
+
+`createStore` expects `plugins` as a function that receives the store API and
+returns plugin results. Use the `plugins(...)` helper to pass a list of plugin
+factories.
+
+```ts
+const { extension } = createStore({
+  state: { count: 0 },
+  actions: () => ({}),
+  plugins: plugins([reset(), history()]),
+})
+
+extension.reset.reset()
+extension.history.undo()
+```
+
+## reset
+
+Adds a `reset()` method to restore the store to its initial state.
+
+```ts
+import { createStore } from "@jlnstack/store"
+import { reset, plugins } from "@jlnstack/store/plugins"
+
+const { extension, store } = createStore({
+  state: { count: 0 },
+  actions: () => ({}),
+  plugins: plugins([reset()]),
+})
+
+store.setState({ count: 10 })
+extension.reset.reset()
+store.getState() // { count: 0 }
+```
+
+## history
+
+Adds undo/redo functionality to your store.
+
+```ts
+import { createStore } from "@jlnstack/store"
+import { history, plugins } from "@jlnstack/store/plugins"
+
+const { extension, store } = createStore({
+  state: { count: 0 },
+  actions: () => ({}),
+  plugins: plugins([history()]),
+})
+
+store.setState({ count: 1 })
+store.setState({ count: 2 })
+
+extension.history.undo()
+store.getState() // { count: 1 }
+
+extension.history.redo()
+store.getState() // { count: 2 }
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `limit` | `number` | `100` | Maximum number of history states |
+
+### Methods
+
+| Method | Description |
+|--------|-------------|
+| `undo()` | Reverts to previous state |
+| `redo()` | Re-applies undone state |
+| `clear()` | Clears all history |
+| `canUndo()` | Returns `true` if undo is available |
+| `canRedo()` | Returns `true` if redo is available |
+| `pastStates()` | Returns array of past states |
+| `futureStates()` | Returns array of future states |
+
+## logger
+
+Logs state changes to the console.
+
+```ts
+import { createStore } from "@jlnstack/store"
+import { logger, plugins } from "@jlnstack/store/plugins"
+
+const { actions } = createStore({
+  state: { count: 0 },
+  actions: (set) => ({
+    increment: () => set((s) => ({ count: s.count + 1 })),
+  }),
+  plugins: plugins([logger({ name: "CounterStore" })]),
+})
+
+actions.increment()
+// Console: CounterStore setState { count: 1 }
+```
+
+### Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `name` | `string` | required | Store name for log prefix |
+| `enabled` | `boolean` | `true` | Enable/disable logging |
+
+## Combining Plugins
+
+Use multiple plugins together:
+
+```ts
+import { createStore } from "@jlnstack/store"
+import { history, logger, reset, plugins } from "@jlnstack/store/plugins"
+
+const { extension, actions } = createStore({
+  state: { count: 0 },
+  actions: (set) => ({
+    increment: () => set((s) => ({ count: s.count + 1 })),
+  }),
+  plugins: plugins([
+    history(),
+    reset(),
+    logger({ name: "MyStore" }),
+  ]),
+})
+
+actions.increment()
+extension.history.undo()
+extension.reset.reset()
+```
