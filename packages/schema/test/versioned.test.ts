@@ -25,7 +25,6 @@ describe("createVersionedSchema", () => {
   describe("current version validation", () => {
     it("validates data at current version", async () => {
       const schema = createVersionedSchema({
-        version: "1",
         schema: createMockSchema((v) => {
           const obj = v as { name: string };
           if (typeof obj.name === "string") return obj;
@@ -33,19 +32,19 @@ describe("createVersionedSchema", () => {
         }),
       });
 
+      // No migrations = current version is 1
       const result = await schema["~standard"].validate({
-        version: "1",
+        version: 1,
         data: { name: "John" },
       });
 
       expect(result).toEqual({
-        value: { version: "1", data: { name: "John" } },
+        value: { version: 1, data: { name: "John" } },
       });
     });
 
     it("returns error for invalid data at current version", async () => {
       const schema = createVersionedSchema({
-        version: "1",
         schema: createMockSchema((v) => {
           const obj = v as { name: string };
           if (typeof obj.name === "string") return obj;
@@ -54,7 +53,7 @@ describe("createVersionedSchema", () => {
       });
 
       const result = await schema["~standard"].validate({
-        version: "1",
+        version: 1,
         data: { invalid: true },
       });
 
@@ -81,24 +80,23 @@ describe("createVersionedSchema", () => {
       });
 
       const v1Migration: VersionMigration<V1> = {
-        version: "1",
         schema: v1Schema,
         up: (v1) => ({ name: v1.name, age: 0 }),
       };
 
       const schema = createVersionedSchema({
-        version: "2",
         schema: v2Schema,
         migrations: [v1Migration],
       });
 
+      // migrations.length + 1 = 2
       const result = await schema["~standard"].validate({
-        version: "1",
+        version: 1,
         data: { name: "John" },
       });
 
       expect(result).toEqual({
-        value: { version: "2", data: { name: "John", age: 0 } },
+        value: { version: 2, data: { name: "John", age: 0 } },
       });
     });
 
@@ -141,55 +139,52 @@ describe("createVersionedSchema", () => {
       });
 
       const v1Migration: VersionMigration<V1> = {
-        version: "1",
         schema: v1Schema,
         up: (v1) => ({ name: v1.name, age: 0 }),
       };
 
       const v2Migration: VersionMigration<V2> = {
-        version: "2",
         schema: v2Schema,
         up: (v2) => ({ name: v2.name, age: v2.age, email: undefined }),
       };
 
       const schema = createVersionedSchema({
-        version: "3",
         schema: v3Schema,
         migrations: [v1Migration, v2Migration],
       });
 
-      // Test v1 -> v3
+      // Test v1 -> v3 (current version = 3)
       const v1Result = await schema["~standard"].validate({
-        version: "1",
+        version: 1,
         data: { name: "John" },
       });
       expect(v1Result).toEqual({
         value: {
-          version: "3",
+          version: 3,
           data: { name: "John", age: 0, email: undefined },
         },
       });
 
       // Test v2 -> v3
       const v2Result = await schema["~standard"].validate({
-        version: "2",
+        version: 2,
         data: { name: "Jane", age: 25 },
       });
       expect(v2Result).toEqual({
         value: {
-          version: "3",
+          version: 3,
           data: { name: "Jane", age: 25, email: undefined },
         },
       });
 
       // Test v3 (no migration needed)
       const v3Result = await schema["~standard"].validate({
-        version: "3",
+        version: 3,
         data: { name: "Bob", age: 30, email: "bob@example.com" },
       });
       expect(v3Result).toEqual({
         value: {
-          version: "3",
+          version: 3,
           data: { name: "Bob", age: 30, email: "bob@example.com" },
         },
       });
@@ -213,7 +208,6 @@ describe("createVersionedSchema", () => {
       });
 
       const v1Migration: VersionMigration<V1> = {
-        version: "1",
         schema: v1Schema,
         up: async (v1) => {
           await new Promise((resolve) => setTimeout(resolve, 1));
@@ -222,24 +216,23 @@ describe("createVersionedSchema", () => {
       };
 
       const schema = createVersionedSchema({
-        version: "2",
         schema: v2Schema,
         migrations: [v1Migration],
       });
 
       const result = await schema["~standard"].validate({
-        version: "1",
+        version: 1,
         data: { name: "john" },
       });
 
       expect(result).toEqual({
-        value: { version: "2", data: { name: "john", displayName: "JOHN" } },
+        value: { version: 2, data: { name: "john", displayName: "JOHN" } },
       });
     });
   });
 
-  describe("legacy (unversioned) data", () => {
-    it("handles unversioned data when legacy option is set", async () => {
+  describe("unversioned data (allowUnversioned)", () => {
+    it("handles unversioned data when allowUnversioned is true", async () => {
       type V1 = { name: string };
       type V2 = { name: string; age: number };
 
@@ -257,48 +250,44 @@ describe("createVersionedSchema", () => {
       });
 
       const v1Migration: VersionMigration<V1> = {
-        version: "1",
         schema: v1Schema,
         up: (v1) => ({ name: v1.name, age: 0 }),
       };
 
       const schema = createVersionedSchema({
-        version: "2",
         schema: v2Schema,
         migrations: [v1Migration],
-        legacy: "1",
+        allowUnversioned: true,
       });
 
-      // Unversioned input (no wrapper)
+      // Unversioned input (no wrapper) - treated as v1
       const result = await schema["~standard"].validate({ name: "John" });
 
       expect(result).toEqual({
-        value: { version: "2", data: { name: "John", age: 0 } },
+        value: { version: 2, data: { name: "John", age: 0 } },
       });
     });
 
-    it("handles legacy data at current version", async () => {
+    it("handles unversioned data at current version", async () => {
       const schema = createVersionedSchema({
-        version: "1",
         schema: createMockSchema((v) => {
           const obj = v as { name: string };
           if (typeof obj.name === "string") return obj;
           return null;
         }),
-        legacy: "1",
+        allowUnversioned: true,
       });
 
-      // Unversioned input treated as v1 (current)
+      // Unversioned input treated as v1 (current version when no migrations)
       const result = await schema["~standard"].validate({ name: "John" });
 
       expect(result).toEqual({
-        value: { version: "1", data: { name: "John" } },
+        value: { version: 1, data: { name: "John" } },
       });
     });
 
-    it("returns error for unversioned data when legacy is not set", async () => {
+    it("returns error for unversioned data when allowUnversioned is not set", async () => {
       const schema = createVersionedSchema({
-        version: "1",
         schema: createMockSchema((v) => {
           const obj = v as { name: string };
           if (typeof obj.name === "string") return obj;
@@ -318,19 +307,18 @@ describe("createVersionedSchema", () => {
   describe("error handling", () => {
     it("returns error for unknown version", async () => {
       const v1Migration: VersionMigration = {
-        version: "1",
         schema: createMockSchema((v) => v),
         up: (v) => v,
       };
 
       const schema = createVersionedSchema({
-        version: "2",
         schema: createMockSchema((v) => v),
         migrations: [v1Migration],
       });
 
+      // Current version is 2, so version 99 is invalid
       const result = await schema["~standard"].validate({
-        version: "99",
+        version: 99,
         data: { name: "John" },
       });
 
@@ -358,20 +346,18 @@ describe("createVersionedSchema", () => {
       });
 
       const v1Migration: VersionMigration<V1> = {
-        version: "1",
         schema: v1Schema,
         // Intentionally wrong migration - doesn't add age
         up: (v1) => ({ name: v1.name }),
       };
 
       const schema = createVersionedSchema({
-        version: "2",
         schema: v2Schema,
         migrations: [v1Migration],
       });
 
       const result = await schema["~standard"].validate({
-        version: "1",
+        version: 1,
         data: { name: "John" },
       });
 
@@ -401,20 +387,18 @@ describe("createVersionedSchema", () => {
       });
 
       const v1Migration: VersionMigration<V1> = {
-        version: "1",
         schema: v1Schema,
         up: (v1) => ({ name: v1.name, age: 0 }),
       };
 
       const schema = createVersionedSchema({
-        version: "2",
         schema: v2Schema,
         migrations: [v1Migration],
       });
 
       // Data doesn't match v1 schema
       const result = await schema["~standard"].validate({
-        version: "1",
+        version: 1,
         data: { invalid: true },
       });
 
@@ -425,7 +409,6 @@ describe("createVersionedSchema", () => {
   describe("schema metadata", () => {
     it("has correct vendor and version", () => {
       const schema = createVersionedSchema({
-        version: "1",
         schema: createMockSchema((v) => v),
       });
 

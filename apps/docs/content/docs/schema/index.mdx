@@ -1,19 +1,20 @@
 ---
 title: Introduction
-description: Schema migration utilities for evolving data structures
+description: Schema versioning and migration utilities for evolving data structures
 ---
 
 # Schema
 
-Schema migration utilities for handling evolving data structures. Works with any [Standard Schema](https://github.com/standard-schema/standard-schema) compatible library.
+Schema versioning and migration utilities for handling evolving data structures. Works with any [Standard Schema](https://github.com/standard-schema/standard-schema) compatible library.
 
-> **Note:** This is not a schema validation library. Use Zod, Valibot, Effect Schema, or any other Standard Schema compatible library for that. This package helps you handle migrations when your schemas evolve over time.
+> **Note:** This is not a schema validation library. Use Zod, Valibot, Effect Schema, or any other Standard Schema compatible library for that. This package helps you handle versioning and migrations when your schemas evolve over time.
 
 ## Why Schema?
 
+- **Explicit versioning** — Data includes version identifiers for reliable migration paths.
 - **Works with existing libraries** — Use with Zod, Valibot, ArkType, or any Standard Schema compatible library.
 - **Type-safe migrations** — Full TypeScript inference for migration functions.
-- **Simple API** — One function, one type. That's it.
+- **Legacy support** — Migrate from unversioned data to versioned format.
 
 ## The Problem
 
@@ -30,30 +31,49 @@ When you store validated data (cookies, localStorage, databases), the schema may
 { name: string, age: number, email?: string }
 ```
 
-Old stored data needs to be read and migrated to the current format. This package provides a clean way to handle that.
+Old stored data needs to be read and migrated to the current format. This package provides explicit versioning and migration chains to handle that reliably.
 
 ## Quick Example
 
 ```ts
-import { createMigratableSchema } from "@jlnstack/schema"
+import { createVersionedSchema } from "@jlnstack/schema"
 import { z } from "zod"
 
-// Your current schema (source of truth)
-const userSchema = z.object({
-  name: z.string(),
-  age: z.number(),
-  email: z.string().optional(),
+const userSchema = createVersionedSchema({
+  version: "3",
+  schema: z.object({
+    name: z.string(),
+    age: z.number(),
+    email: z.string().optional(),
+  }),
+  migrations: [
+    {
+      version: "1",
+      schema: z.object({ name: z.string() }),
+      up: (v1) => ({ name: v1.name, age: 0 }),
+    },
+    {
+      version: "2",
+      schema: z.object({ name: z.string(), age: z.number() }),
+      up: (v2) => ({ ...v2, email: undefined }),
+    },
+  ],
+  legacy: "1", // treat unversioned data as v1
 })
 
-// Wrap with migrations from older formats
-const migratableSchema = createMigratableSchema(userSchema, [
-  {
-    from: z.object({ name: z.string() }),
-    migrate: (old) => ({ name: old.name, age: 0, email: undefined }),
-  },
-])
-
-// migratableSchema is a Standard Schema
-// - New data validates normally
-// - Old data ({ name: "John" }) migrates to { name: "John", age: 0, email: undefined }
+// Input:  { version: "1", data: { name: "John" } }
+// Output: { version: "3", data: { name: "John", age: 0, email: undefined } }
 ```
+
+## Data Format
+
+All versioned data uses this wrapper format:
+
+```ts
+{
+  version: string,
+  data: T
+}
+```
+
+This makes the version explicit and allows reliable migration paths.

@@ -11,21 +11,21 @@ export type InferOutput<T> = T extends StandardSchemaV1<unknown, infer O>
 /**
  * The versioned data wrapper format.
  * All versioned data is stored/transmitted in this shape.
+ * Version is a number derived from the migration chain position.
  */
 export type VersionedData<T> = {
-  version: string;
+  version: number;
   data: T;
 };
 
 /**
  * A version migration definition.
- * Defines a schema for a specific version and how to migrate UP to the next version.
+ * The version is implicit based on position in the migrations array:
+ * - migrations[0] = version 1 (migrates to version 2)
+ * - migrations[1] = version 2 (migrates to version 3)
+ * - etc.
  */
 export type VersionMigration<TData = unknown> = {
-  /**
-   * The version identifier (e.g., "1", "2", "1.0.0")
-   */
-  version: string;
   /**
    * The schema to validate data at this version
    */
@@ -38,26 +38,26 @@ export type VersionMigration<TData = unknown> = {
 };
 
 /**
- * Configuration for createVersionedSchema
+ * Configuration for createVersionedSchema.
+ * The current version is derived from migrations.length + 1.
  */
 export type VersionedSchemaConfig<TSchema extends StandardSchemaV1> = {
-  /**
-   * The current version identifier
-   */
-  version: string;
   /**
    * The current schema (source of truth)
    */
   schema: TSchema;
   /**
    * Migrations from older versions, ordered from oldest to newest.
+   * - migrations[0] handles version 1 data and upgrades to version 2
+   * - migrations[1] handles version 2 data and upgrades to version 3
+   * - etc.
    * Each migration's `up` function should transform to the NEXT version's format.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   migrations?: VersionMigration<any>[];
   /**
-   * If data doesn't have the { version, data } wrapper, treat it as this version.
-   * Useful for migrating from unversioned data to versioned.
+   * If true, accept data without the { version, data } wrapper
+   * and treat it as version 1.
    */
-  legacy?: string;
+  allowUnversioned?: boolean;
 };

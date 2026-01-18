@@ -9,49 +9,52 @@ import type {
 /**
  * Check if value looks like a versioned data wrapper
  */
-function isVersionedData(value: unknown): value is { version: string; data: unknown } {
+function isVersionedData(
+  value: unknown,
+): value is { version: number; data: unknown } {
   return (
     typeof value === "object" &&
     value !== null &&
     "version" in value &&
     "data" in value &&
-    typeof (value as { version: unknown }).version === "string"
+    typeof (value as { version: unknown }).version === "number"
   );
 }
 
 /**
  * Create a versioned schema with migration support.
  *
- * The schema validates data in the format `{ version: string, data: T }`.
- * If migrations are provided, older versions are automatically migrated
- * to the current version.
+ * The schema validates data in the format `{ version: number, data: T }`.
+ * Versions are derived from the migrations array position:
+ * - migrations[0] = version 1 (migrates to version 2)
+ * - migrations[1] = version 2 (migrates to version 3)
+ * - Current version = migrations.length + 1
  *
  * @example
  * ```ts
  * const userSchema = createVersionedSchema({
- *   version: "3",
  *   schema: z.object({
  *     name: z.string(),
  *     age: z.number(),
  *     email: z.string().optional(),
  *   }),
  *   migrations: [
+ *     // Version 1 -> 2
  *     {
- *       version: "1",
  *       schema: z.object({ name: z.string() }),
  *       up: (v1) => ({ name: v1.name, age: 0 }),
  *     },
+ *     // Version 2 -> 3
  *     {
- *       version: "2",
  *       schema: z.object({ name: z.string(), age: z.number() }),
  *       up: (v2) => ({ ...v2, email: undefined }),
  *     },
  *   ],
- *   legacy: "1", // treat unversioned data as v1
+ *   allowUnversioned: true, // treat unversioned data as v1
  * })
  *
- * // Input: { version: "1", data: { name: "John" } }
- * // Output: { version: "3", data: { name: "John", age: 0, email: undefined } }
+ * // Input: { version: 1, data: { name: "John" } }
+ * // Output: { version: 3, data: { name: "John", age: 0, email: undefined } }
  * ```
  */
 export function createVersionedSchema<
@@ -61,16 +64,19 @@ export function createVersionedSchema<
 ): StandardSchemaV1<unknown, VersionedData<InferOutput<TSchema>>> {
   type Output = InferOutput<TSchema>;
 
-  const { version: currentVersion, schema, migrations = [], legacy } = config;
+  const { schema, migrations = [], allowUnversioned } = config;
 
-  // Build a map of version -> migration for quick lookup
-  const migrationMap = new Map<string, VersionMigration>();
-  for (const migration of migrations) {
-    migrationMap.set(migration.version, migration);
+  // Current version is derived from migrations array length + 1
+  const currentVersion = migrations.length + 1;
+
+  // Build a map of version number -> migration for quick lookup
+  const migrationMap = new Map<number, VersionMigration>();
+  for (let i = 0; i < migrations.length; i++) {
+    const migration = migrations[i];
+    if (migration) {
+      migrationMap.set(i + 1, migration); // Version is index + 1
+    }
   }
-
-  // Build ordered list of versions for migration chain
-  const versionOrder = [...migrations.map((m) => m.version), currentVersion];
 
   return {
     "~standard": {
@@ -82,23 +88,34 @@ export function createVersionedSchema<
         | { value: VersionedData<Output> }
         | { issues: Array<{ message: string }> }
       > => {
-        let inputVersion: string;
+        let inputVersion: number;
         let inputData: unknown;
 
         // Check if input is already versioned
         if (isVersionedData(value)) {
           inputVersion = value.version;
           inputData = value.data;
-        } else if (legacy !== undefined) {
-          // Treat as legacy (unversioned) data
-          inputVersion = legacy;
+        } else if (allowUnversioned) {
+          // Treat as unversioned data (version 1)
+          inputVersion = 1;
           inputData = value;
         } else {
           return {
             issues: [
               {
                 message:
-                  "Invalid input: expected { version: string, data: unknown } or configure 'legacy' option for unversioned data",
+                  "Invalid input: expected { version: number, data: unknown } or set 'allowUnversioned: true' for unversioned data",
+              },
+            ],
+          };
+        }
+
+        // Validate version is within range
+        if (inputVersion < 1 || inputVersion > currentVersion) {
+          return {
+            issues: [
+              {
+                message: `Unknown version: ${inputVersion}. Valid versions are 1 to ${currentVersion}`,
               },
             ],
           };
@@ -108,29 +125,26 @@ export function createVersionedSchema<
         if (inputVersion === currentVersion) {
           const result = await schema["~standard"].validate(inputData);
           if ("value" in result) {
-            return { value: { version: currentVersion, data: result.value as Output } };
+            return {
+              value: { version: currentVersion, data: result.value as Output },
+            };
           }
           return {
             issues: result.issues.map((i) => ({ message: i.message })),
           };
         }
 
-        // Find the starting version in our migration chain
-        const startIndex = versionOrder.indexOf(inputVersion);
-        if (startIndex === -1) {
+        // Get the starting migration
+        const startMigration = migrationMap.get(inputVersion);
+        if (!startMigration) {
           return {
-            issues: [{ message: `Unknown version: ${inputVersion}` }],
+            issues: [
+              { message: `No migration found for version: ${inputVersion}` },
+            ],
           };
         }
 
         // Validate against the starting version's schema
-        const startMigration = migrationMap.get(inputVersion);
-        if (!startMigration) {
-          return {
-            issues: [{ message: `No migration found for version: ${inputVersion}` }],
-          };
-        }
-
         const initialResult =
           await startMigration.schema["~standard"].validate(inputData);
         if ("issues" in initialResult && initialResult.issues?.length) {
@@ -140,20 +154,14 @@ export function createVersionedSchema<
         }
 
         // Walk up the migration chain
-        let currentData: unknown = "value" in initialResult ? initialResult.value : inputData;
+        let currentData: unknown =
+          "value" in initialResult ? initialResult.value : inputData;
 
-        for (let i = startIndex; i < versionOrder.length - 1; i++) {
-          const migrationVersion = versionOrder[i];
-          if (!migrationVersion) {
-            return {
-              issues: [{ message: "Invalid migration chain" }],
-            };
-          }
-          const migration = migrationMap.get(migrationVersion);
-
+        for (let v = inputVersion; v < currentVersion; v++) {
+          const migration = migrationMap.get(v);
           if (!migration) {
             return {
-              issues: [{ message: `Missing migration for version: ${migrationVersion}` }],
+              issues: [{ message: `Missing migration for version: ${v}` }],
             };
           }
 
@@ -176,7 +184,9 @@ export function createVersionedSchema<
         return {
           value: {
             version: currentVersion,
-            data: ("value" in finalResult ? finalResult.value : currentData) as Output,
+            data: ("value" in finalResult
+              ? finalResult.value
+              : currentData) as Output,
           },
         };
       },
