@@ -90,6 +90,7 @@
     }
   },
   "dependencies": {
+    "@jlnstack/store": "workspace:*",
     "@tanstack/react-form": "^1.27.7",
     "@testing-library/react": "^16.1.0",
     "jsdom": "^27.4.0"

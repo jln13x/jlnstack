@@ -10,7 +10,11 @@ import type {
   GroupInput,
 } from "../types";
 import { createFilterComponent } from "./filter-field";
-import { createUseFilter, createUseFilterById, createUseFilterDefinitions } from "./hooks";
+import {
+  createUseFilter,
+  createUseFilterById,
+  createUseFilterDefinitions,
+} from "./hooks";
 
 type AvailableFilter<Schema extends FilterSchemaConstraint> = {
   [K in keyof Schema]: { name: K } & Schema[K];
@@ -98,4 +102,9 @@ function useFilterHook<const Schema extends FilterSchemaConstraint>(
 }
 
 export { useFilterHook as useFilter };
-export type { AvailableFilter, FilterActions, UseFilterOptions, UseFilterReturn };
+export type {
+  AvailableFilter,
+  FilterActions,
+  UseFilterOptions,
+  UseFilterReturn,
+};

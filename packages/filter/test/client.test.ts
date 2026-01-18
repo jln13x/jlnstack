@@ -86,13 +86,14 @@ describe("FilterStore", () => {
 
       const group = store.getFilterById(groupId);
       expect(group).toBeDefined();
-      expect(isGroup(group!)).toBe(true);
-      if (isGroup(group!)) {
+      if (group && isGroup(group)) {
         expect(group.filters).toHaveLength(1);
         expect(group.filters[0]).toMatchObject({
           field: "active",
           value: true,
         });
+      } else {
+        expect.fail("Expected group to be defined and a group");
       }
     });
 
@@ -133,13 +134,14 @@ describe("FilterStore", () => {
 
       const parent = store.getFilterById(parentId);
       expect(parent).toBeDefined();
-      expect(isGroup(parent!)).toBe(true);
-      if (isGroup(parent!)) {
+      if (parent && isGroup(parent)) {
         expect(parent.filters).toHaveLength(1);
         expect(parent.filters[0]).toMatchObject({
           id: childId,
           operator: "or",
         });
+      } else {
+        expect.fail("Expected parent to be defined and a group");
       }
     });
   });
@@ -196,9 +198,10 @@ describe("FilterStore", () => {
 
       const group = store.getFilterById(groupId);
       expect(group).toBeDefined();
-      expect(isGroup(group!)).toBe(true);
-      if (isGroup(group!)) {
+      if (group && isGroup(group)) {
         expect(group.operator).toBe("or");
+      } else {
+        expect.fail("Expected group to be defined and a group");
       }
     });
 
@@ -285,10 +288,11 @@ describe("FilterStore", () => {
 
       const group = store.getFilterById(groupId);
       expect(group).toBeDefined();
-      expect(isGroup(group!)).toBe(true);
-      if (isGroup(group!)) {
+      if (group && isGroup(group)) {
         expect(group.filters).toHaveLength(1);
         expect(group.filters[0]).toMatchObject({ id: conditionId });
+      } else {
+        expect.fail("Expected group to be defined and a group");
       }
       expect(store.getFilter().filters).toHaveLength(1);
     });
@@ -304,9 +308,11 @@ describe("FilterStore", () => {
 
       const group = store.getFilterById(groupId);
       expect(group).toBeDefined();
-      if (isGroup(group!)) {
+      if (group && isGroup(group)) {
         expect(group.filters[0]).toMatchObject({ id: id2 });
         expect(group.filters[1]).toMatchObject({ id: id1 });
+      } else {
+        expect.fail("Expected group to be defined and a group");
       }
     });
 
@@ -340,10 +346,11 @@ describe("FilterStore", () => {
 
       const newGroup = store.getFilterById(newGroupId);
       expect(newGroup).toBeDefined();
-      expect(isGroup(newGroup!)).toBe(true);
-      if (isGroup(newGroup!)) {
+      if (newGroup && isGroup(newGroup)) {
         expect(newGroup.operator).toBe("or");
         expect(newGroup.filters).toHaveLength(2);
+      } else {
+        expect.fail("Expected newGroup to be defined and a group");
       }
     });
 
@@ -369,9 +376,11 @@ describe("FilterStore", () => {
 
       const parent = store.getFilterById(parentId);
       expect(parent).toBeDefined();
-      if (isGroup(parent!)) {
+      if (parent && isGroup(parent)) {
         expect(parent.filters).toHaveLength(1);
         expect(parent.filters[0]).toMatchObject({ id: newGroupId });
+      } else {
+        expect.fail("Expected parent to be defined and a group");
       }
     });
 
@@ -382,10 +391,11 @@ describe("FilterStore", () => {
 
       const group = store.getFilterById(groupId);
       expect(group).toBeDefined();
-      expect(isGroup(group!)).toBe(true);
-      if (isGroup(group!)) {
+      if (group && isGroup(group)) {
         expect(group.operator).toBe("or");
         expect(group.filters).toEqual([]);
+      } else {
+        expect.fail("Expected group to be defined and a group");
       }
     });
 
@@ -396,8 +406,10 @@ describe("FilterStore", () => {
 
       const group = store.getFilterById(groupId);
       expect(group).toBeDefined();
-      if (isGroup(group!)) {
+      if (group && isGroup(group)) {
         expect(group.operator).toBe("and");
+      } else {
+        expect.fail("Expected group to be defined and a group");
       }
     });
 

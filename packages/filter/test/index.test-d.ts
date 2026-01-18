@@ -2,9 +2,9 @@ import { describe, expectTypeOf, it } from "vitest";
 import {
   booleanFilter,
   createFilter,
-  stringFilter,
   type FilterInput,
   type FilterValue,
+  stringFilter,
 } from "../src/index";
 
 describe("type tests", () => {
@@ -40,7 +40,10 @@ describe("type tests", () => {
     type Input = FilterInput<typeof schema>;
 
     expectTypeOf<Input>().toEqualTypeOf<{
-      name?: { operator: "eq" | "neq" | "contains" | "startsWith" | "endsWith"; value: string };
+      name?: {
+        operator: "eq" | "neq" | "contains" | "startsWith" | "endsWith";
+        value: string;
+      };
       isActive?: boolean;
     }>();
   });

@@ -2,7 +2,11 @@
 
 import { type ReactNode, useSyncExternalStore } from "react";
 import type { FilterStore } from "../filter-client";
-import type { AnyFilterDef, FilterSchemaConstraint, FilterValue } from "../index";
+import type {
+  AnyFilterDef,
+  FilterSchemaConstraint,
+  FilterValue,
+} from "../index";
 import type { Condition } from "../types";
 import { isGroup } from "../types";
 

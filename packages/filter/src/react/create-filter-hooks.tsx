@@ -7,7 +7,10 @@ import {
   useFilterContext,
   useFilterDefinitions,
 } from "./filter-context";
-import { type UseFilterOptions, useFilter as useFilterHook } from "./use-filter";
+import {
+  type UseFilterOptions,
+  useFilter as useFilterHook,
+} from "./use-filter";
 
 export function createFilterHooks<Schema extends FilterSchemaConstraint>(
   schema: Schema,
