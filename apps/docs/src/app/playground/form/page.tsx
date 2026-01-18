@@ -234,6 +234,7 @@ function StepperFooter({
 
       {showSubmit ? (
         <button
+          key="submit"
           type="submit"
           form={formId}
           className="px-4 py-2 text-sm font-medium bg-neutral-100 text-neutral-900 rounded-lg transition-colors hover:bg-white"
@@ -242,6 +243,7 @@ function StepperFooter({
         </button>
       ) : (
         <button
+          key="next"
           type="button"
           onClick={onNext}
           disabled={isLastStep}
