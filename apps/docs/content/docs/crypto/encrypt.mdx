@@ -1,0 +1,162 @@
+---
+title: Encryption
+description: Type-safe data encryption with AES-GCM
+---
+
+# Encryption
+
+Encrypt and decrypt structured data with AES-GCM and optional schema validation.
+
+## Basic Usage
+
+```ts
+import { createEncrypt } from "@jlnstack/crypto/encrypt"
+
+const encryptor = createEncrypt({
+  key: process.env.ENCRYPTION_KEY!,
+})
+
+// Encrypt any data
+const encrypted = await encryptor.encrypt({ secret: "password123" })
+
+// Decrypt back to original
+const data = await encryptor.decrypt(encrypted)
+console.log(data.secret) // "password123"
+```
+
+## Schema Validation
+
+Add a schema to validate data on both encrypt and decrypt:
+
+```ts
+import { createEncrypt } from "@jlnstack/crypto/encrypt"
+import { z } from "zod"
+
+const vault = createEncrypt({
+  schema: z.object({
+    ssn: z.string(),
+    creditCard: z.string(),
+  }),
+  key: process.env.ENCRYPTION_KEY!,
+})
+
+// Type-safe - TypeScript knows the shape
+const encrypted = await vault.encrypt({
+  ssn: "123-45-6789",
+  creditCard: "4111-1111-1111-1111",
+})
+
+// Data is typed as { ssn: string, creditCard: string }
+const { ssn, creditCard } = await vault.decrypt(encrypted)
+```
+
+## Key Requirements
+
+Keys can be provided as strings or Uint8Arrays:
+
+```ts
+// String key (will be derived using PBKDF2)
+const encryptor = createEncrypt({
+  key: "my-secret-password",
+})
+
+// 32-byte key (used directly for AES-256)
+const key = new Uint8Array(32)
+crypto.getRandomValues(key)
+
+const encryptor = createEncrypt({
+  key: key,
+})
+```
+
+For best security, use a 32-byte (256-bit) random key. If you provide a shorter key, it will be derived using PBKDF2.
+
+## Encrypted Format
+
+The encrypted output is a base64 string containing:
+- 12-byte initialization vector (IV)
+- Ciphertext with authentication tag
+
+Format: `base64(iv):base64(ciphertext)`
+
+Each encryption uses a random IV, so the same data produces different ciphertext each time.
+
+## Use Cases
+
+### Storing Sensitive Data in Database
+
+```ts
+const vault = createEncrypt({
+  schema: z.object({
+    apiKey: z.string(),
+    refreshToken: z.string(),
+  }),
+  key: process.env.ENCRYPTION_KEY!,
+})
+
+// Before storing
+const encrypted = await vault.encrypt({
+  apiKey: "sk_live_xxx",
+  refreshToken: "rt_xxx",
+})
+await db.insert({ credentials: encrypted })
+
+// When retrieving
+const row = await db.findOne()
+const { apiKey, refreshToken } = await vault.decrypt(row.credentials)
+```
+
+### Encrypting Cookies
+
+```ts
+const sessionEncryptor = createEncrypt({
+  schema: z.object({
+    userId: z.string(),
+    permissions: z.array(z.string()),
+  }),
+  key: process.env.SESSION_KEY!,
+})
+
+// Encrypt session data for cookie
+const encrypted = await sessionEncryptor.encrypt({
+  userId: "user-123",
+  permissions: ["read", "write"],
+})
+
+// Set as cookie value
+cookies.set("session", encrypted)
+```
+
+## Error Handling
+
+```ts
+try {
+  const data = await encryptor.decrypt(encrypted)
+} catch (error) {
+  if (error.message === "Decryption failed: invalid key or corrupted data") {
+    // Wrong key or tampered data
+  } else if (error.message.startsWith("Invalid data:")) {
+    // Schema validation failed
+  }
+}
+```
+
+## API Reference
+
+### createEncrypt(config)
+
+Creates an encryptor instance.
+
+**Config:**
+- `key` (string | Uint8Array) — The encryption key
+- `schema` (StandardSchema, optional) — Schema to validate data
+
+**Returns:** Encryptor instance with `encrypt` and `decrypt` methods.
+
+### encryptor.encrypt(data)
+
+Encrypts data and returns a base64 string.
+
+### encryptor.decrypt(encrypted)
+
+Decrypts a string and returns the original data. Throws on invalid data or wrong key.

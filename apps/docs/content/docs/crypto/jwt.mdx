@@ -1,0 +1,164 @@
+---
+title: JWT
+description: Type-safe JSON Web Token creation and verification
+---
+
+# JWT
+
+Create and verify JSON Web Tokens with type-safe payloads and schema validation.
+
+## Basic Usage
+
+```ts
+import { createJWT } from "@jlnstack/crypto/jwt"
+
+const jwt = createJWT({
+  secret: process.env.JWT_SECRET!,
+})
+
+// Sign a payload
+const token = await jwt.sign({ userId: "123", role: "admin" })
+
+// Verify and get the payload
+const payload = await jwt.verify(token)
+console.log(payload.userId) // "123"
+```
+
+## Schema Validation
+
+Add a schema to validate payloads on both sign and verify:
+
+```ts
+import { createJWT } from "@jlnstack/crypto/jwt"
+import { z } from "zod"
+
+const userToken = createJWT({
+  payload: z.object({
+    userId: z.string(),
+    role: z.enum(["admin", "user"]),
+  }),
+  secret: process.env.JWT_SECRET!,
+})
+
+// Type-safe - TypeScript knows the shape
+const token = await userToken.sign({
+  userId: "123",
+  role: "admin",
+})
+
+// Payload is typed as { userId: string, role: "admin" | "user" }
+const { userId, role } = await userToken.verify(token)
+```
+
+## Algorithms
+
+Supports HMAC algorithms:
+
+```ts
+const jwt = createJWT({
+  secret: process.env.JWT_SECRET!,
+  algorithm: "HS256", // default
+})
+
+// Also available: "HS384", "HS512"
+```
+
+## Sign Options
+
+Add standard JWT claims when signing:
+
+```ts
+const token = await jwt.sign(
+  { userId: "123" },
+  {
+    expiresIn: 3600,        // Expires in 1 hour (seconds)
+    notBefore: 0,           // Valid immediately
+    issuer: "my-app",       // iss claim
+    subject: "user-123",    // sub claim
+    audience: "api",        // aud claim
+    jwtId: "unique-id",     // jti claim
+  }
+)
+```
+
+## Default Options
+
+Set defaults that apply to all tokens:
+
+```ts
+const jwt = createJWT({
+  secret: process.env.JWT_SECRET!,
+  defaults: {
+    expiresIn: 3600,
+    issuer: "my-app",
+  },
+})
+
+// All tokens will expire in 1 hour and have issuer set
+const token = await jwt.sign({ userId: "123" })
+```
+
+## Verification Options
+
+Validate claims during verification:
+
+```ts
+const payload = await jwt.verify(token, {
+  clockTolerance: 30,           // Allow 30 seconds clock skew
+  issuer: "my-app",             // Require specific issuer
+  audience: ["api", "web"],     // Require one of these audiences
+})
+```
+
+## Decode Without Verification
+
+Decode a token without verifying the signature:
+
+```ts
+const { header, payload } = jwt.decode(token)
+
+console.log(header.alg) // "HS256"
+console.log(payload.userId) // "123"
+```
+
+## Error Handling
+
+```ts
+try {
+  const payload = await jwt.verify(token)
+} catch (error) {
+  if (error.message === "Token has expired") {
+    // Handle expiration
+  } else if (error.message === "Invalid signature") {
+    // Handle tampering
+  } else if (error.message === "Invalid issuer") {
+    // Handle wrong issuer
+  }
+}
+```
+
+## API Reference
+
+### createJWT(config)
+
+Creates a JWT instance.
+
+**Config:**
+- `secret` (string | Uint8Array) — The secret key for signing
+- `payload` (StandardSchema, optional) — Schema to validate payloads
+- `algorithm` ("HS256" | "HS384" | "HS512", optional) — Algorithm to use, defaults to "HS256"
+- `defaults` (SignOptions, optional) — Default options for signing
+
+**Returns:** JWT instance with `sign`, `verify`, and `decode` methods.
+
+### jwt.sign(payload, options?)
+
+Signs a payload and returns a JWT string.
+
+### jwt.verify(token, options?)
+
+Verifies a token and returns the payload. Throws on invalid tokens.
+
+### jwt.decode(token)
+
+Decodes a token without verification. Returns `{ header, payload }`.
