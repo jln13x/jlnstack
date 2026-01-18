@@ -1,0 +1,52 @@
+---
+title: Introduction
+description: Type-safe form utilities for React
+---
+
+# Form
+
+Type-safe form utilities for React with Standard Schema support.
+
+## Why @jlnstack/form?
+
+- **Standard Schema** — Works with Zod, Valibot, ArkType, and any schema library implementing the Standard Schema spec
+- **React Hook Form Integration** — First-class support for react-hook-form with full type inference
+- **Type Safety** — Infers form types directly from your schema, no manual type definitions needed
+
+## Installation
+
+```bash
+npm install @jlnstack/form
+```
+
+For react-hook-form integration:
+
+```bash
+npm install @jlnstack/form react-hook-form @hookform/resolvers
+```
+
+## Quick Example
+
+```tsx
+import { createForm } from "@jlnstack/form/react-hook-form";
+import { z } from "zod";
+
+const schema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+
+const { useForm } = createForm(schema);
+
+function LoginForm() {
+  const form = useForm();
+
+  return (
+    <form onSubmit={form.handleSubmit((data) => console.log(data))}>
+      <input {...form.register("email")} />
+      <input {...form.register("password")} type="password" />
+      <button type="submit">Login</button>
+    </form>
+  );
+}
+```
