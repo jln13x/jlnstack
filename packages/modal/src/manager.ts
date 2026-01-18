@@ -4,7 +4,7 @@ import {
   type ModalStore,
   type ModalStoreOptions,
 } from "./store";
-import type { Modal, ModalInstance } from "./types";
+import type { Modal, ModalInstance, Position, Size } from "./types";
 
 export type ModalManagerOptions = ModalStoreOptions;
 
@@ -23,6 +23,10 @@ export type ModalManager = {
   sendToBack: (id: string) => void;
   moveUp: (id: string) => void;
   moveDown: (id: string) => void;
+
+  setPosition: (id: string, position: Position) => void;
+  updatePosition: (id: string, delta: Position) => void;
+  setSize: (id: string, size: Size) => void;
 
   close: (id: string) => void;
   closeAll: () => void;
@@ -63,6 +67,8 @@ export function createModalManager(
       return store.actions.getAll().map((m) => {
         const instance = getInstanceOrThrow(m.id);
         instance.order = m.order;
+        instance.position = m.position;
+        instance.size = m.size;
         return instance;
       });
     },
@@ -84,6 +90,14 @@ export function createModalManager(
     moveUp: (id: string) => store.actions.moveUp(id),
 
     moveDown: (id: string) => store.actions.moveDown(id),
+
+    setPosition: (id: string, position: Position) =>
+      store.actions.setPosition(id, position),
+
+    updatePosition: (id: string, delta: Position) =>
+      store.actions.updatePosition(id, delta),
+
+    setSize: (id: string, size: Size) => store.actions.setSize(id, size),
 
     close: (id: string) => {
       const instance = instances.get(id);

@@ -1,6 +1,7 @@
 "use client";
 
 import { DndContext, type DragEndEvent, useDraggable } from "@dnd-kit/core";
+import { createSnapModifier } from "@dnd-kit/modifiers";
 import { CSS } from "@dnd-kit/utilities";
 import {
   createModalManager,
@@ -11,7 +12,7 @@ import {
 import { ModalProvider, useModal, useModals } from "@jlnstack/modal/react";
 import { FileText, HelpCircle, MessageSquare, Settings, X } from "lucide-react";
 import { Dialog } from "radix-ui";
-import { type ReactNode, useCallback, useState } from "react";
+import { type ReactNode, useCallback, useRef, useState } from "react";
 
 // ============================================================================
 // Sample Modals
@@ -205,10 +206,57 @@ function Toggle({
 }
 
 // ============================================================================
-// Position Tracking
+// Resize Handle Component
 // ============================================================================
 
-type ModalPositions = Record<string, { x: number; y: number }>;
+function ResizeHandle({
+  onResize,
+}: {
+  onResize: (delta: { width: number; height: number }) => void;
+}) {
+  const [isResizing, setIsResizing] = useState(false);
+  const startPos = useRef({ x: 0, y: 0 });
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsResizing(true);
+    startPos.current = { x: e.clientX, y: e.clientY };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!isResizing) return;
+    const deltaX = e.clientX - startPos.current.x;
+    const deltaY = e.clientY - startPos.current.y;
+    startPos.current = { x: e.clientX, y: e.clientY };
+    onResize({ width: deltaX, height: deltaY });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    setIsResizing(false);
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+  };
+
+  return (
+    <div
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
+    >
+      <svg
+        viewBox="0 0 16 16"
+        className="w-full h-full text-neutral-600 hover:text-neutral-400 transition-colors"
+      >
+        <path
+          fill="currentColor"
+          d="M14 14H12V12H14V14ZM14 10H12V8H14V10ZM10 14H8V12H10V14Z"
+        />
+      </svg>
+    </div>
+  );
+}
 
 // ============================================================================
 // Draggable Modal Component
@@ -216,22 +264,24 @@ type ModalPositions = Record<string, { x: number; y: number }>;
 
 function DraggableModal({
   instance,
-  position,
   isTop,
   onBringToFront,
+  onResize,
 }: {
   instance: ModalInstance;
-  position: { x: number; y: number };
   isTop: boolean;
   onBringToFront: () => void;
+  onResize: (delta: { width: number; height: number }) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: instance.id,
   });
 
   const style = {
-    left: position.x,
-    top: position.y,
+    left: instance.position.x,
+    top: instance.position.y,
+    width: instance.size.width,
+    height: instance.size.height,
     transform: transform ? CSS.Translate.toString(transform) : undefined,
     zIndex: instance.order + 100,
   };
@@ -243,7 +293,7 @@ function DraggableModal({
           ref={setNodeRef}
           style={style}
           onPointerDown={onBringToFront}
-          className={`fixed w-80 bg-neutral-900 border rounded-lg shadow-2xl outline-none transition-[shadow,opacity] ${
+          className={`fixed bg-neutral-900 border rounded-lg shadow-2xl outline-none transition-[shadow,opacity] flex flex-col ${
             isTop
               ? "border-neutral-500 shadow-neutral-900/50"
               : "border-neutral-800 shadow-neutral-950/50"
@@ -253,15 +303,11 @@ function DraggableModal({
           <div
             {...listeners}
             {...attributes}
-            className="flex items-center justify-between px-3 py-2 border-b border-neutral-800 cursor-move select-none"
+            className="flex items-center justify-between px-3 py-2 border-b border-neutral-800 cursor-move select-none shrink-0"
           >
             <span className="text-xs text-neutral-500 font-mono">
               {instance.id}
             </span>
-          </div>
-          {/* Content */}
-          <ModalInstanceProvider instance={instance}>
-            <div className="p-4">{instance.render() as ReactNode}</div>
             <button
               type="button"
               onClick={(e) => {
@@ -272,7 +318,15 @@ function DraggableModal({
             >
               <X size={14} />
             </button>
+          </div>
+          {/* Content */}
+          <ModalInstanceProvider instance={instance}>
+            <div className="p-4 flex-1 overflow-auto">
+              {instance.render() as ReactNode}
+            </div>
           </ModalInstanceProvider>
+          {/* Resize handle */}
+          <ResizeHandle onResize={onResize} />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
@@ -315,8 +369,22 @@ function ModalInstanceProvider({
 // Playground Outlet
 // ============================================================================
 
-function PlaygroundOutlet({ positions }: { positions: ModalPositions }) {
-  const { modals, isOnTop, bringToFront } = useModals();
+const MIN_WIDTH = 200;
+const MIN_HEIGHT = 150;
+
+function PlaygroundOutlet() {
+  const { modals, isOnTop, bringToFront, setSize } = useModals();
+
+  const handleResize = (
+    id: string,
+    currentSize: { width: number; height: number },
+    delta: { width: number; height: number },
+  ) => {
+    setSize(id, {
+      width: Math.max(MIN_WIDTH, currentSize.width + delta.width),
+      height: Math.max(MIN_HEIGHT, currentSize.height + delta.height),
+    });
+  };
 
   return (
     <>
@@ -324,9 +392,9 @@ function PlaygroundOutlet({ positions }: { positions: ModalPositions }) {
         <DraggableModal
           key={modal.id}
           instance={modal}
-          position={positions[modal.id] ?? { x: 100, y: 100 }}
           isTop={isOnTop(modal.id)}
           onBringToFront={() => bringToFront(modal.id)}
+          onResize={(delta) => handleResize(modal.id, modal.size, delta)}
         />
       ))}
     </>
@@ -479,74 +547,60 @@ function DesktopIcon({
 }
 
 // ============================================================================
+// Grid Configuration
+// ============================================================================
+
+const GRID_SIZE = 20; // pixels
+const snapToGridModifier = createSnapModifier(GRID_SIZE);
+
+// ============================================================================
+// Grid Background
+// ============================================================================
+
+function GridBackground() {
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        backgroundImage: `
+          linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)
+        `,
+        backgroundSize: `${GRID_SIZE}px ${GRID_SIZE}px`,
+      }}
+    />
+  );
+}
+
+// ============================================================================
 // Main Page
 // ============================================================================
 
-let modalCounter = 0;
-
 export default function ModalPlaygroundPage() {
   const [manager] = useState(() => createModalManager());
-  const [positions, setPositions] = useState<ModalPositions>({});
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, delta } = event;
     const id = active.id as string;
 
-    setPositions((prev) => {
-      const current = prev[id] ?? {
-        x: 100 + modalCounter * 30,
-        y: 100 + modalCounter * 30,
-      };
-      return {
-        ...prev,
-        [id]: {
-          x: current.x + delta.x,
-          y: current.y + delta.y,
-        },
-      };
-    });
+    if (delta.x !== 0 || delta.y !== 0) {
+      manager.updatePosition(id, { x: delta.x, y: delta.y });
+    }
   };
 
-  // Initialize positions for new modals
-  const initializePosition = useCallback((id: string) => {
-    setPositions((prev) => {
-      if (prev[id]) return prev;
-      modalCounter++;
-      return {
-        ...prev,
-        [id]: {
-          x: 100 + (modalCounter % 10) * 30,
-          y: 100 + (modalCounter % 10) * 30,
-        },
-      };
-    });
-  }, []);
-
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext modifiers={[snapToGridModifier]} onDragEnd={handleDragEnd}>
       <ModalProvider manager={manager}>
-        <div className="h-screen w-screen bg-neutral-950 overflow-hidden text-neutral-100">
+        <div className="h-screen w-screen bg-neutral-950 overflow-hidden text-neutral-100 relative">
+          <GridBackground />
           <Desktop />
-          <PositionInitializer onInit={initializePosition} />
           <Debug />
-          <PlaygroundOutlet positions={positions} />
+          <PlaygroundOutlet />
           <Taskbar />
         </div>
       </ModalProvider>
     </DndContext>
   );
-}
-
-// Component to initialize positions when modals are created
-function PositionInitializer({ onInit }: { onInit: (id: string) => void }) {
-  const { modals } = useModals();
-
-  // Initialize positions for any new modals
-  modals.forEach((modal) => {
-    onInit(modal.id);
-  });
-
-  return null;
 }
 
 const Debug = () => {

@@ -1,17 +1,21 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useSyncExternalStore } from "react";
-import type { Modal, ModalInstance } from "../types";
+import type { Modal, ModalInstance, WithDefaults } from "../types";
 import { useModalManager } from "./context";
 
 const EMPTY_MODALS: ModalInstance[] = [];
 
-export function useModal<TInput, TOutput>(modal: Modal<TInput, TOutput>) {
+export function useModal<
+  TInput,
+  TOutput,
+  TDefaults extends Partial<TInput> = {},
+>(modal: Modal<TInput, TOutput, TDefaults>) {
   const manager = useModalManager();
 
   const open = useCallback(
-    (input: TInput): Promise<TOutput | undefined> => {
-      return manager.open(modal, input);
+    (input: WithDefaults<TInput, TDefaults>): Promise<TOutput | undefined> => {
+      return manager.open(modal, input as TInput);
     },
     [manager, modal],
   );
@@ -51,6 +55,9 @@ export function useModals() {
       sendToBack: manager.sendToBack,
       moveUp: manager.moveUp,
       moveDown: manager.moveDown,
+      setPosition: manager.setPosition,
+      updatePosition: manager.updatePosition,
+      setSize: manager.setSize,
       close: manager.close,
       closeAll: manager.closeAll,
     }),

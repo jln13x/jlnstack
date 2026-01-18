@@ -5,14 +5,25 @@ export type {
   ModalDef,
   ModalInstance,
   OpenModalResult,
+  Position,
+  Size,
+  TemplateContext,
+  TemplateWrapper,
+  WithDefaults,
 } from "./types";
 
 // Builder
-export { modal, type ModalBuilder, type StandardSchemaV1 } from "./builder";
+export {
+  modal,
+  type CreateOptions,
+  type ModalBuilder,
+  type StandardSchemaV1,
+} from "./builder";
 
 // Store
 export {
   createModalStore,
+  type AddModalOptions,
   type ModalStore,
   type ModalStoreActions,
   type ModalStoreOptions,

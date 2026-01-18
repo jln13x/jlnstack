@@ -1,9 +1,12 @@
 import { createStore } from "@jlnstack/store";
+import type { Position, Size } from "./types";
 
 export type ModalInstanceState = {
   id: string;
   order: number;
   open: boolean;
+  position: Position;
+  size: Size;
 };
 
 type ModalStoreState = {
@@ -20,8 +23,13 @@ function error(message: string): never {
   throw new Error(message);
 }
 
+export type AddModalOptions = {
+  position?: Position;
+  size?: Size;
+};
+
 export type ModalStoreActions = {
-  add: (id: string) => void;
+  add: (id: string, options?: AddModalOptions) => void;
   remove: (id: string) => void;
   get: (id: string) => ModalInstanceState | undefined;
   has: (id: string) => boolean;
@@ -37,6 +45,10 @@ export type ModalStoreActions = {
   sendToBack: (id: string) => void;
   moveUp: (id: string) => void;
   moveDown: (id: string) => void;
+
+  setPosition: (id: string, position: Position) => void;
+  updatePosition: (id: string, delta: Position) => void;
+  setSize: (id: string, size: Size) => void;
 
   closeAll: () => void;
 };
@@ -98,7 +110,7 @@ export function createModalStore(options: ModalStoreOptions = {}): ModalStore {
       modals: {},
     } as ModalStoreState,
     actions: (s): ModalStoreActions => ({
-      add: (id: string) => {
+      add: (id: string, options?: AddModalOptions) => {
         s.setState((state) => {
           if (state.modals[id]) {
             error(`Modal with id "${id}" already exists`);
@@ -108,7 +120,13 @@ export function createModalStore(options: ModalStoreOptions = {}): ModalStore {
             ...state,
             modals: {
               ...state.modals,
-              [id]: { id, order: count + 1, open: true },
+              [id]: {
+                id,
+                order: count + 1,
+                open: true,
+                position: options?.position ?? { x: 0, y: 0 },
+                size: options?.size ?? { width: 400, height: 300 },
+              },
             },
           };
         });
@@ -209,16 +227,8 @@ export function createModalStore(options: ModalStoreOptions = {}): ModalStore {
             ...state,
             modals: {
               ...state.modals,
-              [current.id]: {
-                id: current.id,
-                order: above.order,
-                open: current.open,
-              },
-              [above.id]: {
-                id: above.id,
-                order: current.order,
-                open: above.open,
-              },
+              [current.id]: { ...current, order: above.order },
+              [above.id]: { ...above, order: current.order },
             },
           };
         });
@@ -239,16 +249,53 @@ export function createModalStore(options: ModalStoreOptions = {}): ModalStore {
             ...state,
             modals: {
               ...state.modals,
-              [current.id]: {
-                id: current.id,
-                order: below.order,
-                open: current.open,
+              [current.id]: { ...current, order: below.order },
+              [below.id]: { ...below, order: current.order },
+            },
+          };
+        });
+      },
+
+      setPosition: (id: string, position: Position) => {
+        s.setState((state) => {
+          const modal = assertExists(state, id);
+          return {
+            ...state,
+            modals: {
+              ...state.modals,
+              [id]: { ...modal, position },
+            },
+          };
+        });
+      },
+
+      updatePosition: (id: string, delta: Position) => {
+        s.setState((state) => {
+          const modal = assertExists(state, id);
+          return {
+            ...state,
+            modals: {
+              ...state.modals,
+              [id]: {
+                ...modal,
+                position: {
+                  x: modal.position.x + delta.x,
+                  y: modal.position.y + delta.y,
+                },
               },
-              [below.id]: {
-                id: below.id,
-                order: current.order,
-                open: below.open,
-              },
+            },
+          };
+        });
+      },
+
+      setSize: (id: string, size: Size) => {
+        s.setState((state) => {
+          const modal = assertExists(state, id);
+          return {
+            ...state,
+            modals: {
+              ...state.modals,
+              [id]: { ...modal, size },
             },
           };
         });

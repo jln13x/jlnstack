@@ -30,6 +30,8 @@ export function openModal<TInput, TOutput>(
   const instance: ModalInstance<TOutput> = {
     id,
     order: 0,
+    position: { x: 0, y: 0 },
+    size: { width: 400, height: 300 },
     render: () =>
       modal._def.component(input, {
         resolve: (value) => {
@@ -56,10 +58,12 @@ export function openModal<TInput, TOutput>(
 
   store.actions.add(id);
 
-  // Update order from store
+  // Update from store
   const storeModal = store.actions.get(id);
   if (storeModal) {
     instance.order = storeModal.order;
+    instance.position = storeModal.position;
+    instance.size = storeModal.size;
   }
 
   return {
