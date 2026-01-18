@@ -1,23 +1,9 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { describe, expectTypeOf, it } from "vitest";
 import { createMigratableSchema } from "../src/migratable";
-import type { InferInput, InferOutput, Migration } from "../src/types";
+import type { Migration } from "../src/types";
 
 describe("type inference", () => {
-  it("InferOutput extracts output type from schema", () => {
-    type Schema = StandardSchemaV1<unknown, { name: string; age: number }>;
-    type Output = InferOutput<Schema>;
-
-    expectTypeOf<Output>().toEqualTypeOf<{ name: string; age: number }>();
-  });
-
-  it("InferInput extracts input type from schema", () => {
-    type Schema = StandardSchemaV1<string, number>;
-    type Input = InferInput<Schema>;
-
-    expectTypeOf<Input>().toEqualTypeOf<string>();
-  });
-
   it("createMigratableSchema returns StandardSchemaV1 with correct output type", () => {
     type User = { name: string; age: number };
 

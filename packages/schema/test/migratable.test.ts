@@ -51,7 +51,10 @@ describe("createMigratableSchema", () => {
 
     const schema = createMigratableSchema(currentSchema, []);
 
-    const result = await schema["~standard"].validate({ name: "John", age: 30 });
+    const result = await schema["~standard"].validate({
+      name: "John",
+      age: 30,
+    });
 
     expect(result).toEqual({ value: { name: "John", age: 30 } });
   });
@@ -122,25 +125,25 @@ describe("createMigratableSchema", () => {
     });
 
     const v1Schema = createMockSchema<V1>((v) => {
-      const obj = v as Record<string, unknown>;
+      const obj = v as V1 & { age?: unknown; email?: unknown };
       if (
-        typeof obj["name"] === "string" &&
+        typeof obj.name === "string" &&
         !("age" in obj) &&
         !("email" in obj)
       ) {
-        return { name: obj["name"] as string };
+        return { name: obj.name };
       }
       return null;
     });
 
     const v2Schema = createMockSchema<V2>((v) => {
-      const obj = v as Record<string, unknown>;
+      const obj = v as V2 & { email?: unknown };
       if (
-        typeof obj["name"] === "string" &&
-        typeof obj["age"] === "number" &&
+        typeof obj.name === "string" &&
+        typeof obj.age === "number" &&
         !("email" in obj)
       ) {
-        return { name: obj["name"] as string, age: obj["age"] as number };
+        return { name: obj.name, age: obj.age };
       }
       return null;
     });

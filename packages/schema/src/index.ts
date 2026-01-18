@@ -1,2 +1,2 @@
 export { createMigratableSchema } from "./migratable";
-export type { InferInput, InferOutput, Migration } from "./types";
+export type { Migration } from "./types";
