@@ -70,6 +70,19 @@ function removeFromTree<Schema extends FilterSchemaConstraint>(
   }
 }
 
+function isDescendant<Schema extends FilterSchemaConstraint>(
+  root: Group<Schema>,
+  ancestorId: string,
+  nodeId: string,
+): boolean {
+  let current: string | undefined = nodeId;
+  while (current) {
+    if (current === ancestorId) return true;
+    current = findParentId(root, current);
+  }
+  return false;
+}
+
 function createFilterStore<Schema extends FilterSchemaConstraint>(
   options: FilterStoreOptions<Schema>,
 ) {
@@ -235,6 +248,9 @@ function createFilterStore<Schema extends FilterSchemaConstraint>(
     }) => {
       const root = api.getState().root;
       if (opts.id === root.id) error("Cannot move root group");
+      if (isDescendant(root, opts.id, opts.targetGroupId)) {
+        error(`Cannot move filter into its own descendant "${opts.targetGroupId}"`);
+      }
       const filter = findById(root, opts.id);
       if (!filter) error(`Filter with id "${opts.id}" not found`);
       const targetGroup = findById(root, opts.targetGroupId);
@@ -283,6 +299,9 @@ function createFilterStore<Schema extends FilterSchemaConstraint>(
         if (id === root.id) error("Cannot group root");
         const filter = findById(root, id);
         if (!filter) error(`Filter with id "${id}" not found`);
+        if (opts.groupId && isDescendant(root, id, opts.groupId)) {
+          error(`Cannot group into descendant "${opts.groupId}"`);
+        }
       }
 
       const newGroupId = generateId();

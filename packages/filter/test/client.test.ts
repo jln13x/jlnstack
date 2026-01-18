@@ -325,6 +325,16 @@ describe("FilterStore", () => {
         store.moveFilter({ id: rootId, targetGroupId: groupId, index: 0 }),
       ).toThrow("Cannot move root group");
     });
+
+    it("should throw when moving a group into its own descendant", () => {
+      const store = createStore();
+      const parentId = store.addGroup({ operator: "and" });
+      const childId = store.addGroup({ operator: "or", groupId: parentId });
+
+      expect(() =>
+        store.moveFilter({ id: parentId, targetGroupId: childId, index: 0 }),
+      ).toThrow('Cannot move filter into its own descendant "');
+    });
   });
 
   describe("groupFilters", () => {
@@ -420,6 +430,20 @@ describe("FilterStore", () => {
       expect(() => store.groupFilters({ ids: [rootId] })).toThrow(
         "Cannot group root",
       );
+    });
+
+    it("should throw when grouping into a descendant", () => {
+      const store = createStore();
+      const parentId = store.addGroup({ operator: "and" });
+      const childId = store.addGroup({ operator: "or", groupId: parentId });
+
+      expect(() =>
+        store.groupFilters({
+          ids: [parentId],
+          groupId: childId,
+          operator: "and",
+        }),
+      ).toThrow('Cannot group into descendant "');
     });
   });
 
