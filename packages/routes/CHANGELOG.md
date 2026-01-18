@@ -1,5 +1,12 @@
 # @jlnstack/routes
 
+## 0.0.9
+
+### Patch Changes
+
+- 159412b: disallow array access
+- b3993f9: param inheritance
+
 ## 0.0.8
 
 ### Patch Changes

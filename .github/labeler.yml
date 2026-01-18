@@ -1,0 +1,15 @@
+routes:
+  - changed-files:
+    - any-glob-to-any-file: 'packages/routes/**/*'
+
+cookies:
+  - changed-files:
+    - any-glob-to-any-file: 'packages/cookies/**/*'
+
+procedure:
+  - changed-files:
+    - any-glob-to-any-file: 'packages/procedure/**/*'
+
+store:
+  - changed-files:
+    - any-glob-to-any-file: 'packages/store/**/*'
