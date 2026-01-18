@@ -3,6 +3,9 @@
 // Builder
 export {
   type CreateOptions,
+  type LazyImport,
+  type LazyModalComponent,
+  type LazyOptions,
   type ModalBuilder,
   modal,
   type StandardSchemaV1,

@@ -317,6 +317,55 @@ function SettingsButton() {
 }
 ```
 
+### Lazy Loading in Registry
+
+Use `.lazy()` to code-split heavy modals in your registry:
+
+```tsx
+// modals/index.ts
+import { modal } from "@jlnstack/modal";
+
+export const modals = {
+  // Eager - loaded with the registry
+  confirm: modal.input<{ message: string }>().create(/* ... */),
+
+  // Lazy - loaded on first open
+  settings: modal
+    .input<{ userId: string }>()
+    .lazy(() => import("./SettingsModal")),
+
+  // Lazy with custom fallback
+  dashboard: modal
+    .input<{ dashboardId: string }>()
+    .lazy(
+      () => import("./DashboardModal"),
+      { fallback: <div>Loading dashboard...</div> }
+    ),
+};
+```
+
+The lazy modal component should be a default export:
+
+```tsx
+// modals/SettingsModal.tsx
+import type { ModalComponentOptions } from "@jlnstack/modal";
+
+type Props = { userId: string };
+
+export default function SettingsModal({
+  userId,
+  close,
+  resolve,
+}: Props & ModalComponentOptions<void>) {
+  return (
+    <div>
+      <h2>Settings for {userId}</h2>
+      <button onClick={close}>Close</button>
+    </div>
+  );
+}
+```
+
 ## Types
 
 ```tsx
