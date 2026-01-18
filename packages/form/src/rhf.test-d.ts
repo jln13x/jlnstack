@@ -4,7 +4,7 @@
  */
 
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import type { CreateFormReturn, InferInput, InferOutput } from "./rhf";
+import type { CreateFormReturn } from "./rhf";
 
 // ============================================================================
 // Test helpers
@@ -43,28 +43,6 @@ type NestedSchema = StandardSchemaV1<
     user: { name: string; email: string };
     settings: { theme: "light" | "dark" };
   }
->;
-
-// ============================================================================
-// InferInput / InferOutput tests
-// ============================================================================
-
-// Test InferInput extracts input type correctly
-type _TestInferInput = Expect<
-  Equal<InferInput<UserSchema>, { name: string; email: string }>
->;
-
-// Test InferOutput extracts output type correctly
-type _TestInferOutput = Expect<
-  Equal<InferOutput<UserSchema>, { name: string; email: string }>
->;
-
-// Test transform schema input/output differ
-type _TestTransformInput = Expect<
-  Equal<InferInput<TransformSchema>, { age: string }>
->;
-type _TestTransformOutput = Expect<
-  Equal<InferOutput<TransformSchema>, { age: number }>
 >;
 
 // ============================================================================

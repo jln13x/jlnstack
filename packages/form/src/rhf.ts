@@ -6,18 +6,6 @@ import type {
 } from "react-hook-form";
 
 /**
- * Infer the output type from a Standard Schema
- */
-export type InferOutput<TSchema extends StandardSchemaV1> =
-  StandardSchemaV1.InferOutput<TSchema>;
-
-/**
- * Infer the input type from a Standard Schema
- */
-export type InferInput<TSchema extends StandardSchemaV1> =
-  StandardSchemaV1.InferInput<TSchema>;
-
-/**
  * Ensures a type is compatible with react-hook-form's FieldValues
  * Falls back to FieldValues if the type doesn't extend Record<string, any>
  */
@@ -39,8 +27,10 @@ export type TypedUseFormProps<
  */
 export interface CreateFormReturn<
   TSchema extends StandardSchemaV1,
-  TFieldValues extends FieldValues = ToFieldValues<InferInput<TSchema>>,
-  TTransformedValues = InferOutput<TSchema>,
+  TFieldValues extends FieldValues = ToFieldValues<
+    StandardSchemaV1.InferInput<TSchema>
+  >,
+  TTransformedValues = StandardSchemaV1.InferOutput<TSchema>,
 > {
   /**
    * A typed useForm hook that automatically includes the schema resolver.
