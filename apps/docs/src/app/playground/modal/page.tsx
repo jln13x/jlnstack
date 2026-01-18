@@ -395,7 +395,13 @@ function PlaygroundOutlet() {
           instance={modal}
           isTop={isOnTop(modal.id)}
           onBringToFront={() => bringToFront(modal.id)}
-          onResize={(delta) => handleResize(modal.id, modal.size ?? { width: 320, height: 200 }, delta)}
+          onResize={(delta) =>
+            handleResize(
+              modal.id,
+              modal.size ?? { width: 320, height: 200 },
+              delta,
+            )
+          }
         />
       ))}
     </>
