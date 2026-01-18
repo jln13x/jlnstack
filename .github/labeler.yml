@@ -9,3 +9,7 @@ cookies:
 procedure:
   - changed-files:
     - any-glob-to-any-file: 'packages/procedure/**/*'
+
+store:
+  - changed-files:
+    - any-glob-to-any-file: 'packages/store/**/*'

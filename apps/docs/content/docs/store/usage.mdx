@@ -1,0 +1,84 @@
+---
+title: Usage
+description: How to use Store
+---
+
+# Usage
+
+## createReactStore
+
+Creates a store with a Provider, `useStore` hook, `useActions` hook, and `useExtensions` hook.
+
+```tsx
+import { createReactStore } from "@jlnstack/store/react"
+
+const CounterStore = createReactStore({
+  name: "CounterStore",
+  state: (initial: number) => ({ count: initial }),
+  actions: (set) => ({
+    increment: () => set((s) => ({ ...s, count: s.count + 1 })),
+    decrement: () => set((s) => ({ ...s, count: s.count - 1 })),
+  }),
+})
+
+export const { Provider, useStore, useActions, useExtensions } = CounterStore
+```
+
+## Provider
+
+Wraps your component tree and accepts an `initialState` prop.
+
+```tsx
+<Provider initialState={0}>
+  <Counter />
+</Provider>
+```
+
+## useStore
+
+Subscribes to state using a selector.
+
+```tsx
+function Counter() {
+  const count = useStore((state) => state.count)
+  return <div>{count}</div>
+}
+```
+
+## useActions
+
+Returns actions with a stable reference.
+
+```tsx
+function Controls() {
+  const { increment, decrement } = useActions()
+  return (
+    <>
+      <button onClick={increment}>+</button>
+      <button onClick={decrement}>-</button>
+    </>
+  )
+}
+```
+
+## useExtensions
+
+Returns plugin extensions keyed by plugin id (empty object if no plugins are configured).
+Assumes the `history()` plugin is enabled.
+
+```tsx
+function HistoryControls() {
+  const { history } = useExtensions()
+
+  return (
+    <>
+      <button onClick={history.undo} disabled={!history.canUndo()}>
+        Undo
+      </button>
+      <button onClick={history.redo} disabled={!history.canRedo()}>
+        Redo
+      </button>
+    </>
+  )
+}
+```
