@@ -72,14 +72,14 @@
         "default": "./dist/react.cjs"
       }
     },
-    "./rhf": {
+    "./react-hook-form": {
       "import": {
-        "types": "./dist/rhf.d.mts",
-        "default": "./dist/rhf.mjs"
+        "types": "./dist/react-hook-form.d.mts",
+        "default": "./dist/react-hook-form.mjs"
       },
       "require": {
-        "types": "./dist/rhf.d.cts",
-        "default": "./dist/rhf.cjs"
+        "types": "./dist/react-hook-form.d.cts",
+        "default": "./dist/react-hook-form.cjs"
       }
     }
   }
