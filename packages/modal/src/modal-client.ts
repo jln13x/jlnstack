@@ -4,7 +4,10 @@ type ModalComponentOptions<TOutput> = {
 };
 
 type ModalDef<TInput, TOutput> = {
-  component: (input: TInput, options: ModalComponentOptions<TOutput>) => unknown;
+  component: (
+    input: TInput,
+    options: ModalComponentOptions<TOutput>,
+  ) => unknown;
 };
 
 type Modal<TInput, TOutput> = {

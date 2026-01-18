@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useSyncExternalStore, type ReactNode } from "react";
+import { type ReactNode, useCallback, useSyncExternalStore } from "react";
 import type { ModalInstance, Position, Size } from "../types";
 import { useModalManager } from "./context";
 
@@ -45,7 +45,14 @@ function ModalRenderer({ modal }: { modal: ModalInstance }) {
 
   return (
     <ModalInstanceContext.Provider
-      value={{ id: modal.id, close, resolve, setPosition, updatePosition, setSize }}
+      value={{
+        id: modal.id,
+        close,
+        resolve,
+        setPosition,
+        updatePosition,
+        setSize,
+      }}
     >
       {modal.render() as ReactNode}
     </ModalInstanceContext.Provider>
@@ -63,7 +70,9 @@ type ModalInstanceContextValue = {
   setSize: (size: Size) => void;
 };
 
-const ModalInstanceContext = createContext<ModalInstanceContextValue | null>(null);
+const ModalInstanceContext = createContext<ModalInstanceContextValue | null>(
+  null,
+);
 
 export function useModalInstance(): ModalInstanceContextValue {
   const ctx = use(ModalInstanceContext);

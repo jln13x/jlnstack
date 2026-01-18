@@ -7,7 +7,10 @@ export type ModalComponentOptions<TOutput> = {
 };
 
 export type ModalDef<TInput, TOutput> = {
-  component: (input: TInput, options: ModalComponentOptions<TOutput>) => unknown;
+  component: (
+    input: TInput,
+    options: ModalComponentOptions<TOutput>,
+  ) => unknown;
 };
 
 export type Modal<

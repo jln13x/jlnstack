@@ -15,10 +15,9 @@ describe("template", () => {
     const templatedModal = modal
       .template<{ className: string }>(wrapper)
       .input<{ title: string }>()
-      .create(
-        (input) => ({ type: "content", title: input.title }),
-        { defaultValues: { template: { className: "dialog" } } },
-      );
+      .create((input) => ({ type: "content", title: input.title }), {
+        defaultValues: { template: { className: "dialog" } },
+      });
 
     const result = templatedModal._def.component(
       { title: "Hello" },
@@ -64,10 +63,12 @@ describe("template", () => {
     templatedModal._def.component({}, { close: closeFn, resolve: resolveFn });
 
     expect(capturedClose).not.toBeNull();
+    // biome-ignore lint/style/noNonNullAssertion: test assertion - we just checked it's not null
     capturedClose!();
     expect(closeFn).toHaveBeenCalledOnce();
 
     expect(capturedResolve).not.toBeNull();
+    // biome-ignore lint/style/noNonNullAssertion: test assertion - we just checked it's not null
     capturedResolve!(true);
     expect(resolveFn).toHaveBeenCalledWith(true);
   });
@@ -81,10 +82,9 @@ describe("template", () => {
       }))
       .input<{ name: string }>()
       .output<number>()
-      .create(
-        (input) => ({ greeting: `Hello ${input.name}` }),
-        { defaultValues: { template: { theme: "dark" } } },
-      );
+      .create((input) => ({ greeting: `Hello ${input.name}` }), {
+        defaultValues: { template: { theme: "dark" } },
+      });
 
     const result = templatedModal._def.component(
       { name: "World" },
@@ -103,10 +103,9 @@ describe("defaultValues", () => {
   it("should merge modal input defaults", () => {
     const modalWithDefaults = modal
       .input<{ title: string; message: string }>()
-      .create(
-        (input) => input,
-        { defaultValues: { modal: { title: "Default Title" } } },
-      );
+      .create((input) => input, {
+        defaultValues: { modal: { title: "Default Title" } },
+      });
 
     // At runtime, defaults are merged so we can pass partial input
     // Type system doesn't know this, so we cast for the test
@@ -121,10 +120,9 @@ describe("defaultValues", () => {
   it("should allow overriding default values", () => {
     const modalWithDefaults = modal
       .input<{ title: string; message: string }>()
-      .create(
-        (input) => input,
-        { defaultValues: { modal: { title: "Default Title" } } },
-      );
+      .create((input) => input, {
+        defaultValues: { modal: { title: "Default Title" } },
+      });
 
     const result = modalWithDefaults._def.component(
       { title: "Custom Title", message: "Hello" },
@@ -141,15 +139,12 @@ describe("defaultValues", () => {
         content: ctx.modal,
       }))
       .input<{ title: string; message: string }>()
-      .create(
-        (input) => input,
-        {
-          defaultValues: {
-            template: { className: "dialog" },
-            modal: { title: "Alert" },
-          },
+      .create((input) => input, {
+        defaultValues: {
+          template: { className: "dialog" },
+          modal: { title: "Alert" },
         },
-      );
+      });
 
     // At runtime, defaults are merged so we can pass partial input
     const result = templatedModal._def.component(
@@ -166,10 +161,9 @@ describe("defaultValues", () => {
   it("should store input defaults on modal instance", () => {
     const modalWithDefaults = modal
       .input<{ title: string; message: string }>()
-      .create(
-        (input) => input,
-        { defaultValues: { modal: { title: "Default" } } },
-      );
+      .create((input) => input, {
+        defaultValues: { modal: { title: "Default" } },
+      });
 
     expect(modalWithDefaults._inputDefaults).toEqual({ title: "Default" });
   });

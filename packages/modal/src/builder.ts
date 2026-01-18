@@ -46,7 +46,10 @@ type ModalBuilder<TInput, TOutput, TTemplateProps = never> = {
   ) => ModalBuilder<TInput, TOutput, T>;
   create: [TInput] extends [never]
     ? <I, TDefaults extends Partial<I> = {}>(
-        component: (input: I, options: ModalComponentOptions<TOutput>) => unknown,
+        component: (
+          input: I,
+          options: ModalComponentOptions<TOutput>,
+        ) => unknown,
         options?: CreateOptions<I, TTemplateProps> & {
           defaultValues?: { modal?: TDefaults };
         },
@@ -81,7 +84,10 @@ function createModalBuilder<TInput, TOutput, TTemplateProps = never>(
         options: ModalComponentOptions<unknown>,
       ) => unknown,
       options?: {
-        defaultValues?: { template?: Record<string, unknown>; modal?: Record<string, unknown> };
+        defaultValues?: {
+          template?: Record<string, unknown>;
+          modal?: Record<string, unknown>;
+        };
       },
     ) {
       const inputDefaults = options?.defaultValues?.modal ?? {};
@@ -89,7 +95,10 @@ function createModalBuilder<TInput, TOutput, TTemplateProps = never>(
 
       const def: ModalDef<unknown, unknown> = {
         component: (input, opts) => {
-          const mergedInput = { ...inputDefaults, ...(input as Record<string, unknown>) };
+          const mergedInput = {
+            ...inputDefaults,
+            ...(input as Record<string, unknown>),
+          };
           const content = component(mergedInput, opts);
 
           if (templateWrapper) {

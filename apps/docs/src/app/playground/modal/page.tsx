@@ -153,18 +153,18 @@ function SettingsModalContent({
     <div className="space-y-4">
       <Dialog.Title className="text-sm font-medium">Settings</Dialog.Title>
       <div className="space-y-3">
-        <label className="flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <span className="text-sm text-neutral-300">Notifications</span>
           <Toggle checked={notifications} onChange={setNotifications} />
-        </label>
-        <label className="flex items-center justify-between">
+        </div>
+        <div className="flex items-center justify-between">
           <span className="text-sm text-neutral-300">Dark Mode</span>
           <Toggle checked={darkMode} onChange={setDarkMode} />
-        </label>
-        <label className="flex items-center justify-between">
+        </div>
+        <div className="flex items-center justify-between">
           <span className="text-sm text-neutral-300">Auto Save</span>
           <Toggle checked={autoSave} onChange={setAutoSave} />
-        </label>
+        </div>
       </div>
       <div className="flex justify-end">
         <button
@@ -247,6 +247,7 @@ function ResizeHandle({
     >
       <svg
         viewBox="0 0 16 16"
+        aria-hidden="true"
         className="w-full h-full text-neutral-600 hover:text-neutral-400 transition-colors"
       >
         <path
@@ -334,7 +335,7 @@ function DraggableModal({
 }
 
 // Context provider for modal instance (mirrors the outlet's behavior)
-import { createContext, use } from "react";
+import { createContext } from "react";
 
 type ModalInstanceContextValue = {
   close: () => void;

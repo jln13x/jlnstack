@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
-  ModalClient,
   type Modal,
+  ModalClient,
   type ModalComponentOptions,
 } from "./modal-client";
 
@@ -27,8 +27,8 @@ function createTestModal<TInput, TOutput>(): Modal<TInput, TOutput> & {
 }
 
 function renderModal(client: ModalClient, index = 0) {
-  const instance = client.getState().modals[index]!;
-  instance.render();
+  const instance = client.getState().modals[index];
+  if (instance) instance.render();
 }
 
 describe("ModalClient", () => {
@@ -40,7 +40,7 @@ describe("ModalClient", () => {
       const promise = client.open(modal, { title: "Test" });
       renderModal(client);
 
-      modal.lastOptions!.resolve(true);
+      modal.lastOptions?.resolve(true);
 
       const result = await promise;
       expect(result).toBe(true);
@@ -53,7 +53,7 @@ describe("ModalClient", () => {
       const promise = client.open(modal, { title: "Test" });
       renderModal(client);
 
-      modal.lastOptions!.close();
+      modal.lastOptions?.close();
 
       const result = await promise;
       expect(result).toBeUndefined();
@@ -77,7 +77,7 @@ describe("ModalClient", () => {
       renderModal(client);
       expect(client.getState().modals).toHaveLength(1);
 
-      modal.lastOptions!.resolve(true);
+      modal.lastOptions?.resolve(true);
       expect(client.getState().modals).toHaveLength(0);
     });
 
@@ -89,7 +89,7 @@ describe("ModalClient", () => {
       renderModal(client);
       expect(client.getState().modals).toHaveLength(1);
 
-      modal.lastOptions!.close();
+      modal.lastOptions?.close();
       expect(client.getState().modals).toHaveLength(0);
     });
   });
@@ -115,7 +115,7 @@ describe("ModalClient", () => {
       client.open(modal, undefined);
 
       const [first, second] = client.getState().modals;
-      expect(first!.id).not.toBe(second!.id);
+      expect(first?.id).not.toBe(second?.id);
     });
   });
 
@@ -142,7 +142,9 @@ describe("ModalClient", () => {
 
       const state = client.getState();
       for (let i = 1; i < state.modals.length; i++) {
+        // biome-ignore lint/style/noNonNullAssertion: test assertion - modals exist
         expect(state.modals[i]!.order).toBeGreaterThan(
+          // biome-ignore lint/style/noNonNullAssertion: test assertion - modals exist
           state.modals[i - 1]!.order,
         );
       }
@@ -169,7 +171,7 @@ describe("ModalClient", () => {
       client.subscribe(listener);
       client.open(modal, undefined);
       renderModal(client);
-      modal.lastOptions!.resolve(true);
+      modal.lastOptions?.resolve(true);
 
       expect(listener).toHaveBeenCalledTimes(2);
     });

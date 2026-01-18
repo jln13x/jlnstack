@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, use, useMemo, type ReactNode } from "react";
+import { createContext, type ReactNode, use } from "react";
 import type { ModalManager } from "../manager";
 
 const ModalManagerContext = createContext<ModalManager | null>(null);

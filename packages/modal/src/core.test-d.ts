@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { modal, type StandardSchemaV1 } from "./core";
-import type { WithDefaults, TemplateContext } from "./types";
+import type { TemplateContext, WithDefaults } from "./types";
 
 const mockSchema = <T>(): StandardSchemaV1<T> =>
   ({}) as unknown as StandardSchemaV1<T>;
@@ -12,7 +12,9 @@ describe("modal builder types", () => {
       return null;
     });
 
-    expectTypeOf(m._def.component).parameter(0).toEqualTypeOf<{ title: string }>();
+    expectTypeOf(m._def.component)
+      .parameter(0)
+      .toEqualTypeOf<{ title: string }>();
   });
 
   it("should infer input type from schema", () => {
@@ -22,7 +24,9 @@ describe("modal builder types", () => {
       return null;
     });
 
-    expectTypeOf(m._def.component).parameter(0).toEqualTypeOf<{ title: string }>();
+    expectTypeOf(m._def.component)
+      .parameter(0)
+      .toEqualTypeOf<{ title: string }>();
   });
 
   it("should infer output type from explicit generic", () => {
@@ -58,18 +62,23 @@ describe("modal builder types", () => {
       return null;
     });
 
-    expectTypeOf(m._def.component).parameter(0).toEqualTypeOf<{ name: string }>();
+    expectTypeOf(m._def.component)
+      .parameter(0)
+      .toEqualTypeOf<{ name: string }>();
   });
 
   it("should chain input and output", () => {
     const inputSchema = mockSchema<{ id: number }>();
     const outputSchema = mockSchema<string>();
 
-    const m = modal.input(inputSchema).output(outputSchema).create((input, { resolve }) => {
-      expectTypeOf(input).toEqualTypeOf<{ id: number }>();
-      expectTypeOf(resolve).parameter(0).toEqualTypeOf<string>();
-      return null;
-    });
+    const m = modal
+      .input(inputSchema)
+      .output(outputSchema)
+      .create((input, { resolve }) => {
+        expectTypeOf(input).toEqualTypeOf<{ id: number }>();
+        expectTypeOf(resolve).parameter(0).toEqualTypeOf<string>();
+        return null;
+      });
 
     expectTypeOf(m._def.component).parameter(0).toEqualTypeOf<{ id: number }>();
   });
@@ -77,11 +86,13 @@ describe("modal builder types", () => {
 
 describe("template types", () => {
   it("should pass template props to wrapper", () => {
-    const templated = modal.template<{ className: string }>(({ modal, props }) => {
-      expectTypeOf(props).toEqualTypeOf<{ className: string }>();
-      expectTypeOf(modal).toEqualTypeOf<unknown>();
-      return null;
-    });
+    const templated = modal.template<{ className: string }>(
+      ({ modal, props }) => {
+        expectTypeOf(props).toEqualTypeOf<{ className: string }>();
+        expectTypeOf(modal).toEqualTypeOf<unknown>();
+        return null;
+      },
+    );
 
     templated.input<{ title: string }>().create((input) => {
       expectTypeOf(input).toEqualTypeOf<{ title: string }>();
@@ -109,7 +120,9 @@ describe("template types", () => {
         return null;
       });
 
-    expectTypeOf(m._def.component).parameter(0).toEqualTypeOf<{ name: string }>();
+    expectTypeOf(m._def.component)
+      .parameter(0)
+      .toEqualTypeOf<{ name: string }>();
   });
 });
 
