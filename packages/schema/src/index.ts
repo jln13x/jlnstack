@@ -1,2 +1,6 @@
-export { createMigratableSchema } from "./migratable";
-export type { Migration } from "./types";
+export { createVersionedSchema } from "./versioned";
+export type {
+  VersionedData,
+  VersionMigration,
+  VersionedSchemaConfig,
+} from "./types";
