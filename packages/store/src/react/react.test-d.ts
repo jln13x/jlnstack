@@ -47,10 +47,7 @@ describe("createReactStore with plugins", () => {
     plugins: [history()],
   });
 
-  // Extract the plugins type from the selector parameter
-  type PluginsType = Parameters<
-    Parameters<typeof StoreWithHistory.usePlugins>[0]
-  >[0];
+  type PluginsType = ReturnType<typeof StoreWithHistory.usePlugins>;
 
   it("infers usePlugins return type with history plugin", () => {
     expectTypeOf<PluginsType>().toHaveProperty("history");

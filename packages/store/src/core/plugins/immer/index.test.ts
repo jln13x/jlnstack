@@ -12,6 +12,7 @@ describe("immer plugin", () => {
 
     store.setState((s) => {
       s.count = 5;
+      return s;
     });
 
     expect(store.getState().count).toBe(5);
@@ -26,6 +27,7 @@ describe("immer plugin", () => {
 
     store.setState((s) => {
       s.user.name = "Bob";
+      return s;
     });
 
     expect(store.getState().user).toEqual({ name: "Bob", age: 30 });
@@ -40,9 +42,11 @@ describe("immer plugin", () => {
 
     store.setState((s) => {
       s.items.push("first");
+      return s;
     });
     store.setState((s) => {
       s.items.push("second");
+      return s;
     });
 
     expect(store.getState().items).toEqual(["first", "second"]);
