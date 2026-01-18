@@ -8,8 +8,8 @@ description: Type-safe modal management for React
 A lightweight, type-safe modal management library for React with support for:
 
 - **Type-safe modals** with input/output generics
-- **Builder API** with fluent `.input()`, `.output()`, `.template()`, `.lazy()` methods
-- **Lazy loading** for code-splitting modals
+- **Builder API** with fluent `.input()`, `.output()`, `.template()` methods
+- **Lazy loading** with `lazy()` for code-splitting modals
 - **Position & size management** for draggable/resizable modals
 - **Z-index management** with bringToFront, sendToBack, moveUp, moveDown
 
@@ -140,47 +140,43 @@ const dialogModal = modal
 
 ### Lazy Loading
 
-Use `.lazy()` to code-split modals and load them on demand:
+Use `lazy()` to wrap modal imports for code-splitting. The modal is only loaded when first opened:
 
 ```tsx
-// modals/settings.tsx - this file is only loaded when the modal opens
-import type { ModalComponentOptions } from "@jlnstack/modal";
+// modals/settings.ts - a normal modal definition
+import { modal } from "@jlnstack/modal";
 
-type Props = { userId: string };
-
-export default function SettingsModal({ userId, close, resolve }: Props & ModalComponentOptions<void>) {
-  return (
+export const settingsModal = modal
+  .input<{ userId: string }>()
+  .create((input, { close }) => (
     <div className="modal">
-      <h2>Settings for {userId}</h2>
+      <h2>Settings for {input.userId}</h2>
       <button onClick={close}>Close</button>
     </div>
-  );
-}
+  ));
 ```
 
 ```tsx
-// modals/index.ts - define the lazy modal
-import { modal } from "@jlnstack/modal";
+// modals/index.ts - wrap with lazy()
+import { modal, lazy } from "@jlnstack/modal";
 
 export const modals = {
   // Eager - loaded immediately with the registry
   confirm: modal.input<{ message: string }>().create(/* ... */),
 
   // Lazy - only loaded when first opened
-  settings: modal
-    .input<{ userId: string }>()
-    .lazy(() => import("./settings")),
+  settings: lazy(() => import("./settings").then(m => m.settingsModal)),
 };
 ```
 
-The component is loaded via dynamic import when the modal is first opened. You can provide a custom fallback:
+You can provide a custom fallback while loading:
 
 ```tsx
-const settingsModal = modal
-  .input<{ userId: string }>()
-  .lazy(
-    () => import("./settings"),
-    { fallback: <LoadingSpinner /> }
-  );
+import { lazy } from "@jlnstack/modal";
+
+const settingsModal = lazy(
+  () => import("./settings").then(m => m.settingsModal),
+  { fallback: <LoadingSpinner /> }
+);
 ```
 

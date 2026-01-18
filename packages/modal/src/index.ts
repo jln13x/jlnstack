@@ -3,13 +3,12 @@
 // Builder
 export {
   type CreateOptions,
-  type LazyImport,
-  type LazyModalComponent,
-  type LazyOptions,
   type ModalBuilder,
   modal,
   type StandardSchemaV1,
 } from "./builder";
+// Lazy loading
+export { lazy, type LazyModalOptions } from "./lazy";
 // Manager
 export {
   createModalManager,

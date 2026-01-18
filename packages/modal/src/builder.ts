@@ -1,4 +1,3 @@
-import { lazy, Suspense, type ComponentType, type ReactNode } from "react";
 import type {
   Modal,
   ModalComponentOptions,
@@ -28,18 +27,6 @@ type CreateOptions<TInput, TTemplateProps> = {
     ? {}
     : { template?: Partial<TTemplateProps> });
 };
-
-type LazyOptions<TInput, TTemplateProps> = CreateOptions<TInput, TTemplateProps> & {
-  fallback?: ReactNode;
-};
-
-type LazyModalComponent<TInput, TOutput> = ComponentType<
-  TInput & ModalComponentOptions<TOutput>
->;
-
-type LazyImport<TInput, TOutput> = () => Promise<{
-  default: LazyModalComponent<TInput, TOutput>;
-}>;
 
 type ModalBuilder<TInput, TOutput, TTemplateProps = never> = {
   input: {
@@ -73,19 +60,6 @@ type ModalBuilder<TInput, TOutput, TTemplateProps = never> = {
           options: ModalComponentOptions<TOutput>,
         ) => unknown,
         options?: CreateOptions<TInput, TTemplateProps> & {
-          defaultValues?: { modal?: TDefaults };
-        },
-      ) => Modal<TInput, TOutput, TDefaults>;
-  lazy: [TInput] extends [never]
-    ? <I, TDefaults extends Partial<I> = {}>(
-        importFn: LazyImport<I, TOutput>,
-        options?: LazyOptions<I, TTemplateProps> & {
-          defaultValues?: { modal?: TDefaults };
-        },
-      ) => Modal<I, TOutput, TDefaults>
-    : <TDefaults extends Partial<TInput> = {}>(
-        importFn: LazyImport<TInput, TOutput>,
-        options?: LazyOptions<TInput, TTemplateProps> & {
           defaultValues?: { modal?: TDefaults };
         },
       ) => Modal<TInput, TOutput, TDefaults>;
@@ -144,61 +118,9 @@ function createModalBuilder<TInput, TOutput, TTemplateProps = never>(
         Record<string, unknown>
       >;
     },
-    lazy(
-      importFn: () => Promise<{ default: ComponentType<unknown> }>,
-      options?: {
-        fallback?: ReactNode;
-        defaultValues?: {
-          template?: Record<string, unknown>;
-          modal?: Record<string, unknown>;
-        };
-      },
-    ) {
-      const LazyComponent = lazy(importFn);
-      const inputDefaults = options?.defaultValues?.modal ?? {};
-      const templateProps = options?.defaultValues?.template ?? {};
-      const fallback = options?.fallback ?? null;
-
-      const def: ModalDef<unknown, unknown> = {
-        component: (input, opts) => {
-          const mergedInput = {
-            ...inputDefaults,
-            ...(input as Record<string, unknown>),
-          };
-
-          const content = (
-            <Suspense fallback={fallback}>
-              <LazyComponent {...mergedInput} {...opts} />
-            </Suspense>
-          );
-
-          if (templateWrapper) {
-            return templateWrapper({
-              modal: content,
-              close: opts.close,
-              resolve: opts.resolve as (value: unknown) => void,
-              props: templateProps as TTemplateProps,
-            });
-          }
-          return content;
-        },
-      };
-      return { _def: def, _inputDefaults: inputDefaults } as Modal<
-        unknown,
-        unknown,
-        Record<string, unknown>
-      >;
-    },
   } as ModalBuilder<TInput, TOutput, TTemplateProps>;
 }
 
 export const modal: ModalBuilder<never, undefined> = createModalBuilder();
 
-export type {
-  CreateOptions,
-  LazyImport,
-  LazyModalComponent,
-  LazyOptions,
-  ModalBuilder,
-  StandardSchemaV1,
-};
+export type { CreateOptions, ModalBuilder, StandardSchemaV1 };
