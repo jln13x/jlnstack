@@ -249,7 +249,9 @@ function createFilterStore<Schema extends FilterSchemaConstraint>(
       const root = api.getState().root;
       if (opts.id === root.id) error("Cannot move root group");
       if (isDescendant(root, opts.id, opts.targetGroupId)) {
-        error(`Cannot move filter into its own descendant "${opts.targetGroupId}"`);
+        error(
+          `Cannot move filter into its own descendant "${opts.targetGroupId}"`,
+        );
       }
       const filter = findById(root, opts.id);
       if (!filter) error(`Filter with id "${opts.id}" not found`);
