@@ -1,0 +1,113 @@
+{
+  "name": "@jlnstack/store",
+  "description": "Type-safe store",
+  "version": "0.0.0",
+  "license": "MIT",
+  "author": "jln13x",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jln13x/jlnstack"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui"
+  },
+  "peerDependencies": {
+    "immer": ">=10",
+    "react": ">=18",
+    "zustand": ">=5"
+  },
+  "peerDependenciesMeta": {
+    "immer": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "@vitest/ui": "^2.1.8",
+    "tsdown": "^0.15.4",
+    "typescript": "catalog:",
+    "vitest": "^2.1.8",
+    "zustand": "^5.0.0"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/core/core.d.mts",
+        "default": "./dist/core/core.mjs"
+      },
+      "require": {
+        "types": "./dist/core/core.d.cts",
+        "default": "./dist/core/core.cjs"
+      }
+    },
+    "./plugins/history": {
+      "import": {
+        "types": "./dist/core/plugins/history/index.d.mts",
+        "default": "./dist/core/plugins/history/index.mjs"
+      },
+      "require": {
+        "types": "./dist/core/plugins/history/index.d.cts",
+        "default": "./dist/core/plugins/history/index.cjs"
+      }
+    },
+    "./plugins/immer": {
+      "import": {
+        "types": "./dist/core/plugins/immer/index.d.mts",
+        "default": "./dist/core/plugins/immer/index.mjs"
+      },
+      "require": {
+        "types": "./dist/core/plugins/immer/index.d.cts",
+        "default": "./dist/core/plugins/immer/index.cjs"
+      }
+    },
+    "./plugins/logger": {
+      "import": {
+        "types": "./dist/core/plugins/logger/index.d.mts",
+        "default": "./dist/core/plugins/logger/index.mjs"
+      },
+      "require": {
+        "types": "./dist/core/plugins/logger/index.d.cts",
+        "default": "./dist/core/plugins/logger/index.cjs"
+      }
+    },
+    "./plugins/reset": {
+      "import": {
+        "types": "./dist/core/plugins/reset/index.d.mts",
+        "default": "./dist/core/plugins/reset/index.mjs"
+      },
+      "require": {
+        "types": "./dist/core/plugins/reset/index.d.cts",
+        "default": "./dist/core/plugins/reset/index.cjs"
+      }
+    },
+    "./react": {
+      "import": {
+        "types": "./dist/react/react.d.mts",
+        "default": "./dist/react/react.mjs"
+      },
+      "require": {
+        "types": "./dist/react/react.d.cts",
+        "default": "./dist/react/react.cjs"
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "title": "Routes",
+  "description": "Type-safe route builder",
+  "root": true,
+  "pages": [
+    "index",
+    "installation",
+    "usage",
+    "dynamic-segments",
+    "search-params",
+    "schema-validation"
+  ]
+}

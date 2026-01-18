@@ -1,0 +1,82 @@
+---
+title: Custom Serializer
+description: Use a custom serializer for cookie values
+---
+
+# Custom Serializer
+
+By default, cookies are serialized using JSON. You can provide a custom serializer for special use cases like preserving `Date` objects, `Map`, `Set`, or other complex types.
+
+## Serializer Interface
+
+A serializer must implement `serialize` and `deserialize` methods:
+
+```ts
+interface Serializer<T> {
+  serialize: (value: T) => string
+  deserialize: (raw: string) => T
+}
+```
+
+## Using SuperJSON
+
+[SuperJSON](https://github.com/flightcontrolhq/superjson#readme) is a great option for serializing complex JavaScript types like `Date`, `Map`, `Set`, `BigInt`, and more.
+
+```bash
+npm install superjson
+```
+
+```ts
+import { createCookie } from "@jlnstack/cookies/next"
+import superjson from "superjson"
+
+const session = createCookie<{
+  user: string
+  expiresAt: Date
+}>("session", {
+  serializer: superjson
+})
+
+await session.set({
+  user: "john",
+  expiresAt: new Date("2025-12-31")
+})
+
+const data = await session.get()
+// data.expiresAt is a Date object, not a string
+```
+
+## Combining with Schema Validation
+
+You can use both a custom serializer and schema validation:
+
+```ts
+import { createCookie } from "@jlnstack/cookies/next"
+import superjson from "superjson"
+import { z } from "zod"
+
+const session = createCookie("session", {
+  schema: z.object({
+    user: z.string(),
+    expiresAt: z.date()
+  }),
+  serializer: superjson
+})
+```
+
+## Custom Example
+
+Here's a simple base64 serializer for obfuscation:
+
+```ts
+import { createCookie, type Serializer } from "@jlnstack/cookies/next"
+
+const base64Serializer: Serializer<unknown> = {
+  serialize: (value) => btoa(JSON.stringify(value)),
+  deserialize: (raw) => JSON.parse(atob(raw))
+}
+
+const secret = createCookie<{ apiKey: string }>("secret", {
+  serializer: base64Serializer
+})
+```

@@ -13,8 +13,8 @@
     "release": "pnpm build && changeset publish",
     "lint": "biome check",
     "format": "biome format --write",
-    "build": "pnpm run build:procedure",
-    "build:procedure": "pnpm --filter=@jlnstack/procedure build"
+    "test": "turbo run test",
+    "build": "turbo run build --filter='!docs'"
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.0",

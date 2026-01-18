@@ -45,3 +45,5 @@ dist
 .turbo
 
 next.js
+
+*.vitest-temp.json

@@ -1,0 +1,76 @@
+---
+title: Usage
+description: Basic cookie operations
+---
+
+# Usage
+
+## Creating a Cookie
+
+Use `createCookie` to define a typed cookie. The function returns a cookie object with `get`, `set`, and `delete` methods.
+
+```ts
+import { createCookie } from "@jlnstack/cookies/next"
+
+const sessionToken = createCookie<string>("session-token")
+```
+
+## Reading a Cookie
+
+```ts
+const token = await sessionToken.get()
+// token: string | undefined
+```
+
+Returns `undefined` if the cookie doesn't exist or fails schema validation.
+
+## Writing a Cookie
+
+```ts
+await sessionToken.set("abc123")
+```
+
+### Cookie Options
+
+Pass options as the second argument to `set`:
+
+```ts
+await sessionToken.set("abc123", {
+  maxAge: 60 * 60 * 24 * 7, // 7 days
+  path: "/",
+  secure: true,
+  httpOnly: true,
+  sameSite: "lax"
+})
+```
+
+Available options:
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `maxAge` | `number` | Max age in seconds |
+| `expires` | `Date` | Expiration date |
+| `path` | `string` | Cookie path |
+| `domain` | `string` | Cookie domain |
+| `secure` | `boolean` | HTTPS only |
+| `httpOnly` | `boolean` | HTTP only (not accessible via JS) |
+| `sameSite` | `"strict" \| "lax" \| "none"` | SameSite policy |
+
+## Deleting a Cookie
+
+```ts
+await sessionToken.delete()
+```
+
+## JSON Values
+
+Objects and arrays are automatically serialized to JSON:
+
+```ts
+const cart = createCookie<{ items: string[] }>("cart")
+
+await cart.set({ items: ["product-1", "product-2"] })
+
+const data = await cart.get()
+// data: { items: string[] } | undefined
+```

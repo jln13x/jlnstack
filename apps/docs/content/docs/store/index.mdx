@@ -1,0 +1,32 @@
+---
+title: Introduction
+description: Type-safe store built on top of Zustand
+---
+
+# Store
+
+Type-safe store built on top of [Zustand](https://github.com/pmndrs/zustand).
+
+Inspired by [TkDodo's Zustand best practices](https://tkdodo.eu/blog/working-with-zustand).
+
+## Quick Example
+
+```tsx
+import { createReactStore } from "@jlnstack/store/react"
+
+const BearStore = createReactStore({
+  name: "BearStore",
+  state: (initialBears: number) => ({
+    bears: initialBears,
+    fish: 10,
+  }),
+  actions: (set) => ({
+    increasePopulation: (by: number) =>
+      set((state) => ({ ...state, bears: state.bears + by })),
+    eatFish: () =>
+      set((state) => ({ ...state, fish: state.fish - 1 })),
+  }),
+})
+
+export const { Provider, useStore, useActions } = BearStore
+```
