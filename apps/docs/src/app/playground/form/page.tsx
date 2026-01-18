@@ -168,7 +168,14 @@ function AccountStep({
       <p className="text-neutral-400 text-sm">
         Enter your account information to complete setup.
       </p>
-      <form {...formProps} className="space-y-4">
+      <form
+        {...formProps}
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSubmit();
+        }}
+        className="space-y-4"
+      >
         <div className="space-y-2">
           <label htmlFor="name" className="text-sm text-neutral-300">
             Name
@@ -211,7 +218,7 @@ function StepperFooter({
   onBack: () => void;
   onNext: () => void;
 }) {
-  const { isFormRegistered, submitForm, formId } = useFormContext();
+  const { isFormRegistered, formId } = useFormContext();
 
   const isLastStep = currentStep === totalSteps - 1;
   const showSubmit = isLastStep && isFormRegistered;
@@ -231,7 +238,6 @@ function StepperFooter({
         <button
           type="submit"
           form={formId}
-          onClick={() => submitForm()}
           className="px-4 py-2 text-sm font-medium bg-neutral-100 text-neutral-900 rounded-lg transition-colors hover:bg-white"
         >
           Submit
