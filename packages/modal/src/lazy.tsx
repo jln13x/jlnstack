@@ -27,8 +27,11 @@ export function lazy<TInput, TOutput, TDefaults extends Partial<TInput> = {}>(
   importFn: () => Promise<Modal<TInput, TOutput, TDefaults>>,
   options?: LazyModalOptions,
 ): Modal<TInput, TOutput, TDefaults> {
+  let loadedDefaults: TDefaults = {} as TDefaults;
+
   const LazyWrapper = reactLazy(async () => {
     const loadedModal = await importFn();
+    loadedDefaults = loadedModal._inputDefaults;
     return {
       default: function LazyModalRenderer(props: {
         input: TInput;
@@ -52,6 +55,8 @@ export function lazy<TInput, TOutput, TDefaults extends Partial<TInput> = {}>(
 
   return {
     _def: def,
-    _inputDefaults: {} as TDefaults,
-  };
+    get _inputDefaults() {
+      return loadedDefaults;
+    },
+  } as Modal<TInput, TOutput, TDefaults>;
 }
