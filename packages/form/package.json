@@ -25,15 +25,20 @@
     "test:ui": "vitest --ui"
   },
   "peerDependencies": {
+    "@hookform/resolvers": ">=4.0.0",
     "react": ">=19",
     "react-hook-form": ">=7.54.0"
   },
   "peerDependenciesMeta": {
+    "@hookform/resolvers": {
+      "optional": true
+    },
     "react-hook-form": {
       "optional": true
     }
   },
   "devDependencies": {
+    "@hookform/resolvers": "^4.0.0",
     "@standard-schema/spec": "^1.0.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.1.0",
