@@ -1,6 +1,6 @@
 import { defineConfig } from "tsdown";
 
-export const input = ["src/index.ts", "src/react.tsx"];
+export const input = ["src/index.ts", "src/react.tsx", "src/rhf.ts"];
 
 export default defineConfig({
   target: ["node18", "es2017"],
