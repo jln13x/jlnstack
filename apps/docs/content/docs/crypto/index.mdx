@@ -1,0 +1,66 @@
+---
+title: Introduction
+description: Type-safe cryptography utilities with JWT and encryption
+---
+
+# Crypto
+
+Crypto is a type-safe cryptography library with first-class support for schema validation. Create and verify JWTs, encrypt and decrypt data, all with full TypeScript inference.
+
+## Why Crypto?
+
+- **Type-safe** — Full TypeScript inference for JWT payloads and encrypted data.
+- **Schema validation** — First-class support for [Standard Schema](https://github.com/standard-schema/standard-schema) (Zod, Valibot, ArkType, etc.).
+- **Runtime-agnostic** — Works in Node.js, Edge runtimes, and browsers.
+- **No heavy dependencies** — Built on Oslo crypto libraries and Web Crypto API.
+
+## Modules
+
+### JWT
+
+Create and verify JSON Web Tokens with type-safe payloads.
+
+```ts
+import { createJWT } from "@jlnstack/crypto/jwt"
+import { z } from "zod"
+
+const userToken = createJWT({
+  payload: z.object({
+    userId: z.string(),
+    role: z.enum(["admin", "user"]),
+  }),
+  secret: process.env.JWT_SECRET!,
+})
+
+// Type-safe signing
+const token = await userToken.sign({ userId: "123", role: "admin" })
+
+// Type-safe verification
+const { userId, role } = await userToken.verify(token)
+```
+
+### Encryption
+
+Encrypt and decrypt structured data with AES-GCM.
+
+```ts
+import { createEncrypt } from "@jlnstack/crypto/encrypt"
+import { z } from "zod"
+
+const vault = createEncrypt({
+  schema: z.object({
+    ssn: z.string(),
+    creditCard: z.string(),
+  }),
+  key: process.env.ENCRYPTION_KEY!,
+})
+
+// Encrypt sensitive data
+const encrypted = await vault.encrypt({
+  ssn: "123-45-6789",
+  creditCard: "4111-1111-1111-1111",
+})
+
+// Decrypt and validate
+const { ssn, creditCard } = await vault.decrypt(encrypted)
+```
