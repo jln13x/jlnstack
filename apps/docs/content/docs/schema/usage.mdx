@@ -1,0 +1,161 @@
+---
+title: Usage
+description: How to use schema migrations
+---
+
+# Usage
+
+## Creating a Migratable Schema
+
+Use `createMigratableSchema` to wrap your current schema with migration paths from older formats.
+
+```ts
+import { createMigratableSchema } from "@jlnstack/schema"
+import type { Migration } from "@jlnstack/schema"
+import { z } from "zod"
+
+// Your current schema (source of truth)
+const userSchema = z.object({
+  name: z.string(),
+  age: z.number(),
+  email: z.string().optional(),
+})
+
+type User = z.infer<typeof userSchema>
+
+// Define typed migrations
+const v1Migration: Migration<{ name: string }, User> = {
+  from: z.object({ name: z.string() }),
+  migrate: (old) => ({ name: old.name, age: 0, email: undefined }),
+}
+
+const v2Migration: Migration<{ name: string; age: number }, User> = {
+  from: z.object({ name: z.string(), age: z.number() }),
+  migrate: (old) => ({ ...old, email: undefined }),
+}
+
+// Create the migratable schema
+const migratableUserSchema = createMigratableSchema(userSchema, [
+  v1Migration,
+  v2Migration,
+])
+```
+
+## How It Works
+
+1. **Validates against current schema first** — if data matches, returns it directly
+2. **Falls back to migrations** — tries each migration's `from` schema in order
+3. **Migrates matching data** — transforms old format to current using `migrate` function
+4. **Returns validation error** — if nothing matches, returns the original schema's error
+
+```
+Input data
+    │
+    ▼
+┌─────────────────────────┐
+│ Validate against        │
+│ current schema          │──── Valid ────▶ Return value
+└───────────┬─────────────┘
+            │ Invalid
+            ▼
+┌─────────────────────────┐
+│ Try migration schemas   │
+│ in order                │──── Match ────▶ migrate() ──▶ Return value
+└───────────┬─────────────┘
+            │ No match
+            ▼
+      Return error
+```
+
+## With @jlnstack/cookies
+
+This package integrates seamlessly with `@jlnstack/cookies`:
+
+```ts
+import { createCookie, browserCookie } from "@jlnstack/cookies/browser"
+import { createMigratableSchema } from "@jlnstack/schema"
+import { z } from "zod"
+
+const preferencesSchema = z.object({
+  theme: z.enum(["light", "dark", "system"]),
+  fontSize: z.number(),
+  compact: z.boolean(),
+})
+
+const migratablePreferences = createMigratableSchema(preferencesSchema, [
+  {
+    // Original format - just had theme
+    from: z.object({ theme: z.enum(["light", "dark"]) }),
+    migrate: (old) => ({
+      theme: old.theme,
+      fontSize: 16,
+      compact: false,
+    }),
+  },
+])
+
+const preferencesCookie = createCookie({
+  name: "preferences",
+  schema: migratablePreferences,
+  ...browserCookie("preferences"),
+})
+
+// Old cookie with { theme: "dark" } automatically migrates to:
+// { theme: "dark", fontSize: 16, compact: false }
+```
+
+## With Valibot
+
+```ts
+import { createMigratableSchema } from "@jlnstack/schema"
+import * as v from "valibot"
+
+const currentSchema = v.object({
+  name: v.string(),
+  age: v.number(),
+})
+
+const migratable = createMigratableSchema(currentSchema, [
+  {
+    from: v.object({ name: v.string() }),
+    migrate: (old) => ({ name: old.name, age: 0 }),
+  },
+])
+```
+
+## Async Migrations
+
+Both schema validation and migration functions can be async:
+
+```ts
+const migration = {
+  from: someAsyncSchema,
+  migrate: async (old) => {
+    const enrichedData = await fetchAdditionalData(old.id)
+    return { ...old, ...enrichedData }
+  },
+}
+```
+
+## API Reference
+
+### `createMigratableSchema(schema, migrations)`
+
+Creates a Standard Schema that handles migrations from older formats.
+
+**Parameters:**
+- `schema` — Your current schema (any Standard Schema compatible)
+- `migrations` — Array of migration definitions
+
+**Returns:** A Standard Schema that validates and migrates data
+
+### `Migration<TFrom, TTo>`
+
+Type for defining a migration:
+
+```ts
+type Migration<TFrom, TTo> = {
+  from: StandardSchemaV1<unknown, TFrom>
+  migrate: (value: TFrom) => TTo | Promise<TTo>
+}
+```

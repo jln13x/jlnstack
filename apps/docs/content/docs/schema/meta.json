@@ -1,0 +1,6 @@
+{
+  "title": "Schema",
+  "description": "Schema migration utilities",
+  "root": true,
+  "pages": ["index", "installation", "usage"]
+}
