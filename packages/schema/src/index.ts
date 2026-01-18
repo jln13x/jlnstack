@@ -1,6 +1,6 @@
-export { createVersionedSchema } from "./versioned";
 export type {
   VersionedData,
-  VersionMigration,
   VersionedSchemaConfig,
+  VersionMigration,
 } from "./types";
+export { createVersionedSchema } from "./versioned";

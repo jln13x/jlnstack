@@ -1,7 +1,7 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 import { describe, expect, it } from "vitest";
-import { createVersionedSchema } from "../src/versioned";
 import type { VersionMigration } from "../src/types";
+import { createVersionedSchema } from "../src/versioned";
 
 function createMockSchema<T>(
   validate: (value: unknown) => T | null,
