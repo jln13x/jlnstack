@@ -7,11 +7,10 @@ const steps = ["Welcome", "Preferences", "Account"];
 
 export default function FormPlayground() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<{
-    theme?: string;
-    name?: string;
-    email?: string;
-  }>({});
+  const [theme, setTheme] = useState<string>();
+  const [formData, setFormData] = useState<{ name?: string; email?: string }>(
+    {},
+  );
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -26,7 +25,9 @@ export default function FormPlayground() {
   };
 
   const handleSubmit = () => {
-    alert(`Submitted:\n${JSON.stringify(formData, null, 2)}`);
+    alert(
+      `Account created!\n\nName: ${formData.name}\nEmail: ${formData.email}`,
+    );
   };
 
   return (
@@ -71,15 +72,12 @@ export default function FormPlayground() {
             <div className="p-6 min-h-[280px]">
               {currentStep === 0 && <WelcomeStep />}
               {currentStep === 1 && (
-                <PreferencesStep
-                  value={formData.theme}
-                  onChange={(theme) => setFormData((d) => ({ ...d, theme }))}
-                />
+                <PreferencesStep value={theme} onChange={setTheme} />
               )}
               {currentStep === 2 && (
                 <AccountStep
                   data={formData}
-                  onChange={(data) => setFormData((d) => ({ ...d, ...data }))}
+                  onChange={setFormData}
                   onSubmit={handleSubmit}
                 />
               )}
