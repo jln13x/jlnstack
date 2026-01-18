@@ -1,4 +1,4 @@
-import { lazy as reactLazy, Suspense, type ReactNode } from "react";
+import { type ReactNode, lazy as reactLazy, Suspense } from "react";
 import type { Modal, ModalComponentOptions, ModalDef } from "./types";
 
 export type LazyModalOptions = {
@@ -34,7 +34,10 @@ export function lazy<TInput, TOutput, TDefaults extends Partial<TInput> = {}>(
         input: TInput;
         options: ModalComponentOptions<TOutput>;
       }) {
-        return loadedModal._def.component(props.input, props.options) as ReactNode;
+        return loadedModal._def.component(
+          props.input,
+          props.options,
+        ) as ReactNode;
       },
     };
   });
