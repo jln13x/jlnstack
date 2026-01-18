@@ -7,49 +7,59 @@ description: Using modals in React
 
 ## Setup
 
-### 1. Mount Provider & Outlet
+### 1. Create a Modal Manager
 
-Create a modal client and wrap your app with the provider. Place `ModalOutlet` where you want modals to render.
+```tsx
+import { createModalManager } from "@jlnstack/modal";
+
+const manager = createModalManager();
+```
+
+### 2. Mount Provider & Outlet
+
+Wrap your app with `ModalProvider` and place `ModalOutlet` where you want modals to render:
 
 ```tsx
 // app/providers.tsx
 "use client";
 
-import { ModalClient, ModalClientProvider, ModalOutlet } from "@jlnstack/modal/react";
+import { createModalManager } from "@jlnstack/modal";
+import { ModalProvider, ModalOutlet } from "@jlnstack/modal/react";
 
-const modalClient = new ModalClient();
+const manager = createModalManager();
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ModalClientProvider client={modalClient}>
+    <ModalProvider manager={manager}>
       {children}
       <ModalOutlet />
-    </ModalClientProvider>
+    </ModalProvider>
   );
 }
 ```
 
-### 2. Create a Modal
+### 3. Create a Modal
 
-Use `createModal` to define a modal with typed input.
+Use the `modal` builder to define a modal with typed input and output:
 
 ```tsx
 // modals/confirm-modal.tsx
-import { createModal } from "@jlnstack/modal";
+import { modal } from "@jlnstack/modal";
 
-export const confirmModal = createModal<{ title: string; onConfirm: () => void }>(
-  (input) => (
+export const confirmModal = modal
+  .input<{ title: string; message: string }>()
+  .output<boolean>()
+  .create((input, { resolve, close }) => (
     <div className="modal">
       <h2>{input.title}</h2>
-      <button onClick={input.onConfirm}>Confirm</button>
+      <p>{input.message}</p>
+      <button onClick={() => resolve(true)}>Confirm</button>
+      <button onClick={() => close()}>Cancel</button>
     </div>
-  )
-);
+  ));
 ```
 
-### 3. useModal
-
-Use the `useModal` hook to open and close modals.
+### 4. Open Modals with useModal
 
 ```tsx
 import { useModal } from "@jlnstack/modal/react";
@@ -58,54 +68,234 @@ import { confirmModal } from "./modals/confirm-modal";
 function DeleteButton() {
   const modal = useModal(confirmModal);
 
+  const handleDelete = async () => {
+    const confirmed = await modal.open({
+      title: "Delete item?",
+      message: "This action cannot be undone.",
+    });
+
+    if (confirmed) {
+      deleteItem();
+    }
+  };
+
+  return <button onClick={handleDelete}>Delete</button>;
+}
+```
+
+## Hooks
+
+### useModal
+
+Opens a specific modal and returns a promise that resolves when the modal closes:
+
+```tsx
+import { useModal } from "@jlnstack/modal/react";
+
+function MyComponent() {
+  const modal = useModal(myModal);
+
+  const result = await modal.open({ /* input */ });
+  // result is typed based on the modal's output type
+}
+```
+
+### useModals
+
+Access all open modals and management actions:
+
+```tsx
+import { useModals } from "@jlnstack/modal/react";
+
+function ModalManager() {
+  const {
+    modals,      // Array of all open modal instances
+    count,       // Number of open modals
+    topModal,    // The frontmost modal
+
+    // Z-index management
+    bringToFront,
+    sendToBack,
+    moveUp,
+    moveDown,
+
+    // Position & size
+    setPosition,
+    updatePosition,
+    setSize,
+
+    // Utilities
+    has,
+    isOnTop,
+    close,
+    closeAll,
+  } = useModals();
+
   return (
-    <button
-      onClick={() =>
-        modal.open({
-          title: "Delete item?",
-          onConfirm: () => {
-            deleteItem();
-            modal.close();
-          },
-        })
-      }
-    >
-      Delete
-    </button>
+    <div>
+      <p>{count} modals open</p>
+      <button onClick={closeAll}>Close All</button>
+    </div>
   );
 }
 ```
 
-## Modal Registry
+### useModalInstance
 
-For larger applications, organize your modals in a registry object for easy access.
+Access the current modal instance from within a modal component:
+
+```tsx
+import { useModalInstance } from "@jlnstack/modal/react";
+
+function MyModalContent() {
+  const {
+    id,             // Modal instance ID
+    close,          // Close this modal
+    resolve,        // Resolve with a value
+    setPosition,    // Set absolute position
+    updatePosition, // Move by delta
+    setSize,        // Set size
+  } = useModalInstance();
+
+  return (
+    <div>
+      <button onClick={() => updatePosition({ x: 10, y: 0 })}>
+        Move Right
+      </button>
+      <button onClick={close}>Close</button>
+    </div>
+  );
+}
+```
+
+### useModalManager
+
+Direct access to the modal manager:
+
+```tsx
+import { useModalManager } from "@jlnstack/modal/react";
+
+function MyComponent() {
+  const manager = useModalManager();
+
+  // Full manager API available
+  manager.open(myModal, { input: "value" });
+  manager.closeAll();
+}
+```
+
+## Position & Size Management
+
+Each modal instance has a position and size that can be controlled programmatically:
+
+```tsx
+import { useModals } from "@jlnstack/modal/react";
+
+function WindowManager() {
+  const { modals, setPosition, setSize, bringToFront } = useModals();
+
+  return (
+    <div>
+      {modals.map((modal) => (
+        <div
+          key={modal.id}
+          style={{
+            position: "absolute",
+            left: modal.position.x,
+            top: modal.position.y,
+            width: modal.size.width,
+            height: modal.size.height,
+            zIndex: modal.order,
+          }}
+          onClick={() => bringToFront(modal.id)}
+        >
+          {modal.render()}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### Position Methods
+
+```tsx
+// Set absolute position
+setPosition(modalId, { x: 100, y: 100 });
+
+// Move by delta
+updatePosition(modalId, { x: 10, y: 0 }); // Move 10px right
+```
+
+### Size Methods
+
+```tsx
+// Set size
+setSize(modalId, { width: 600, height: 400 });
+```
+
+## Z-Index Management
+
+Control modal stacking order:
+
+```tsx
+const { bringToFront, sendToBack, moveUp, moveDown, isOnTop } = useModals();
+
+// Bring modal to front of stack
+bringToFront(modalId);
+
+// Send modal to back of stack
+sendToBack(modalId);
+
+// Move one level up/down
+moveUp(modalId);
+moveDown(modalId);
+
+// Check if modal is on top
+if (isOnTop(modalId)) {
+  // This modal is the frontmost
+}
+```
+
+## Modal Registry Pattern
+
+For larger applications, organize modals in a registry:
 
 ```tsx
 // modals/index.ts
-import { createModal } from "@jlnstack/modal";
+import { modal } from "@jlnstack/modal";
 
 export const modals = {
-  confirm: createModal<{ title: string; onConfirm: () => void }>((input) => (
-    <div className="modal">
-      <h2>{input.title}</h2>
-      <button onClick={input.onConfirm}>Confirm</button>
-    </div>
-  )),
+  confirm: modal
+    .input<{ title: string; message: string }>()
+    .output<boolean>()
+    .create((input, { resolve, close }) => (
+      <div className="modal">
+        <h2>{input.title}</h2>
+        <p>{input.message}</p>
+        <button onClick={() => resolve(true)}>Confirm</button>
+        <button onClick={() => close()}>Cancel</button>
+      </div>
+    )),
 
   settings: {
-    theme: createModal<{ currentTheme: string }>((input) => (
-      <div className="modal">
-        <h2>Theme Settings</h2>
-        <p>Current: {input.currentTheme}</p>
-      </div>
-    )),
+    theme: modal
+      .input<{ currentTheme: string }>()
+      .create((input) => (
+        <div className="modal">
+          <h2>Theme Settings</h2>
+          <p>Current: {input.currentTheme}</p>
+        </div>
+      )),
 
-    profile: createModal<{ userId: string }>((input) => (
-      <div className="modal">
-        <h2>Profile Settings</h2>
-        <p>User: {input.userId}</p>
-      </div>
-    )),
+    profile: modal
+      .input<{ userId: string }>()
+      .create((input) => (
+        <div className="modal">
+          <h2>Profile Settings</h2>
+          <p>User: {input.userId}</p>
+        </div>
+      )),
   },
 };
 ```
@@ -125,4 +315,33 @@ function SettingsButton() {
     </button>
   );
 }
+```
+
+## Types
+
+```tsx
+import type {
+  Modal,
+  ModalInstance,
+  ModalManager,
+  Position,
+  Size,
+} from "@jlnstack/modal/react";
+
+// Position type
+type Position = { x: number; y: number };
+
+// Size type
+type Size = { width: number; height: number };
+
+// Modal instance (runtime)
+type ModalInstance = {
+  id: string;
+  order: number;
+  position: Position;
+  size: Size;
+  render: () => ReactNode;
+  resolve: (value: unknown) => void;
+  close: () => void;
+};
 ```

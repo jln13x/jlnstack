@@ -5,12 +5,135 @@ description: Type-safe modal management for React
 
 # Modal
 
-A lightweight, type-safe modal management library for React.
+A lightweight, type-safe modal management library for React with support for:
 
+- **Type-safe modals** with input/output generics
+- **Builder API** with fluent `.input()`, `.output()`, `.template()` methods
+- **Position & size management** for draggable/resizable modals
+- **Z-index management** with bringToFront, sendToBack, moveUp, moveDown
 
 ## Installation
 
-```npm
+```bash
 npm install @jlnstack/modal
+```
+
+## Quick Start
+
+### 1. Create a Modal
+
+Use the `modal` builder to define type-safe modals:
+
+```tsx
+import { modal } from "@jlnstack/modal";
+
+// Simple modal with typed input
+export const confirmModal = modal
+  .input<{ title: string; message: string }>()
+  .output<boolean>()
+  .create((input, { resolve, close }) => (
+    <div className="modal">
+      <h2>{input.title}</h2>
+      <p>{input.message}</p>
+      <button onClick={() => resolve(true)}>Confirm</button>
+      <button onClick={() => close()}>Cancel</button>
+    </div>
+  ));
+```
+
+### 2. Set up the Provider
+
+```tsx
+import { createModalManager } from "@jlnstack/modal";
+import { ModalProvider, ModalOutlet } from "@jlnstack/modal/react";
+
+const manager = createModalManager();
+
+function App() {
+  return (
+    <ModalProvider manager={manager}>
+      <YourApp />
+      <ModalOutlet />
+    </ModalProvider>
+  );
+}
+```
+
+### 3. Open Modals
+
+```tsx
+import { useModal } from "@jlnstack/modal/react";
+import { confirmModal } from "./modals";
+
+function DeleteButton() {
+  const modal = useModal(confirmModal);
+
+  const handleDelete = async () => {
+    const confirmed = await modal.open({
+      title: "Delete Item",
+      message: "Are you sure you want to delete this item?",
+    });
+
+    if (confirmed) {
+      // User clicked confirm
+      deleteItem();
+    }
+  };
+
+  return <button onClick={handleDelete}>Delete</button>;
+}
+```
+
+## Modal Builder API
+
+The `modal` builder provides a fluent API for creating type-safe modals:
+
+```tsx
+import { modal } from "@jlnstack/modal";
+
+// Define input and output types
+const myModal = modal
+  .input<{ name: string }>()  // Type the input
+  .output<string>()           // Type the resolved value
+  .create((input, options) => <MyComponent {...input} {...options} />);
+```
+
+### With Default Values
+
+Provide default values to make input fields optional:
+
+```tsx
+const greetModal = modal
+  .input<{ name: string; greeting: string }>()
+  .create(
+    (input) => <p>{input.greeting}, {input.name}!</p>,
+    {
+      defaultValues: {
+        modal: { greeting: "Hello" }  // greeting is now optional
+      }
+    }
+  );
+
+// Can open without greeting
+greetModal.open({ name: "World" });
+```
+
+### With Templates
+
+Wrap modals in reusable templates:
+
+```tsx
+const dialogModal = modal
+  .output<boolean>()
+  .template(({ modal, close, resolve }) => (
+    <div className="dialog-wrapper">
+      <div className="dialog-content">{modal}</div>
+      <div className="dialog-footer">
+        <button onClick={() => resolve(false)}>Cancel</button>
+        <button onClick={() => resolve(true)}>OK</button>
+      </div>
+    </div>
+  ))
+  .create((input) => <p>{input.message}</p>);
 ```
 
