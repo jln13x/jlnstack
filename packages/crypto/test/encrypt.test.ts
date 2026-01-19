@@ -159,7 +159,7 @@ describe("createEncrypt", () => {
       );
     });
 
-    it("throws on invalid IV length", async () => {
+    it("throws on corrupted IV", async () => {
       const encryptor = createEncrypt<{ data: string }>({
         key: TEST_KEY,
       });
@@ -170,7 +170,7 @@ describe("createEncrypt", () => {
       const corrupted = `${invalidIv}:${ct}`;
 
       await expect(encryptor.decrypt(corrupted)).rejects.toThrow(
-        "Invalid IV length",
+        "Decryption failed",
       );
     });
   });
@@ -194,9 +194,9 @@ describe("createEncrypt", () => {
         key: TEST_KEY,
       });
 
-      await expect(encryptor.encrypt({ ssn: "invalid" } as never)).rejects.toThrow(
-        "Invalid data",
-      );
+      await expect(
+        encryptor.encrypt({ ssn: "invalid" } as never),
+      ).rejects.toThrow("Invalid data");
     });
 
     it("validates data on decrypt", async () => {

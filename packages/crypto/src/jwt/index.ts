@@ -1,230 +1,121 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
-import { parseJWT } from "@oslojs/jwt";
-import { hmac } from "@oslojs/crypto/hmac";
-import { SHA256, SHA384, SHA512 } from "@oslojs/crypto/sha2";
-import { constantTimeEqual } from "@oslojs/crypto/subtle";
-import { validateSchema, textToBytes, toBase64Url } from "../utils";
-import type {
-  JWT,
-  JWTConfig,
-  JWTHeader,
-  JWTClaims,
-  JWTAlgorithm,
-  SignOptions,
-  VerifyOptions,
-} from "./types";
+import * as jose from "jose";
 
-export type {
-  JWT,
-  JWTConfig,
-  JWTHeader,
-  JWTClaims,
-  JWTAlgorithm,
-  SignOptions,
-  VerifyOptions,
-} from "./types";
+export type { JWTHeaderParameters, JWTPayload } from "jose";
 
-const HASH_ALGORITHMS = {
-  HS256: SHA256,
-  HS384: SHA384,
-  HS512: SHA512,
-} as const;
-
-function getSecretBytes(secret: string | Uint8Array): Uint8Array {
-  return typeof secret === "string" ? textToBytes(secret) : secret;
+export interface JWTConfig<T> {
+  schema?: StandardSchemaV1<T>;
+  secret: string | Uint8Array;
+  defaults?: {
+    expiresIn?: number;
+    notBefore?: number;
+    issuer?: string;
+    subject?: string;
+    audience?: string | string[];
+    jwtId?: string;
+  };
 }
 
-function sign(
-  algorithm: JWTAlgorithm,
-  secret: Uint8Array,
-  data: string,
-): Uint8Array {
-  const hashAlgorithm = HASH_ALGORITHMS[algorithm];
-  return hmac(hashAlgorithm, secret, textToBytes(data));
+async function validate<T>(schema: StandardSchemaV1<T>, value: unknown) {
+  const result = await schema["~standard"].validate(value);
+  if ("issues" in result && result.issues) {
+    throw new Error(
+      `Invalid payload: ${result.issues[0]?.message ?? "Validation failed"}`,
+    );
+  }
+  return result.value as T;
 }
 
-function verifySignature(
-  algorithm: JWTAlgorithm,
-  secret: Uint8Array,
-  data: string,
-  signature: Uint8Array,
-): boolean {
-  const expected = sign(algorithm, secret, data);
-  return constantTimeEqual(expected, signature);
-}
-
-export function createJWT<T = Record<string, unknown>>(
+export function createJWT<T extends jose.JWTPayload = jose.JWTPayload>(
   config: JWTConfig<T>,
-): JWT<T> {
-  const {
-    payload: payloadSchema,
-    secret,
-    algorithm = "HS256",
-    defaults = {},
-  } = config;
-
-  const secretBytes = getSecretBytes(secret);
+) {
+  const { schema, secret, defaults = {} } = config;
+  const secretBytes =
+    typeof secret === "string" ? new TextEncoder().encode(secret) : secret;
 
   return {
-    async sign(payload: T, options: SignOptions = {}): Promise<string> {
-      // Validate payload against schema if provided
-      if (payloadSchema) {
-        const result = await validateSchema(payloadSchema, payload);
-        if (!result.success) {
-          throw new Error(`Invalid payload: ${result.error}`);
-        }
-      }
+    async sign(payload: T, options?: JWTConfig<T>["defaults"]) {
+      if (schema) await validate(schema, payload);
 
-      const mergedOptions = { ...defaults, ...options };
-      const now = Math.floor(Date.now() / 1000);
+      const opts = { ...defaults, ...options };
 
-      // Build claims
-      const claims: JWTClaims = {
-        ...payload,
-        iat: now,
-      };
+      let jwt = new jose.SignJWT(payload)
+        .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+        .setIssuedAt();
 
-      if (mergedOptions.expiresIn !== undefined) {
-        claims.exp = now + mergedOptions.expiresIn;
-      }
+      if (opts.expiresIn !== undefined)
+        jwt = jwt.setExpirationTime(`${opts.expiresIn}s`);
+      if (opts.notBefore !== undefined)
+        jwt = jwt.setNotBefore(`${opts.notBefore}s`);
+      if (opts.issuer !== undefined) jwt = jwt.setIssuer(opts.issuer);
+      if (opts.subject !== undefined) jwt = jwt.setSubject(opts.subject);
+      if (opts.audience !== undefined) jwt = jwt.setAudience(opts.audience);
+      if (opts.jwtId !== undefined) jwt = jwt.setJti(opts.jwtId);
 
-      if (mergedOptions.notBefore !== undefined) {
-        claims.nbf = now + mergedOptions.notBefore;
-      }
-
-      if (mergedOptions.issuer !== undefined) {
-        claims.iss = mergedOptions.issuer;
-      }
-
-      if (mergedOptions.subject !== undefined) {
-        claims.sub = mergedOptions.subject;
-      }
-
-      if (mergedOptions.audience !== undefined) {
-        claims.aud = mergedOptions.audience;
-      }
-
-      if (mergedOptions.jwtId !== undefined) {
-        claims.jti = mergedOptions.jwtId;
-      }
-
-      // Build header
-      const header: JWTHeader = {
-        alg: algorithm,
-        typ: "JWT",
-      };
-
-      // Create signature
-      const headerEncoded = toBase64Url(textToBytes(JSON.stringify(header)));
-      const payloadEncoded = toBase64Url(textToBytes(JSON.stringify(claims)));
-      const signatureInput = `${headerEncoded}.${payloadEncoded}`;
-      const signature = sign(algorithm, secretBytes, signatureInput);
-      const signatureEncoded = toBase64Url(signature);
-
-      return `${headerEncoded}.${payloadEncoded}.${signatureEncoded}`;
+      return jwt.sign(secretBytes);
     },
 
     async verify(
       token: string,
-      options: VerifyOptions = {},
-    ): Promise<T & JWTClaims> {
-      let header: object;
-      let payload: object;
-      let signature: Uint8Array;
-
+      options?: {
+        clockTolerance?: number;
+        issuer?: string | string[];
+        audience?: string | string[];
+      },
+    ) {
       try {
-        [header, payload, signature] = parseJWT(token);
-      } catch {
+        const { payload } = await jose.jwtVerify(token, secretBytes, {
+          algorithms: ["HS256"],
+          ...options,
+        });
+
+        if (schema) {
+          const validated = await validate(schema, payload);
+          return { ...validated, ...payload } as T;
+        }
+
+        return payload as T;
+      } catch (error) {
+        if (error instanceof jose.errors.JWTExpired) {
+          throw new Error("Token has expired");
+        }
+        if (error instanceof jose.errors.JWTClaimValidationFailed) {
+          const msg = error.message;
+          if (msg.includes("iss")) throw new Error("Invalid issuer");
+          if (msg.includes("aud")) throw new Error("Invalid audience");
+          if (msg.includes("nbf")) throw new Error("Token is not yet valid");
+          throw new Error(msg);
+        }
+        if (error instanceof jose.errors.JWSSignatureVerificationFailed) {
+          throw new Error("Invalid signature");
+        }
+        if (
+          error instanceof Error &&
+          error.message.startsWith("Invalid payload:")
+        ) {
+          throw error;
+        }
         throw new Error("Invalid token format");
       }
-
-      const jwtHeader = header as JWTHeader;
-      const claims = payload as T & JWTClaims;
-
-      // Verify algorithm
-      if (jwtHeader.alg !== algorithm) {
-        throw new Error(
-          `Algorithm mismatch: expected ${algorithm}, got ${jwtHeader.alg}`,
-        );
-      }
-
-      // Verify signature
-      const parts = token.split(".");
-      if (parts.length !== 3) {
-        throw new Error("Invalid token format");
-      }
-
-      const signatureInput = `${parts[0]}.${parts[1]}`;
-      if (!verifySignature(algorithm, secretBytes, signatureInput, signature)) {
-        throw new Error("Invalid signature");
-      }
-
-      const now = Math.floor(Date.now() / 1000);
-      const clockTolerance = options.clockTolerance ?? 0;
-
-      // Verify expiration
-      if (claims.exp !== undefined && now > claims.exp + clockTolerance) {
-        throw new Error("Token has expired");
-      }
-
-      // Verify not before
-      if (claims.nbf !== undefined && now < claims.nbf - clockTolerance) {
-        throw new Error("Token is not yet valid");
-      }
-
-      // Verify issuer
-      if (options.issuer !== undefined) {
-        const validIssuers = Array.isArray(options.issuer)
-          ? options.issuer
-          : [options.issuer];
-        if (!claims.iss || !validIssuers.includes(claims.iss)) {
-          throw new Error("Invalid issuer");
-        }
-      }
-
-      // Verify audience
-      if (options.audience !== undefined) {
-        const validAudiences = Array.isArray(options.audience)
-          ? options.audience
-          : [options.audience];
-        const tokenAudiences = Array.isArray(claims.aud)
-          ? claims.aud
-          : claims.aud
-            ? [claims.aud]
-            : [];
-        const hasValidAudience = tokenAudiences.some((aud) =>
-          validAudiences.includes(aud),
-        );
-        if (!hasValidAudience) {
-          throw new Error("Invalid audience");
-        }
-      }
-
-      // Validate payload against schema if provided
-      if (payloadSchema) {
-        const result = await validateSchema(payloadSchema, claims);
-        if (!result.success) {
-          throw new Error(`Invalid payload: ${result.error}`);
-        }
-      }
-
-      return claims;
     },
 
-    decode(token: string): { header: JWTHeader; payload: T & JWTClaims } {
-      let header: object;
-      let payload: object;
+    async decode(token: string) {
+      let header: jose.ProtectedHeaderParameters;
+      let payload: jose.JWTPayload;
 
       try {
-        [header, payload] = parseJWT(token);
+        header = jose.decodeProtectedHeader(token);
+        payload = jose.decodeJwt(token);
       } catch {
         throw new Error("Invalid token format");
       }
 
-      return {
-        header: header as JWTHeader,
-        payload: payload as T & JWTClaims,
-      };
+      if (schema) {
+        const validated = await validate(schema, payload);
+        return { header, payload: { ...validated, ...payload } as T };
+      }
+
+      return { header, payload: payload as T };
     },
   };
 }

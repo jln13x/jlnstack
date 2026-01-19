@@ -42,39 +42,6 @@ describe("createJWT", () => {
       expect(payload.iat).toBeDefined();
     });
 
-    it("signs and verifies with HS256 algorithm", async () => {
-      const jwt = createJWT({
-        secret: TEST_SECRET,
-        algorithm: "HS256",
-      });
-
-      const token = await jwt.sign({ data: "test" });
-      const payload = await jwt.verify(token);
-      expect(payload.data).toBe("test");
-    });
-
-    it("signs and verifies with HS384 algorithm", async () => {
-      const jwt = createJWT({
-        secret: TEST_SECRET,
-        algorithm: "HS384",
-      });
-
-      const token = await jwt.sign({ data: "test" });
-      const payload = await jwt.verify(token);
-      expect(payload.data).toBe("test");
-    });
-
-    it("signs and verifies with HS512 algorithm", async () => {
-      const jwt = createJWT({
-        secret: TEST_SECRET,
-        algorithm: "HS512",
-      });
-
-      const token = await jwt.sign({ data: "test" });
-      const payload = await jwt.verify(token);
-      expect(payload.data).toBe("test");
-    });
-
     it("signs with Uint8Array secret", async () => {
       const secretBytes = new TextEncoder().encode(TEST_SECRET);
       const jwt = createJWT({
@@ -180,7 +147,10 @@ describe("createJWT", () => {
         },
       });
 
-      const token = await jwt.sign({ data: "test" }, { issuer: "custom-issuer" });
+      const token = await jwt.sign(
+        { data: "test" },
+        { issuer: "custom-issuer" },
+      );
       const payload = await jwt.verify(token);
 
       expect(payload.iss).toBe("custom-issuer");
@@ -216,11 +186,14 @@ describe("createJWT", () => {
     it("rejects tokens with wrong issuer", async () => {
       const jwt = createJWT({ secret: TEST_SECRET });
 
-      const token = await jwt.sign({ data: "test" }, { issuer: "wrong-issuer" });
-
-      await expect(jwt.verify(token, { issuer: "expected-issuer" })).rejects.toThrow(
-        "Invalid issuer",
+      const token = await jwt.sign(
+        { data: "test" },
+        { issuer: "wrong-issuer" },
       );
+
+      await expect(
+        jwt.verify(token, { issuer: "expected-issuer" }),
+      ).rejects.toThrow("Invalid issuer");
     });
 
     it("accepts tokens with matching issuer", async () => {
@@ -269,15 +242,6 @@ describe("createJWT", () => {
       await expect(jwt2.verify(token)).rejects.toThrow("Invalid signature");
     });
 
-    it("rejects tokens with wrong algorithm", async () => {
-      const jwt256 = createJWT({ secret: TEST_SECRET, algorithm: "HS256" });
-      const jwt512 = createJWT({ secret: TEST_SECRET, algorithm: "HS512" });
-
-      const token = await jwt256.sign({ data: "test" });
-
-      await expect(jwt512.verify(token)).rejects.toThrow("Algorithm mismatch");
-    });
-
     it("rejects malformed tokens", async () => {
       const jwt = createJWT({ secret: TEST_SECRET });
 
@@ -292,7 +256,7 @@ describe("createJWT", () => {
       const jwt = createJWT<{ userId: string }>({ secret: TEST_SECRET });
 
       const token = await jwt.sign({ userId: "123" });
-      const { header, payload } = jwt.decode(token);
+      const { header, payload } = await jwt.decode(token);
 
       expect(header.alg).toBe("HS256");
       expect(header.typ).toBe("JWT");
@@ -303,15 +267,17 @@ describe("createJWT", () => {
       const jwt = createJWT({ secret: TEST_SECRET });
 
       const token = await jwt.sign({ data: "test" }, { expiresIn: -3600 });
-      const { payload } = jwt.decode(token);
+      const { payload } = await jwt.decode(token);
 
       expect(payload.data).toBe("test");
     });
 
-    it("throws on malformed tokens", () => {
+    it("throws on malformed tokens", async () => {
       const jwt = createJWT({ secret: TEST_SECRET });
 
-      expect(() => jwt.decode("invalid")).toThrow("Invalid token format");
+      await expect(jwt.decode("invalid")).rejects.toThrow(
+        "Invalid token format",
+      );
     });
   });
 
@@ -319,7 +285,7 @@ describe("createJWT", () => {
     it("validates payload on sign", async () => {
       const schema = createMockSchema((v) => v as { role: string });
       const jwt = createJWT({
-        payload: schema,
+        schema,
         secret: TEST_SECRET,
       });
 
@@ -330,7 +296,7 @@ describe("createJWT", () => {
     it("rejects invalid payload on sign", async () => {
       const schema = createFailingSchema("Invalid role");
       const jwt = createJWT({
-        payload: schema,
+        schema,
         secret: TEST_SECRET,
       });
 
@@ -342,7 +308,7 @@ describe("createJWT", () => {
     it("validates payload on verify", async () => {
       const schema = createMockSchema((v) => v as { role: string });
       const jwt = createJWT({
-        payload: schema,
+        schema,
         secret: TEST_SECRET,
       });
 
