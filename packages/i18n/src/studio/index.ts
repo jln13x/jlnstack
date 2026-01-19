@@ -28,3 +28,5 @@ export {
   type WebSocketHandlers,
   type WebSocketMessage,
 } from "./websocket";
+
+export { generateStudioUI } from "./ui";

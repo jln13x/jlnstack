@@ -9,6 +9,7 @@ import {
   deleteTranslationKey,
   type TranslationEntry,
 } from "./parser";
+import { generateStudioUI } from "./ui";
 
 export interface StudioConfig {
   port: number;
@@ -60,6 +61,14 @@ export function createStudioServer(config: StudioConfig): StudioServer {
     const pathname = url.pathname;
 
     try {
+      // Serve UI at root
+      if (req.method === "GET" && (pathname === "/" || pathname === "/index.html")) {
+        res.setHeader("Content-Type", "text/html");
+        res.writeHead(200);
+        res.end(generateStudioUI(actualPort));
+        return;
+      }
+
       // GET /api/translations - list all translations
       if (req.method === "GET" && pathname === "/api/translations") {
         const parsed = parseTranslationFile(resolvedPath);

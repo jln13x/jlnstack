@@ -103,7 +103,7 @@
         "id": 17,
         "title": "Studio: WebSocket",
         "description": "Real-time sync between UI and server",
-        "done": false
+        "done": true
       },
       {
         "id": 18,
