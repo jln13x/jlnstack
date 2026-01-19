@@ -12,3 +12,4 @@ export type {
 
 export { defineTranslations } from "./define";
 export { interpolate } from "./interpolate";
+export { createTranslation } from "./create";

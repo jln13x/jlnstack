@@ -31,7 +31,7 @@
         "id": 5,
         "title": "createTranslation (sync core)",
         "description": "Core sync translation function for non-framework usage",
-        "done": false
+        "done": true
       },
       {
         "id": 6,
