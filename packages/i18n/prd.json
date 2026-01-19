@@ -61,19 +61,19 @@
         "id": 10,
         "title": "CLI setup",
         "description": "Setup CLI binary with cac, add migrate command scaffold",
-        "done": false
+        "done": true
       },
       {
         "id": 11,
         "title": "CLI migrate command",
         "description": "Implement JSON to TS migration",
-        "done": false
+        "done": true
       },
       {
         "id": 12,
         "title": "CLI check command",
         "description": "Check for missing translations across locales",
-        "done": false
+        "done": true
       },
       {
         "id": 13,
