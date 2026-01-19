@@ -14,7 +14,6 @@ import type {
   Modal,
   ModalComponentOptions,
   ModalInstance,
-  ServerModal,
   WithDefaults,
 } from "../types";
 import { isServerModal } from "../types";
