@@ -9,3 +9,4 @@
 - [@jlnstack/procedure](./packages/procedure/README.md) - Type-safe procedure builder
 - [@jlnstack/routes](./packages/routes/README.md) - Type-safe route builder
 - [@jlnstack/store](./packages/store/README.md) - Type-safe store
+- [@jlnstack/crypto](./packages/crypto/README.md) - Type-safe cryptography utilities
