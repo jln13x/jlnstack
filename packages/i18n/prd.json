@@ -97,7 +97,7 @@
         "id": 16,
         "title": "Studio: File watcher",
         "description": "Watch translation files for external changes",
-        "done": false
+        "done": true
       },
       {
         "id": 17,

@@ -21,3 +21,10 @@ export {
   type FileWatcher,
   type FileWatcherConfig,
 } from "./watcher";
+
+export {
+  createStudioWebSocket,
+  type StudioWebSocket,
+  type WebSocketHandlers,
+  type WebSocketMessage,
+} from "./websocket";
