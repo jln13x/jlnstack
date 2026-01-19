@@ -79,7 +79,7 @@
         "id": 13,
         "title": "Studio planning",
         "description": "Document studio architecture and UI spec (no implementation)",
-        "done": false
+        "done": true
       }
     ]
   },
@@ -106,19 +106,81 @@
   },
   "studio": {
     "status": "planned",
-    "features": [
-      "Grid editor for translations",
-      "Missing translation highlighting",
-      "Search and filter",
-      "Export to CSV/JSON",
-      "Import with validation",
-      "AI translation suggestions (optional)",
-      "Live HMR sync"
-    ],
+    "command": "npx @jlnstack/i18n studio",
+    "defaultPort": 4200,
+    "features": {
+      "core": [
+        "Grid editor for translations (key × locale)",
+        "Missing translation highlighting (red cells)",
+        "Search and filter by key/value/locale",
+        "Inline editing with auto-save"
+      ],
+      "import_export": [
+        "Export to CSV for external translators",
+        "Export to JSON for backup",
+        "Import CSV/JSON with validation",
+        "Diff view for imported changes"
+      ],
+      "developer_experience": [
+        "Live HMR sync with running app",
+        "Keyboard navigation (arrow keys, Tab)",
+        "Undo/redo support",
+        "Syntax highlighting for interpolation {vars}"
+      ],
+      "future": [
+        "AI translation suggestions (OpenAI/Anthropic API)",
+        "Translation memory (reuse similar translations)",
+        "Plural form handling",
+        "Comments/notes per translation"
+      ]
+    },
     "architecture": {
-      "server": "File watcher + REST API + WebSocket for HMR",
-      "ui": "Minimal React or vanilla JS interface",
-      "sync": "Writes back to .ts source files"
+      "server": {
+        "description": "Node.js server that watches translation files and serves the UI",
+        "components": [
+          "File watcher (chokidar) - monitors .ts translation files",
+          "REST API - CRUD operations for translations",
+          "WebSocket - real-time sync with UI and HMR",
+          "TS Parser - reads/writes translation files"
+        ],
+        "endpoints": [
+          "GET /api/translations - list all translations",
+          "PUT /api/translations/:key - update a translation",
+          "POST /api/translations - add new key",
+          "DELETE /api/translations/:key - remove key",
+          "GET /api/locales - list configured locales",
+          "POST /api/export - export to CSV/JSON",
+          "POST /api/import - import from CSV/JSON"
+        ]
+      },
+      "ui": {
+        "description": "Minimal web interface, could be React or vanilla JS",
+        "layout": [
+          "Header: search bar, locale filters, export/import buttons",
+          "Main: scrollable grid with keys as rows, locales as columns",
+          "Footer: stats (total keys, missing count), save indicator"
+        ],
+        "interactions": [
+          "Click cell to edit",
+          "Tab to move between cells",
+          "Ctrl+S to save all",
+          "Escape to cancel edit"
+        ]
+      },
+      "sync": {
+        "description": "Bidirectional sync between UI and .ts files",
+        "flow": [
+          "1. User edits cell in UI",
+          "2. WebSocket sends change to server",
+          "3. Server updates .ts file",
+          "4. File watcher detects change",
+          "5. If app is running, HMR picks up change"
+        ]
+      }
+    },
+    "fileFormat": {
+      "description": "Studio reads/writes standard defineTranslations format",
+      "example": "export const login = { en: \"Sign in\", de: \"Anmelden\" } as const;"
     }
   }
 }
