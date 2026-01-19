@@ -279,10 +279,10 @@ function DraggableModal({
   });
 
   const style = {
-    left: instance.position.x,
-    top: instance.position.y,
-    width: instance.size.width,
-    height: instance.size.height,
+    left: instance.position?.x ?? 100,
+    top: instance.position?.y ?? 100,
+    width: instance.size?.width ?? 320,
+    height: instance.size?.height ?? 200,
     transform: transform ? CSS.Translate.toString(transform) : undefined,
     zIndex: instance.order + 100,
   };
@@ -395,7 +395,13 @@ function PlaygroundOutlet() {
           instance={modal}
           isTop={isOnTop(modal.id)}
           onBringToFront={() => bringToFront(modal.id)}
-          onResize={(delta) => handleResize(modal.id, modal.size, delta)}
+          onResize={(delta) =>
+            handleResize(
+              modal.id,
+              modal.size ?? { width: 320, height: 200 },
+              delta,
+            )
+          }
         />
       ))}
     </>

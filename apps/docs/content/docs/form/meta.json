@@ -1,0 +1,6 @@
+{
+  "title": "Form",
+  "description": "Type-safe form utilities",
+  "root": true,
+  "pages": ["index", "react-hook-form"]
+}
