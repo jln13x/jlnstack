@@ -80,6 +80,42 @@
         "title": "Studio planning",
         "description": "Document studio architecture and UI spec (no implementation)",
         "done": true
+      },
+      {
+        "id": 14,
+        "title": "Studio: TS parser",
+        "description": "Parse and write translation .ts files",
+        "done": false
+      },
+      {
+        "id": 15,
+        "title": "Studio: Server setup",
+        "description": "HTTP server with REST API endpoints",
+        "done": false
+      },
+      {
+        "id": 16,
+        "title": "Studio: File watcher",
+        "description": "Watch translation files for external changes",
+        "done": false
+      },
+      {
+        "id": 17,
+        "title": "Studio: WebSocket",
+        "description": "Real-time sync between UI and server",
+        "done": false
+      },
+      {
+        "id": 18,
+        "title": "Studio: UI",
+        "description": "Grid-based translation editor interface",
+        "done": false
+      },
+      {
+        "id": 19,
+        "title": "Studio: CLI command",
+        "description": "Add studio command to CLI",
+        "done": false
       }
     ]
   },
