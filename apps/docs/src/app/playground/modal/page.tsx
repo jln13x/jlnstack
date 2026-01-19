@@ -311,10 +311,8 @@ function DraggableModal({
             </span>
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                instance.close();
-              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => instance.close()}
               className="p-0.5 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800 rounded transition-colors"
             >
               <X size={14} />
@@ -591,7 +589,13 @@ export default function ModalPlaygroundPage() {
     const id = active.id as string;
 
     if (delta.x !== 0 || delta.y !== 0) {
-      manager.updatePosition(id, { x: delta.x, y: delta.y });
+      const modal = manager.getAll().find((m) => m.id === id);
+      const currentX = modal?.position?.x ?? 100;
+      const currentY = modal?.position?.y ?? 100;
+      manager.setPosition(id, {
+        x: currentX + delta.x,
+        y: currentY + delta.y,
+      });
     }
   };
 

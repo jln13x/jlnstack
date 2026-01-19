@@ -4,6 +4,7 @@
     "routes",
     "cookies",
     "filter",
+    "schema",
     "store",
     "modal",
     "form"
