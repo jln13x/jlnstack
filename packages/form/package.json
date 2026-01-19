@@ -1,0 +1,86 @@
+{
+  "name": "@jlnstack/form",
+  "description": "Type-safe form utilities",
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": "jln13x",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jln13x/jlnstack"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui"
+  },
+  "peerDependencies": {
+    "@hookform/resolvers": ">=4.0.0",
+    "react": ">=19",
+    "react-hook-form": ">=7.54.0"
+  },
+  "peerDependenciesMeta": {
+    "@hookform/resolvers": {
+      "optional": true
+    },
+    "react-hook-form": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@hookform/resolvers": "^4.0.0",
+    "@standard-schema/spec": "^1.0.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19.1.16",
+    "@types/react-dom": "^19.1.9",
+    "@vitest/ui": "^2.1.8",
+    "react-hook-form": "^7.54.0",
+    "tsdown": "^0.15.4",
+    "typescript": "catalog:",
+    "vitest": "^2.1.8"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./react": {
+      "import": {
+        "types": "./dist/react.d.mts",
+        "default": "./dist/react.mjs"
+      },
+      "require": {
+        "types": "./dist/react.d.cts",
+        "default": "./dist/react.cjs"
+      }
+    },
+    "./react-hook-form": {
+      "import": {
+        "types": "./dist/react-hook-form.d.mts",
+        "default": "./dist/react-hook-form.mjs"
+      },
+      "require": {
+        "types": "./dist/react-hook-form.d.cts",
+        "default": "./dist/react-hook-form.cjs"
+      }
+    }
+  }
+}
