@@ -11,3 +11,4 @@ export type {
 } from "./types";
 
 export { defineTranslations } from "./define";
+export { interpolate } from "./interpolate";

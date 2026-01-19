@@ -25,7 +25,7 @@
         "id": 4,
         "title": "Interpolation",
         "description": "Implement interpolate function for {var} replacement",
-        "done": false
+        "done": true
       },
       {
         "id": 5,
