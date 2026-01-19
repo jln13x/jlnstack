@@ -1,7 +1,7 @@
 {
   "name": "@jlnstack/crypto",
   "description": "Type-safe cryptography utilities with JWT and encryption",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "license": "MIT",
   "author": "jln13x",
   "repository": {
