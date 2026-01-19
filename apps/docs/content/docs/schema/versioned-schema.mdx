@@ -1,0 +1,189 @@
+---
+title: Versioned Schema
+description: Handle schema evolution with explicit versioning and migrations
+---
+
+# Versioned Schema
+
+When you store validated data (cookies, localStorage, databases), the schema may change over time:
+
+```ts
+// v1: Initial schema
+{ name: string }
+
+// v2: Added age field
+{ name: string, age: number }
+
+// v3: Added optional email
+{ name: string, age: number, email?: string }
+```
+
+Old stored data needs to be read and migrated to the current format. `createVersionedSchema` provides explicit versioning and migration chains to handle that reliably.
+
+## Quick Example
+
+```ts
+import { createVersionedSchema } from "@jlnstack/schema"
+import { z } from "zod"
+
+const userSchema = createVersionedSchema({
+  schema: z.object({
+    name: z.string(),
+    age: z.number(),
+    email: z.string().optional(),
+  }),
+  migrations: [
+    // v1 -> v2
+    {
+      schema: z.object({ name: z.string() }),
+      up: (v1) => ({ name: v1.name, age: 0 }),
+    },
+    // v2 -> v3
+    {
+      schema: z.object({ name: z.string(), age: z.number() }),
+      up: (v2) => ({ ...v2, email: undefined }),
+    },
+  ],
+  allowUnversioned: true,
+})
+
+// Input:  { version: 1, data: { name: "John" } }
+// Output: { version: 3, data: { name: "John", age: 0, email: undefined } }
+```
+
+## Data Format
+
+All versioned data uses this wrapper format:
+
+```ts
+{
+  version: number,
+  data: T
+}
+```
+
+The version is a number derived from the migrations array:
+- `migrations[0]` = version 1
+- `migrations[1]` = version 2
+- Current version = `migrations.length + 1`
+
+## How It Works
+
+```
+Input: { version: 1, data: { name: "John" } }
+         │
+         ▼
+    Read version: 1
+         │
+         ▼
+    Validate against v1 schema (migrations[0])
+         │
+         ▼
+    migrations[0].up() → { name: "John", age: 0 }
+         │
+         ▼
+    migrations[1].up() → { name: "John", age: 0, email: undefined }
+         │
+         ▼
+    Validate against current schema
+         │
+         ▼
+Output: { version: 3, data: { name: "John", age: 0, email: undefined } }
+```
+
+## Unversioned Data
+
+When migrating from an existing system without versioning, use `allowUnversioned`:
+
+```ts
+const userSchema = createVersionedSchema({
+  schema: v2Schema,
+  migrations: [v1Migration],
+  allowUnversioned: true, // treat bare data as v1
+})
+
+// Unversioned input: { name: "John" }
+// Treated as v1, migrated to v2: { version: 2, data: { name: "John", age: 0 } }
+```
+
+## With @jlnstack/cookies
+
+```ts
+import { createCookie, browserCookie } from "@jlnstack/cookies/browser"
+import { createVersionedSchema } from "@jlnstack/schema"
+import { z } from "zod"
+
+const preferencesSchema = createVersionedSchema({
+  schema: z.object({
+    theme: z.enum(["light", "dark", "system"]),
+    fontSize: z.number(),
+  }),
+  migrations: [
+    {
+      schema: z.object({ theme: z.enum(["light", "dark"]) }),
+      up: (v1) => ({ theme: v1.theme, fontSize: 16 }),
+    },
+  ],
+  allowUnversioned: true,
+})
+
+const preferencesCookie = createCookie({
+  name: "preferences",
+  schema: preferencesSchema,
+  ...browserCookie("preferences"),
+})
+```
+
+## Async Migrations
+
+Migration functions can be async:
+
+```ts
+const v1Migration = {
+  schema: v1Schema,
+  up: async (v1) => {
+    const userData = await fetchUserData(v1.id)
+    return { ...v1, ...userData }
+  },
+}
+```
+
+## API Reference
+
+### `createVersionedSchema(config)`
+
+Creates a Standard Schema that handles versioned data with migrations.
+
+**Config:**
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `schema` | `StandardSchemaV1` | Current schema (source of truth) |
+| `migrations` | `VersionMigration[]` | Migrations from older versions, ordered oldest to newest |
+| `allowUnversioned` | `boolean` | If true, accept bare data as version 1 |
+
+**Returns:** `StandardSchemaV1<unknown, VersionedData<T>>`
+
+The output is always `{ version: number, data: T }` where `T` is inferred from your schema.
+
+### `VersionMigration<T>`
+
+```ts
+type VersionMigration<T> = {
+  schema: StandardSchemaV1<unknown, T>
+  up: (data: T) => unknown | Promise<unknown>
+}
+```
+
+### `VersionedData<T>`
+
+```ts
+type VersionedData<T> = {
+  version: number
+  data: T
+}
+```
+
+## Converting to Zod
+
+`createVersionedSchema` returns a Standard Schema. If you want to continue using Zod's chainable API, see [Conversion](/docs/schema/conversion) to convert it back to a Zod schema.

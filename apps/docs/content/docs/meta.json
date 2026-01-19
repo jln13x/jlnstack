@@ -1,3 +1,11 @@
 {
-  "pages": ["procedure", "routes", "cookies", "store", "modal", "form"]
+  "pages": [
+    "procedure",
+    "routes",
+    "cookies",
+    "schema",
+    "store",
+    "modal",
+    "form"
+  ]
 }

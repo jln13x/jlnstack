@@ -1,0 +1,6 @@
+{
+  "title": "Schema",
+  "description": "Schema utilities",
+  "root": true,
+  "pages": ["index", "installation", "versioned-schema", "conversion"]
+}
