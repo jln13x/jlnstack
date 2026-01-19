@@ -1,7 +1,7 @@
 {
   "name": "@jlnstack/form",
   "description": "Type-safe form utilities",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "license": "MIT",
   "author": "jln13x",
   "repository": {
