@@ -1,0 +1,124 @@
+{
+  "name": "@jlnstack/i18n",
+  "description": "Type-safe, tree-shakeable i18n with RSC support and visual studio",
+  "sprint": {
+    "issues": [
+      {
+        "id": 1,
+        "title": "Project setup",
+        "description": "Create package structure, package.json, tsconfig, tsdown config, vitest config",
+        "done": false
+      },
+      {
+        "id": 2,
+        "title": "Core types",
+        "description": "Define TranslationValue, TranslationDict, ExtractVars, TranslateFn types",
+        "done": false
+      },
+      {
+        "id": 3,
+        "title": "defineTranslations helper",
+        "description": "Helper function to define translations with proper typing and individual exports",
+        "done": false
+      },
+      {
+        "id": 4,
+        "title": "Interpolation",
+        "description": "Implement interpolate function for {var} replacement",
+        "done": false
+      },
+      {
+        "id": 5,
+        "title": "createTranslation (sync core)",
+        "description": "Core sync translation function for non-framework usage",
+        "done": false
+      },
+      {
+        "id": 6,
+        "title": "React useTranslation hook",
+        "description": "Client-side hook that reads locale from context",
+        "done": false
+      },
+      {
+        "id": 7,
+        "title": "React I18nProvider",
+        "description": "Context provider for locale state on client",
+        "done": false
+      },
+      {
+        "id": 8,
+        "title": "Next.js getLocale",
+        "description": "Async function to get locale from headers/cookies",
+        "done": false
+      },
+      {
+        "id": 9,
+        "title": "Next.js getTranslation",
+        "description": "Async function for RSC that accepts dicts and returns translate function",
+        "done": false
+      },
+      {
+        "id": 10,
+        "title": "CLI setup",
+        "description": "Setup CLI binary with cac, add migrate command scaffold",
+        "done": false
+      },
+      {
+        "id": 11,
+        "title": "CLI migrate command",
+        "description": "Implement JSON to TS migration",
+        "done": false
+      },
+      {
+        "id": 12,
+        "title": "CLI check command",
+        "description": "Check for missing translations across locales",
+        "done": false
+      },
+      {
+        "id": 13,
+        "title": "Studio planning",
+        "description": "Document studio architecture and UI spec (no implementation)",
+        "done": false
+      }
+    ]
+  },
+  "api": {
+    "core": {
+      "defineTranslations": "Helper to define translation dict with type inference",
+      "createTranslation": "Sync translation function for core/non-framework usage",
+      "interpolate": "String interpolation for {var} patterns"
+    },
+    "react": {
+      "I18nProvider": "Context provider for locale",
+      "useTranslation": "Client hook for translations",
+      "useLocale": "Get current locale from context"
+    },
+    "next": {
+      "getLocale": "Async - get locale from headers/cookies",
+      "getTranslation": "Async - accepts dicts, returns translate function for RSC"
+    },
+    "cli": {
+      "migrate": "Convert JSON locale files to TS exports",
+      "check": "Validate all locales have all keys",
+      "studio": "Launch visual editor (future)"
+    }
+  },
+  "studio": {
+    "status": "planned",
+    "features": [
+      "Grid editor for translations",
+      "Missing translation highlighting",
+      "Search and filter",
+      "Export to CSV/JSON",
+      "Import with validation",
+      "AI translation suggestions (optional)",
+      "Live HMR sync"
+    ],
+    "architecture": {
+      "server": "File watcher + REST API + WebSocket for HMR",
+      "ui": "Minimal React or vanilla JS interface",
+      "sync": "Writes back to .ts source files"
+    }
+  }
+}
