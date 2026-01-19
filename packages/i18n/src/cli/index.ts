@@ -3,6 +3,7 @@
 import cac from "cac";
 import { migrate } from "./migrate";
 import { check } from "./check";
+import { studio } from "./studio";
 
 const cli = cac("i18n");
 
@@ -24,6 +25,26 @@ cli
       process.exit(1);
     }
   });
+
+cli
+  .command("studio <translations>", "Launch visual translation editor")
+  .option("-p, --port <port>", "Port to run on", { default: 4200 })
+  .option("-l, --locales <locales>", "Comma-separated list of locales", {
+    default: "en",
+  })
+  .action(
+    async (
+      translations: string,
+      options: { port: number | string; locales: string },
+    ) => {
+      const port =
+        typeof options.port === "string"
+          ? parseInt(options.port, 10)
+          : options.port;
+      const locales = options.locales.split(",").map((l) => l.trim());
+      await studio(translations, { port, locales });
+    },
+  );
 
 cli.help();
 cli.version("0.0.0");

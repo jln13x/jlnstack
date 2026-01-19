@@ -21,6 +21,7 @@ export interface StudioServer {
   start(): Promise<void>;
   stop(): Promise<void>;
   getPort(): number;
+  getHttpServer(): http.Server | null;
 }
 
 interface ApiResponse<T = unknown> {
@@ -237,6 +238,10 @@ export function createStudioServer(config: StudioConfig): StudioServer {
 
     getPort() {
       return actualPort;
+    },
+
+    getHttpServer() {
+      return server;
     },
   };
 }
