@@ -85,7 +85,7 @@
         "id": 14,
         "title": "Studio: TS parser",
         "description": "Parse and write translation .ts files",
-        "done": false
+        "done": true
       },
       {
         "id": 15,
