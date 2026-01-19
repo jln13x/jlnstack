@@ -251,6 +251,92 @@ describe("createJWT", () => {
     });
   });
 
+  describe("secret rotation", () => {
+    it("verifies tokens signed with current secret", async () => {
+      const jwt = createJWT({
+        secret: "new-secret",
+        deprecatedSecrets: ["old-secret-1", "old-secret-2"],
+      });
+
+      const token = await jwt.sign({ data: "test" });
+      const payload = await jwt.verify(token);
+
+      expect(payload.data).toBe("test");
+    });
+
+    it("verifies tokens signed with deprecated secret", async () => {
+      const oldJwt = createJWT({ secret: "old-secret" });
+      const newJwt = createJWT({
+        secret: "new-secret",
+        deprecatedSecrets: ["old-secret"],
+      });
+
+      const token = await oldJwt.sign({ data: "test" });
+      const payload = await newJwt.verify(token);
+
+      expect(payload.data).toBe("test");
+    });
+
+    it("verifies tokens signed with any deprecated secret", async () => {
+      const veryOldJwt = createJWT({ secret: "very-old-secret" });
+      const newJwt = createJWT({
+        secret: "new-secret",
+        deprecatedSecrets: ["old-secret", "very-old-secret"],
+      });
+
+      const token = await veryOldJwt.sign({ data: "test" });
+      const payload = await newJwt.verify(token);
+
+      expect(payload.data).toBe("test");
+    });
+
+    it("always signs with current secret", async () => {
+      const jwt = createJWT({
+        secret: "new-secret",
+        deprecatedSecrets: ["old-secret"],
+      });
+      const verifyWithNew = createJWT({ secret: "new-secret" });
+      const verifyWithOld = createJWT({ secret: "old-secret" });
+
+      const token = await jwt.sign({ data: "test" });
+
+      // Should verify with new secret
+      const payload = await verifyWithNew.verify(token);
+      expect(payload.data).toBe("test");
+
+      // Should NOT verify with old secret alone
+      await expect(verifyWithOld.verify(token)).rejects.toThrow(
+        "Invalid signature",
+      );
+    });
+
+    it("rejects tokens signed with unknown secret", async () => {
+      const unknownJwt = createJWT({ secret: "unknown-secret" });
+      const jwt = createJWT({
+        secret: "new-secret",
+        deprecatedSecrets: ["old-secret"],
+      });
+
+      const token = await unknownJwt.sign({ data: "test" });
+
+      await expect(jwt.verify(token)).rejects.toThrow("Invalid signature");
+    });
+
+    it("supports Uint8Array deprecated secrets", async () => {
+      const oldSecret = new TextEncoder().encode("old-secret");
+      const oldJwt = createJWT({ secret: oldSecret });
+      const newJwt = createJWT({
+        secret: "new-secret",
+        deprecatedSecrets: [oldSecret],
+      });
+
+      const token = await oldJwt.sign({ data: "test" });
+      const payload = await newJwt.verify(token);
+
+      expect(payload.data).toBe("test");
+    });
+  });
+
   describe("decode", () => {
     it("decodes token without verification", async () => {
       const jwt = createJWT<{ userId: string }>({ secret: TEST_SECRET });
