@@ -13,8 +13,9 @@ Generate Mermaid diagram code from a filter:
 
 ```ts
 import { generateMermaid } from "@jlnstack/filter/devtools"
+import { useFilterHook } from "@jlnstack/filter/react"
 
-const filter = useFilter(schema)
+const filter = useFilterHook(schema)
 const mermaid = generateMermaid(filter.getFilter())
 
 console.log(mermaid)
@@ -32,8 +33,9 @@ Get a URL to view the diagram on [mermaid.live](https://mermaid.live):
 
 ```ts
 import { getMermaidLiveUrl } from "@jlnstack/filter/devtools"
+import { useFilterHook } from "@jlnstack/filter/react"
 
-const filter = useFilter(schema)
+const filter = useFilterHook(schema)
 const url = getMermaidLiveUrl(filter.getFilter())
 
 console.log(url)
@@ -46,9 +48,10 @@ Add a debug button to open the filter visualization:
 
 ```tsx
 import { getMermaidLiveUrl } from "@jlnstack/filter/devtools"
+import { useFilterHook } from "@jlnstack/filter/react"
 
 function DebugFilter() {
-  const filter = useFilter(schema)
+  const filter = useFilterHook(schema)
 
   const openVisualization = () => {
     const url = getMermaidLiveUrl(filter.getFilter())

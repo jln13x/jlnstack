@@ -54,15 +54,15 @@ const complexFilter = and(
 )
 ```
 
-## Using with useFilter
+## Using with useFilterHook
 
 Pass a filter expression as the `defaultFilter` option:
 
 ```tsx
-import { useFilter } from "@jlnstack/filter/react"
+import { useFilterHook } from "@jlnstack/filter/react"
 
 function UsersPage() {
-  const filter = useFilter(schema, {
+  const filter = useFilterHook(schema, {
     defaultFilter: and(
       condition("active", true)
     ),
@@ -74,10 +74,10 @@ function UsersPage() {
 
 ## Manipulating Groups
 
-The `useFilter` hook provides methods to manipulate the filter tree:
+The `useFilterHook` hook provides methods to manipulate the filter tree:
 
 ```tsx
-const filter = useFilter(schema)
+const filter = useFilterHook(schema)
 
 // Add a condition to the root group
 filter.addCondition({
@@ -154,7 +154,7 @@ Apply presets with `setFilter`:
 import { activeUsers, recentUsers } from "./presets"
 
 function FilterToolbar() {
-  const filter = useFilter(schema)
+  const filter = useFilterHook(schema)
 
   return (
     <div>
@@ -175,7 +175,7 @@ function FilterToolbar() {
 Presets can also be used as default values:
 
 ```tsx
-const filter = useFilter(schema, {
+const filter = useFilterHook(schema, {
   defaultFilter: activeUsers,
 })
 ```

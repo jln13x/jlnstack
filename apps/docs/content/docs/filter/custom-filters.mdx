@@ -90,8 +90,8 @@ const filters = defineFilters({
 })
 
 // Usage
-filter.setFilter("status", "active") // ✅ Type-safe
-filter.setFilter("status", "invalid") // ❌ Type error
+filter.addCondition({ field: "status", value: "active" }) // ✅ Type-safe
+filter.addCondition({ field: "status", value: "invalid" }) // ❌ Type error
 ```
 
 ### Multi-Select Filter
@@ -115,9 +115,9 @@ const filters = defineFilters({
   }),
 })
 
-// Usage in component
+// Usage in component (condition is a Condition<Schema> for \"tags\")
 <filter.Filter
-  name="tags"
+  condition={condition}
   render={({ value, onValueChange, definition }) => (
     <div>
       {definition.options.map((opt) => (
@@ -225,12 +225,13 @@ const filters = defineFilters({
 The `definition` prop in the render function gives you access to all options:
 
 ```tsx
+// condition is a Condition<Schema> for the \"status\" field
 <filter.Filter
-  name="status"
-  render={({ value, onValueChange, definition }) => (
+  condition={condition}
+  render={({ value, onValueChange, onRemove, definition }) => (
     <select
       value={value ?? ""}
-      onChange={(e) => onValueChange(e.target.value || undefined)}
+      onChange={(e) => (e.target.value ? onValueChange(e.target.value) : onRemove())}
     >
       <option value="">All</option>
       {definition.options.map((opt) => (

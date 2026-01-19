@@ -29,10 +29,10 @@ The `createFilterHooks` function returns an object with these hooks:
 
 | Hook | Description |
 |------|-------------|
-| `useFilter(options?)` | Create a filter store (same as `useFilter(schema, options)`) |
+| `useFilter(options?)` | Create a filter store (same as `useFilterHook(schema, options)`) |
 | `useFilterContext()` | Get the filter store from context |
-| `useFilterValues()` | Subscribe to all filter values |
-| `useFilterValue(key)` | Subscribe to a single filter value |
+| `useFilterTree()` | Subscribe to the filter tree |
+| `useFilterById(id)` | Subscribe to a specific filter/group |
 | `useFilterDefinitions()` | Get filter definitions |
 
 ## FilterProvider
@@ -62,13 +62,18 @@ export function UsersPage() {
 Then access the filter from any child component:
 
 ```tsx title="filter-toolbar.tsx"
+import { isGroup } from "@jlnstack/filter"
 import { userFilterHooks } from "./filters"
+
+function countConditions(expr) {
+  if (!isGroup(expr)) return 1
+  return expr.filters.reduce((total, child) => total + countConditions(child), 0)
+}
 
 function FilterToolbar() {
   const filter = userFilterHooks.useFilterContext()
-  const values = filter.useFilterValues()
-
-  const activeCount = Object.values(values).filter(Boolean).length
+  const tree = userFilterHooks.useFilterTree()
+  const activeCount = countConditions(tree)
 
   return (
     <div>
@@ -80,11 +85,19 @@ function FilterToolbar() {
 ```
 
 ```tsx title="users-table.tsx"
+import { isGroup } from "@jlnstack/filter"
 import { userFilterHooks } from "./filters"
 
+function collectConditions(expr) {
+  if (!isGroup(expr)) return [expr]
+  return expr.filters.flatMap(collectConditions)
+}
+
 function UsersTable() {
-  const verified = userFilterHooks.useFilterValue("verified")
-  
+  const tree = userFilterHooks.useFilterTree()
+  const conditions = collectConditions(tree)
+  const verified = conditions.find((condition) => condition.field === "verified")?.value
+
   // Filter your data based on verified value
   return (
     <table>
@@ -100,7 +113,7 @@ Here's a full example showing the recommended pattern:
 
 ```tsx
 // filters.ts
-import { defineFilters, stringFilter, booleanFilter } from "@jlnstack/filter"
+import { defineFilters, stringFilter, booleanFilter, isGroup } from "@jlnstack/filter"
 import { createFilterHooks, FilterProvider } from "@jlnstack/filter/react"
 
 export const userFilters = defineFilters({
@@ -109,11 +122,16 @@ export const userFilters = defineFilters({
 })
 
 export const hooks = createFilterHooks(userFilters)
+
+export function collectConditions(expr) {
+  if (!isGroup(expr)) return [expr]
+  return expr.filters.flatMap(collectConditions)
+}
 ```
 
 ```tsx
 // users-page.tsx
-import { hooks, userFilters } from "./filters"
+import { hooks, collectConditions } from "./filters"
 import { FilterProvider } from "@jlnstack/filter/react"
 
 export function UsersPage({ users }) {
@@ -138,14 +156,11 @@ function AddFilterDropdown() {
       <DropdownMenuContent>
         {definitions.map((def) => (
           <DropdownMenuItem key={def.name}>
-            <filter.Filter
-              name={def.name}
-              render={({ onValueChange }) => (
-                <FilterDialog
-                  definition={def}
-                  onApply={onValueChange}
-                />
-              )}
+            <FilterDialog
+              definition={def}
+              onApply={(value) =>
+                filter.addCondition({ field: def.name, value })
+              }
             />
           </DropdownMenuItem>
         ))}
@@ -156,30 +171,32 @@ function AddFilterDropdown() {
 
 function ActiveFilters() {
   const filter = hooks.useFilterContext()
-  const values = filter.useFilterValues()
+  const tree = hooks.useFilterTree()
+  const conditions = collectConditions(tree)
 
   return (
     <div className="flex gap-2">
-      {Object.entries(values)
-        .filter(([, v]) => v !== undefined)
-        .map(([key]) => (
-          <Badge key={key}>
-            {key}
-            <button onClick={() => filter.clear(key)}>×</button>
-          </Badge>
-        ))}
+      {conditions.map((condition) => (
+        <Badge key={condition.id}>
+          {condition.field}
+          <button onClick={() => filter.removeFilter({ id: condition.id })}>×</button>
+        </Badge>
+      ))}
     </div>
   )
 }
 
 function UsersTable({ users }) {
-  const values = hooks.useFilterValues()
-  
+  const tree = hooks.useFilterTree()
+  const conditions = collectConditions(tree)
+  const verified = conditions.find((condition) => condition.field === "verified")?.value
+  const name = conditions.find((condition) => condition.field === "name")?.value
+
   const filteredUsers = users.filter((user) => {
-    if (values.verified !== undefined && user.verified !== values.verified) {
+    if (verified !== undefined && user.verified !== verified) {
       return false
     }
-    if (values.name?.value && !user.name.includes(values.name.value)) {
+    if (name?.value && !user.name.includes(name.value)) {
       return false
     }
     return true
@@ -205,18 +222,20 @@ function UsersTable({ users }) {
 You can also use the context hooks directly, but you'll need to provide type parameters:
 
 ```tsx
-import { 
-  useFilterContext, 
-  useFilterValues, 
-  useFilterValue 
+import {
+  useFilterContext,
+  useFilter,
+  useFilterById,
+  useFilterDefinitions,
 } from "@jlnstack/filter/react"
 import { userFilters } from "./filters"
 
 function MyComponent() {
   // Need to pass the schema type
   const filter = useFilterContext<typeof userFilters>()
-  const values = useFilterValues<typeof userFilters>()
-  const name = useFilterValue<typeof userFilters, "name">("name")
+  const tree = useFilter<typeof userFilters>()
+  const condition = useFilterById<typeof userFilters>("condition-id")
+  const definitions = useFilterDefinitions<typeof userFilters>()
 }
 ```
 

@@ -18,8 +18,8 @@ Filter is a type-safe filter state management library. Define your filter schema
 ## Quick Example
 
 ```tsx
-import { defineFilters, stringFilter, booleanFilter } from "@jlnstack/filter"
-import { useFilter } from "@jlnstack/filter/react"
+import { defineFilters, stringFilter, booleanFilter, isCondition } from "@jlnstack/filter"
+import { useFilterHook } from "@jlnstack/filter/react"
 
 const schema = defineFilters({
   name: stringFilter({ label: "Name" }),
@@ -27,29 +27,42 @@ const schema = defineFilters({
 })
 
 function MyComponent() {
-  const filter = useFilter(schema)
-
-  // Add a filter condition
-  filter.addCondition({
-    field: "name",
-    value: { operator: "contains", value: "john" },
-  })
-
-  // Reset all filters
-  filter.reset()
+  const filter = useFilterHook(schema)
+  const tree = filter.useFilter()
 
   return (
-    <filter.Filter
-      name="name"
-      render={({ value, onValueChange }) => (
-        <input
-          value={value?.value ?? ""}
-          onChange={(e) =>
-            onValueChange({ operator: "contains", value: e.target.value })
-          }
-        />
+    <div>
+      <button
+        onClick={() =>
+          filter.addCondition({
+            field: "name",
+            value: { operator: "contains", value: "john" },
+          })
+        }
+      >
+        Add Name Filter
+      </button>
+
+      {tree.filters.map((expr) =>
+        isCondition(expr) ? (
+          <filter.Filter
+            key={expr.id}
+            condition={expr}
+            render={({ value, onValueChange }) => (
+              <input
+                value={value?.value ?? ""}
+                onChange={(e) =>
+                  onValueChange({
+                    operator: "contains",
+                    value: e.target.value,
+                  })
+                }
+              />
+            )}
+          />
+        ) : null
       )}
-    />
+    </div>
   )
 }
 ```

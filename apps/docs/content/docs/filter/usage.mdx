@@ -1,11 +1,11 @@
 ---
 title: Basic Usage
-description: Learn how to use useFilter and its reactive hooks
+description: Learn how to use useFilterHook and reactive hooks
 ---
 
 # Basic Usage
 
-The `useFilter` hook is the primary way to manage filter state in React. It returns a **stable reference** by default — meaning the returned object won't change between renders. Reactivity is opt-in through hooks.
+The `useFilterHook` hook is the primary way to create a filter store in React. It returns a **stable reference** by default — meaning the returned object won't change between renders. Reactivity is opt-in through hooks on the store.
 
 ## Defining Filters
 
@@ -21,17 +21,17 @@ export const userFilters = defineFilters({
 })
 ```
 
-## Using useFilter
+## Using useFilterHook
 
-The `useFilter` hook creates a filter store from your schema:
+The `useFilterHook` hook creates a filter store from your schema:
 
 ```tsx
-import { useFilter } from "@jlnstack/filter/react"
+import { useFilterHook } from "@jlnstack/filter/react"
 import { and, condition } from "@jlnstack/filter"
 import { userFilters } from "./filters"
 
 function UsersPage() {
-  const filter = useFilter(userFilters, {
+  const filter = useFilterHook(userFilters, {
     defaultFilter: and(
       condition("verified", true)
     ),
@@ -80,44 +80,69 @@ function UsersPage() {
 
 ## The Filter Component
 
-The `Filter` component provides reactive access to render filter inputs:
+The `Filter` component renders an existing condition from the filter tree. Create conditions with `defaultFilter` or `addCondition`, then pass the condition into `Filter`.
 
 ```tsx
+import { and, condition, isCondition } from "@jlnstack/filter"
+import { useFilterHook } from "@jlnstack/filter/react"
+
 function FilterPanel() {
-  const filter = useFilter(userFilters)
+  const filter = useFilterHook(userFilters, {
+    defaultFilter: and(
+      condition("name", { operator: "contains", value: "" }),
+      condition("verified", true)
+    ),
+  })
+  const tree = filter.useFilter()
 
   return (
     <div>
-      <filter.Filter
-        name="name"
-        render={({ value, onValueChange, definition }) => (
-          <div>
-            <label>{definition.label}</label>
-            <input
-              value={value?.value ?? ""}
-              onChange={(e) =>
-                onValueChange({ operator: "contains", value: e.target.value })
-              }
-            />
-          </div>
-        )}
-      />
+      {tree.filters.map((expr) => {
+        if (!isCondition(expr)) return null
 
-      <filter.Filter
-        name="verified"
-        render={({ value, onValueChange }) => (
-          <select
-            value={value === undefined ? "" : String(value)}
-            onChange={(e) =>
-              onValueChange(e.target.value === "" ? undefined : e.target.value === "true")
-            }
-          >
-            <option value="">All</option>
-            <option value="true">Verified</option>
-            <option value="false">Unverified</option>
-          </select>
-        )}
-      />
+        if (expr.field === "name") {
+          return (
+            <filter.Filter
+              key={expr.id}
+              condition={expr}
+              render={({ value, onValueChange, definition }) => (
+                <div>
+                  <label>{definition.label}</label>
+                  <input
+                    value={value?.value ?? ""}
+                    onChange={(e) =>
+                      onValueChange({ operator: "contains", value: e.target.value })
+                    }
+                  />
+                </div>
+              )}
+            />
+          )
+        }
+
+        if (expr.field === "verified") {
+          return (
+            <filter.Filter
+              key={expr.id}
+              condition={expr}
+              render={({ value, onValueChange, onRemove }) => (
+                <select
+                  value={value ? "true" : "false"}
+                  onChange={(e) =>
+                    e.target.value === "" ? onRemove() : onValueChange(e.target.value === "true")
+                  }
+                >
+                  <option value="">All</option>
+                  <option value="true">Verified</option>
+                  <option value="false">Unverified</option>
+                </select>
+              )}
+            />
+          )
+        }
+
+        return null
+      })}
     </div>
   )
 }
@@ -127,10 +152,11 @@ function FilterPanel() {
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `name` | `string` | The filter key |
-| `type` | `string` | The filter type id (e.g., "string", "boolean") |
-| `value` | `Value \| undefined` | Current filter value |
+| `id` | `string` | Condition ID |
+| `field` | `keyof Schema` | The filter field |
+| `value` | `Value` | Current filter value |
 | `onValueChange` | `(value) => void` | Update the filter value |
+| `onRemove` | `() => void` | Remove the condition |
 | `definition` | `FilterDef` | Full filter definition with options |
 
 ## Reactive Hooks
@@ -141,12 +167,12 @@ Subscribe to filter tree changes:
 
 ```tsx
 function FilterSummary() {
-  const filter = useFilter(userFilters)
+  const filter = useFilterHook(userFilters)
   const currentFilter = filter.useFilter()
 
   return (
     <div>
-      {currentFilter.filters.length} conditions active
+      {currentFilter.filters.length} root filters active
     </div>
   )
 }
@@ -158,7 +184,7 @@ Subscribe to a specific filter by ID:
 
 ```tsx
 function ConditionEditor({ conditionId }) {
-  const filter = useFilter(userFilters)
+  const filter = useFilterHook(userFilters)
   const condition = filter.useFilterById(conditionId)
 
   if (!condition) return null
@@ -173,15 +199,20 @@ Get an array of all filter definitions:
 
 ```tsx
 function AddFilterMenu() {
-  const filter = useFilter(userFilters)
+  const filter = useFilterHook(userFilters)
   const definitions = filter.useFilterDefinitions()
+  const defaultValues = {
+    name: { operator: "contains", value: "" },
+    verified: true,
+    age: { operator: "gte", value: 18 },
+  } as const
 
   return (
     <select
       onChange={(e) => {
-        const field = e.target.value
+        const field = e.target.value as keyof typeof defaultValues
         if (field) {
-          filter.addCondition({ field, value: undefined })
+          filter.addCondition({ field, value: defaultValues[field] })
         }
       }}
     >
@@ -198,7 +229,7 @@ function AddFilterMenu() {
 
 ## Why Stable by Default?
 
-The `useFilter` hook returns a stable object reference. This design choice:
+The `useFilterHook` hook returns a stable object reference. This design choice:
 
 1. **Prevents unnecessary re-renders** — Components using only imperative methods won't re-render.
 2. **Optimizes performance** — Only components using reactive hooks re-render on changes.
@@ -207,7 +238,7 @@ The `useFilter` hook returns a stable object reference. This design choice:
 ```tsx
 // ❌ This component won't re-render when filters change
 function ExportButton() {
-  const filter = useFilter(userFilters)
+  const filter = useFilterHook(userFilters)
   return (
     <button onClick={() => exportData(filter.getFilter())}>
       Export
@@ -217,7 +248,7 @@ function ExportButton() {
 
 // ✅ This component re-renders when filters change
 function ActiveFilterCount() {
-  const filter = useFilter(userFilters)
+  const filter = useFilterHook(userFilters)
   const currentFilter = filter.useFilter()
   return <span>{currentFilter.filters.length} active filters</span>
 }

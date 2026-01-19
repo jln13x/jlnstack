@@ -53,8 +53,9 @@ type StringValue = {
 ### Usage
 
 ```tsx
+// condition is a Condition<Schema> for the \"name\" field
 <filter.Filter
-  name="name"
+  condition={condition}
   render={({ value, onValueChange }) => (
     <input
       value={value?.value ?? ""}
@@ -117,8 +118,9 @@ type NumberValue = {
 ### Usage
 
 ```tsx
+// condition is a Condition<Schema> for the \"age\" field
 <filter.Filter
-  name="age"
+  condition={condition}
   render={({ value, onValueChange, definition }) => (
     <div>
       <select
@@ -195,8 +197,9 @@ type DateValue = {
 ### Usage
 
 ```tsx
+// condition is a Condition<Schema> for the \"createdAt\" field
 <filter.Filter
-  name="createdAt"
+  condition={condition}
   render={({ value, onValueChange }) => (
     <input
       type="date"
@@ -247,15 +250,14 @@ type BooleanValue = boolean
 ### Usage
 
 ```tsx
+// condition is a Condition<Schema> for the \"verified\" field
 <filter.Filter
-  name="verified"
-  render={({ value, onValueChange, definition }) => (
+  condition={condition}
+  render={({ value, onValueChange, onRemove, definition }) => (
     <select
-      value={value === undefined ? "" : String(value)}
+      value={value ? "true" : "false"}
       onChange={(e) =>
-        onValueChange(
-          e.target.value === "" ? undefined : e.target.value === "true"
-        )
+        e.target.value === "" ? onRemove() : onValueChange(e.target.value === "true")
       }
     >
       <option value="">All</option>

@@ -17,7 +17,7 @@ pnpm add @jlnstack/filter @jlnstack/cookies
 
 ## Define the Cookie
 
-Create a cookie to store filter values:
+Create a cookie to store the filter tree (without IDs):
 
 ```ts title="cookies.ts"
 import { createCookie } from "@jlnstack/cookies/next"
@@ -40,7 +40,7 @@ import { UsersTable } from "./users-table"
 export default async function UsersPage() {
   const savedFilters = await userFiltersCookie.get()
 
-  return <UsersTable initialFilters={savedFilters ?? {}} />
+  return <UsersTable initialFilter={savedFilters ?? undefined} />
 }
 ```
 
@@ -51,22 +51,35 @@ Sync filter changes to the cookie:
 ```tsx title="users-table.tsx"
 "use client"
 
+import { isGroup, type GroupInput } from "@jlnstack/filter"
 import { createFilterHooks, FilterProvider } from "@jlnstack/filter/react"
 import { userFilters } from "./filters"
 
 const hooks = createFilterHooks(userFilters)
 
 interface Props {
-  initialFilters: Record<string, unknown>
+  initialFilter?: GroupInput<typeof userFilters>
 }
 
-export function UsersTable({ initialFilters }: Props) {
+function toInput(group) {
+  return {
+    type: "group",
+    operator: group.operator,
+    filters: group.filters.map((expr) =>
+      isGroup(expr)
+        ? toInput(expr)
+        : { type: "condition", field: expr.field, value: expr.value }
+    ),
+  }
+}
+
+export function UsersTable({ initialFilter }: Props) {
   const filter = hooks.useFilter({
-    defaultValues: initialFilters,
-    onFilterChange: async (values) => {
+    defaultFilter: initialFilter,
+    onFilterChange: async (filterTree) => {
       await fetch("/api/save-filters", {
         method: "POST",
-        body: JSON.stringify(values),
+        body: JSON.stringify(toInput(filterTree)),
       })
     },
   })
@@ -102,9 +115,11 @@ Use a Server Action instead of an API route:
 ```ts title="actions.ts"
 "use server"
 
+import type { GroupInput } from "@jlnstack/filter"
 import { userFiltersCookie } from "./cookies"
+import { userFilters } from "./filters"
 
-export async function saveFilters(filters: Record<string, unknown>) {
+export async function saveFilters(filters: GroupInput<typeof userFilters>) {
   await userFiltersCookie.set(filters)
 }
 ```
@@ -114,10 +129,11 @@ export async function saveFilters(filters: Record<string, unknown>) {
 
 import { saveFilters } from "./actions"
 
-export function UsersTable({ initialFilters }: Props) {
+export function UsersTable({ initialFilter }: Props) {
+  // Reuse toInput from the previous example.
   const filter = hooks.useFilter({
-    defaultValues: initialFilters,
-    onFilterChange: saveFilters,
+    defaultFilter: initialFilter,
+    onFilterChange: (filterTree) => saveFilters(toInput(filterTree)),
   })
 
   // ...
