@@ -1,5 +1,6 @@
 import type { ModalStore } from "./store";
 import type { Modal, ModalInstance, OpenModalResult } from "./types";
+import { isServerModal } from "./types";
 
 export type CreateModalOptions<TOutput> = {
   store: ModalStore;
@@ -12,6 +13,20 @@ export function openModal<TInput, TOutput>(
   input: TInput,
   options: CreateModalOptions<TOutput>,
 ): OpenModalResult<TOutput> {
+  // Safety check: server modals should be wrapped by useModal hook before reaching here
+  if (isServerModal(modal)) {
+    throw new Error(
+      "Server modals cannot be opened directly. Use the useModal hook instead."
+    );
+  }
+
+  // Safety check: ensure modal has required structure
+  if (!modal._def?.component) {
+    throw new Error(
+      "Invalid modal: missing _def.component. Make sure the modal was created with modal.create()."
+    );
+  }
+
   const { store, onCleanup, onInstanceCreated } = options;
   const id = store.generateId();
 
