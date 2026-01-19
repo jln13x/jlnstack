@@ -5,6 +5,87 @@ import { createVersionedSchema } from "../src/versioned";
 import { createVersionedZodSchema, toZod } from "../src/zod";
 
 describe("toZod", () => {
+  describe("sync vs async", () => {
+    it("supports .parse() for sync schemas (no async migrations)", () => {
+      const versionedSchema = createVersionedSchema({
+        schema: z.object({ name: z.string() }),
+      });
+
+      const zodSchema = toZod(versionedSchema);
+
+      // Sync validation works with .parse()
+      const result = zodSchema.parse({ version: 1, data: { name: "John" } });
+      expect(result).toEqual({ version: 1, data: { name: "John" } });
+    });
+
+    it("supports .parse() for sync migrations", () => {
+      const versionedSchema = createVersionedSchema({
+        schema: z.object({ name: z.string(), age: z.number() }),
+        migrations: [
+          {
+            schema: z.object({ name: z.string() }),
+            up: (v1) => ({ name: v1.name, age: 0 }), // sync migration
+          },
+        ],
+      });
+
+      const zodSchema = toZod(versionedSchema);
+
+      // Sync migrations work with .parse()
+      const result = zodSchema.parse({ version: 1, data: { name: "John" } });
+      expect(result).toEqual({ version: 2, data: { name: "John", age: 0 } });
+    });
+
+    it("requires .parseAsync() for async migrations", () => {
+      const versionedSchema = createVersionedSchema({
+        schema: z.object({ name: z.string(), displayName: z.string() }),
+        migrations: [
+          {
+            schema: z.object({ name: z.string() }),
+            up: async (v1) => {
+              // async migration
+              await new Promise((resolve) => setTimeout(resolve, 1));
+              return { name: v1.name, displayName: v1.name.toUpperCase() };
+            },
+          },
+        ],
+      });
+
+      const zodSchema = toZod(versionedSchema);
+
+      // Async migrations require .parseAsync(), .parse() throws
+      expect(() =>
+        zodSchema.parse({ version: 1, data: { name: "John" } }),
+      ).toThrow();
+    });
+
+    it("async migrations work with .parseAsync()", async () => {
+      const versionedSchema = createVersionedSchema({
+        schema: z.object({ name: z.string(), displayName: z.string() }),
+        migrations: [
+          {
+            schema: z.object({ name: z.string() }),
+            up: async (v1) => {
+              await new Promise((resolve) => setTimeout(resolve, 1));
+              return { name: v1.name, displayName: v1.name.toUpperCase() };
+            },
+          },
+        ],
+      });
+
+      const zodSchema = toZod(versionedSchema);
+
+      const result = await zodSchema.parseAsync({
+        version: 1,
+        data: { name: "john" },
+      });
+      expect(result).toEqual({
+        version: 2,
+        data: { name: "john", displayName: "JOHN" },
+      });
+    });
+  });
+
   it("converts a Standard Schema to Zod schema", async () => {
     const versionedSchema = createVersionedSchema({
       schema: z.object({ name: z.string(), age: z.number() }),

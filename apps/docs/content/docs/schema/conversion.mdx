@@ -9,6 +9,15 @@ Convert any Standard Schema compatible schema into a Zod schema. This enables ch
 
 Requires `zod` as a peer dependency.
 
+<Callout type="info">
+**Sync vs Async Parsing**
+
+- Use `.parse()` when all migrations are synchronous
+- Use `.parseAsync()` when any migration is asynchronous
+
+If you use `.parse()` with async migrations, Zod will throw an error.
+</Callout>
+
 ## toZod
 
 Convert any Standard Schema to a Zod schema.

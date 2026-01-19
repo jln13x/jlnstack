@@ -148,6 +148,16 @@ const v1Migration = {
 }
 ```
 
+<Callout type="info">
+**Sync vs Async with Zod**
+
+When using `toZod` or `createVersionedZodSchema`:
+- Use `.parse()` when all migrations are synchronous
+- Use `.parseAsync()` when any migration is asynchronous
+
+Sync migrations are faster and simpler to use.
+</Callout>
+
 ## API Reference
 
 ### `createVersionedSchema(config)`
