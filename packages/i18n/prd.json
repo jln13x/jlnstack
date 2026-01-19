@@ -91,7 +91,7 @@
         "id": 15,
         "title": "Studio: Server setup",
         "description": "HTTP server with REST API endpoints",
-        "done": false
+        "done": true
       },
       {
         "id": 16,

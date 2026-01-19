@@ -15,3 +15,9 @@ export {
   type StudioConfig,
   type StudioServer,
 } from "./server";
+
+export {
+  createFileWatcher,
+  type FileWatcher,
+  type FileWatcherConfig,
+} from "./watcher";

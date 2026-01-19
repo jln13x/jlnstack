@@ -26,8 +26,8 @@
     "test:ui": "vitest --ui"
   },
   "peerDependencies": {
-    "react": ">=18",
-    "next": ">=15"
+    "next": ">=15",
+    "react": ">=18"
   },
   "peerDependenciesMeta": {
     "react": {
@@ -38,7 +38,8 @@
     }
   },
   "dependencies": {
-    "cac": "^6.7.14"
+    "cac": "^6.7.14",
+    "chokidar": "^4"
   },
   "devDependencies": {
     "@testing-library/react": "^16.0.0",
