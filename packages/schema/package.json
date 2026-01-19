@@ -1,7 +1,7 @@
 {
   "name": "@jlnstack/schema",
   "description": "Schema versioning and migration utilities",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "license": "MIT",
   "author": "jln13x",
   "repository": {
