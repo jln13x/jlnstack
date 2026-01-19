@@ -9,3 +9,5 @@ export type {
   TranslateFn,
   TranslationConfig,
 } from "./types";
+
+export { defineTranslations } from "./define";

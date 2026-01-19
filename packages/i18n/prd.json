@@ -19,7 +19,7 @@
         "id": 3,
         "title": "defineTranslations helper",
         "description": "Helper function to define translations with proper typing and individual exports",
-        "done": false
+        "done": true
       },
       {
         "id": 4,
