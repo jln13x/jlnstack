@@ -37,13 +37,13 @@
         "id": 6,
         "title": "React useTranslation hook",
         "description": "Client-side hook that reads locale from context",
-        "done": false
+        "done": true
       },
       {
         "id": 7,
         "title": "React I18nProvider",
         "description": "Context provider for locale state on client",
-        "done": false
+        "done": true
       },
       {
         "id": 8,
