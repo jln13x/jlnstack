@@ -18,24 +18,33 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import {
   booleanFilter,
-  dateFilter,
-  defineFilters,
-  isCondition,
-  isGroup,
-  numberFilter,
-  stringFilter,
   type Condition,
   type DateValue,
+  dateFilter,
+  defineFilters,
   type FilterExpression,
   type FilterValue,
   type Group,
   type GroupInput,
+  isCondition,
+  isGroup,
   type NumberValue,
+  numberFilter,
   type StringValue,
+  stringFilter,
 } from "@jlnstack/filter";
 import { getMermaidLiveUrl } from "@jlnstack/filter/devtools";
 import { useFilterHook } from "@jlnstack/filter/react";
-import { ChevronDown, ExternalLink, FolderOpen, GripVertical, Layers, Plus, Trash2, X } from "lucide-react";
+import {
+  ChevronDown,
+  ExternalLink,
+  FolderOpen,
+  GripVertical,
+  Layers,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 
 // ============================================================================
@@ -47,7 +56,11 @@ const schema = defineFilters({
   email: stringFilter({ label: "Email", placeholder: "Enter email..." }),
   age: numberFilter({ label: "Age", min: 0, max: 150 }),
   score: numberFilter({ label: "Score", min: 0, max: 100 }),
-  active: booleanFilter({ label: "Active", trueLabel: "Yes", falseLabel: "No" }),
+  active: booleanFilter({
+    label: "Active",
+    trueLabel: "Yes",
+    falseLabel: "No",
+  }),
   joinedAt: dateFilter({ label: "Joined" }),
 });
 
@@ -68,18 +81,114 @@ type Person = {
 };
 
 const sampleData: Person[] = [
-  { id: 1, name: "Alice Johnson", email: "alice@example.com", age: 28, score: 92, active: true, joinedAt: new Date("2023-01-15") },
-  { id: 2, name: "Bob Smith", email: "bob@company.org", age: 34, score: 78, active: true, joinedAt: new Date("2022-06-20") },
-  { id: 3, name: "Carol Williams", email: "carol@example.com", age: 45, score: 88, active: false, joinedAt: new Date("2021-11-03") },
-  { id: 4, name: "David Brown", email: "david@startup.io", age: 23, score: 65, active: true, joinedAt: new Date("2024-02-28") },
-  { id: 5, name: "Emma Davis", email: "emma@example.com", age: 31, score: 95, active: true, joinedAt: new Date("2023-08-10") },
-  { id: 6, name: "Frank Miller", email: "frank@company.org", age: 52, score: 71, active: false, joinedAt: new Date("2020-04-15") },
-  { id: 7, name: "Grace Wilson", email: "grace@startup.io", age: 29, score: 84, active: true, joinedAt: new Date("2023-12-01") },
-  { id: 8, name: "Henry Taylor", email: "henry@example.com", age: 41, score: 59, active: false, joinedAt: new Date("2022-03-22") },
-  { id: 9, name: "Ivy Anderson", email: "ivy@company.org", age: 26, score: 91, active: true, joinedAt: new Date("2024-01-05") },
-  { id: 10, name: "Jack Thomas", email: "jack@startup.io", age: 38, score: 73, active: true, joinedAt: new Date("2021-09-18") },
-  { id: 11, name: "Kate Martinez", email: "kate@example.com", age: 33, score: 87, active: false, joinedAt: new Date("2022-12-30") },
-  { id: 12, name: "Leo Garcia", email: "leo@company.org", age: 47, score: 62, active: true, joinedAt: new Date("2023-05-14") },
+  {
+    id: 1,
+    name: "Alice Johnson",
+    email: "alice@example.com",
+    age: 28,
+    score: 92,
+    active: true,
+    joinedAt: new Date("2023-01-15"),
+  },
+  {
+    id: 2,
+    name: "Bob Smith",
+    email: "bob@company.org",
+    age: 34,
+    score: 78,
+    active: true,
+    joinedAt: new Date("2022-06-20"),
+  },
+  {
+    id: 3,
+    name: "Carol Williams",
+    email: "carol@example.com",
+    age: 45,
+    score: 88,
+    active: false,
+    joinedAt: new Date("2021-11-03"),
+  },
+  {
+    id: 4,
+    name: "David Brown",
+    email: "david@startup.io",
+    age: 23,
+    score: 65,
+    active: true,
+    joinedAt: new Date("2024-02-28"),
+  },
+  {
+    id: 5,
+    name: "Emma Davis",
+    email: "emma@example.com",
+    age: 31,
+    score: 95,
+    active: true,
+    joinedAt: new Date("2023-08-10"),
+  },
+  {
+    id: 6,
+    name: "Frank Miller",
+    email: "frank@company.org",
+    age: 52,
+    score: 71,
+    active: false,
+    joinedAt: new Date("2020-04-15"),
+  },
+  {
+    id: 7,
+    name: "Grace Wilson",
+    email: "grace@startup.io",
+    age: 29,
+    score: 84,
+    active: true,
+    joinedAt: new Date("2023-12-01"),
+  },
+  {
+    id: 8,
+    name: "Henry Taylor",
+    email: "henry@example.com",
+    age: 41,
+    score: 59,
+    active: false,
+    joinedAt: new Date("2022-03-22"),
+  },
+  {
+    id: 9,
+    name: "Ivy Anderson",
+    email: "ivy@company.org",
+    age: 26,
+    score: 91,
+    active: true,
+    joinedAt: new Date("2024-01-05"),
+  },
+  {
+    id: 10,
+    name: "Jack Thomas",
+    email: "jack@startup.io",
+    age: 38,
+    score: 73,
+    active: true,
+    joinedAt: new Date("2021-09-18"),
+  },
+  {
+    id: 11,
+    name: "Kate Martinez",
+    email: "kate@example.com",
+    age: 33,
+    score: 87,
+    active: false,
+    joinedAt: new Date("2022-12-30"),
+  },
+  {
+    id: 12,
+    name: "Leo Garcia",
+    email: "leo@company.org",
+    age: 47,
+    score: 62,
+    active: true,
+    joinedAt: new Date("2023-05-14"),
+  },
 ];
 
 // ============================================================================
@@ -88,7 +197,7 @@ const sampleData: Person[] = [
 
 function matchesStringFilter(
   value: string,
-  filter: { operator: string; value: string }
+  filter: { operator: string; value: string },
 ): boolean {
   const filterValue = filter.value.toLowerCase();
   const itemValue = value.toLowerCase();
@@ -111,7 +220,7 @@ function matchesStringFilter(
 
 function matchesNumberFilter(
   value: number,
-  filter: { operator: string; value: number }
+  filter: { operator: string; value: number },
 ): boolean {
   switch (filter.operator) {
     case "eq":
@@ -133,7 +242,7 @@ function matchesNumberFilter(
 
 function matchesDateFilter(
   value: Date,
-  filter: { operator: string; value: Date | string }
+  filter: { operator: string; value: Date | string },
 ): boolean {
   const itemTime = value.getTime();
   const filterTime = new Date(filter.value).getTime();
@@ -164,11 +273,17 @@ function matchesCondition(item: Person, condition: Condition<Schema>): boolean {
   const def = schema[condition.field];
 
   if (def.id === "string" && typeof value === "string") {
-    return matchesStringFilter(value, filterValue as { operator: string; value: string });
+    return matchesStringFilter(
+      value,
+      filterValue as { operator: string; value: string },
+    );
   }
 
   if (def.id === "number" && typeof value === "number") {
-    return matchesNumberFilter(value, filterValue as { operator: string; value: number });
+    return matchesNumberFilter(
+      value,
+      filterValue as { operator: string; value: number },
+    );
   }
 
   if (def.id === "boolean" && typeof value === "boolean") {
@@ -176,7 +291,10 @@ function matchesCondition(item: Person, condition: Condition<Schema>): boolean {
   }
 
   if (def.id === "date" && value instanceof Date) {
-    return matchesDateFilter(value, filterValue as { operator: string; value: Date | string });
+    return matchesDateFilter(
+      value,
+      filterValue as { operator: string; value: Date | string },
+    );
   }
 
   return true;
@@ -261,9 +379,11 @@ function Dropdown({
       </button>
       {open && (
         <>
-          <div
-            className="fixed inset-0 z-40"
+          <button
+            type="button"
+            className="fixed inset-0 z-40 cursor-default"
             onClick={() => onOpenChange(false)}
+            onKeyDown={(e) => e.key === "Escape" && onOpenChange(false)}
           />
           <div className="absolute top-full left-0 mt-1 z-50 min-w-[140px] bg-neutral-900 border border-neutral-800 rounded-md shadow-lg py-1">
             {children}
@@ -464,7 +584,7 @@ function BooleanFilterField({
             : "bg-neutral-800 text-neutral-400 hover:bg-neutral-700"
         }`}
       >
-        {value ? (def.trueLabel || "True") : (def.falseLabel || "False")}
+        {value ? def.trueLabel || "True" : def.falseLabel || "False"}
       </button>
 
       <div className="flex-1" />
@@ -499,11 +619,12 @@ function DateFilterField({
   const [operatorOpen, setOperatorOpen] = useState(false);
   const def = definition as ReturnType<typeof dateFilter>;
 
-  const dateString = value.value instanceof Date
-    ? value.value.toISOString().split("T")[0]
-    : typeof value.value === "string"
-      ? value.value.split("T")[0]
-      : "";
+  const dateString =
+    value.value instanceof Date
+      ? value.value.toISOString().split("T")[0]
+      : typeof value.value === "string"
+        ? value.value.split("T")[0]
+        : "";
 
   return (
     <div className="flex items-center gap-2 p-2 bg-neutral-900 border border-neutral-800 rounded-md">
@@ -537,7 +658,9 @@ function DateFilterField({
       <input
         type="date"
         value={dateString}
-        onChange={(e) => onValueChange({ operator: value.operator, value: e.target.value })}
+        onChange={(e) =>
+          onValueChange({ operator: value.operator, value: e.target.value })
+        }
         className="px-2 py-1 text-sm bg-neutral-800 border border-neutral-700 rounded focus:outline-none focus:ring-1 focus:ring-neutral-600"
       />
 
@@ -548,47 +671,6 @@ function DateFilterField({
       >
         <X size={14} />
       </button>
-    </div>
-  );
-}
-
-// ============================================================================
-// Sortable Item Wrapper
-// ============================================================================
-
-function SortableItem({
-  id,
-  children,
-}: {
-  id: string;
-  children: ReactNode;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} className="flex items-center gap-2">
-      <button
-        type="button"
-        className="p-1 text-neutral-600 hover:text-neutral-400 cursor-grab active:cursor-grabbing touch-none"
-        {...attributes}
-        {...listeners}
-      >
-        <GripVertical size={14} />
-      </button>
-      <div className="flex-1">{children}</div>
     </div>
   );
 }
@@ -614,7 +696,9 @@ function FilterCondition({
       <StringFilterField
         condition={condition}
         definition={definition}
-        onValueChange={onValueChange as (v: { operator: string; value: string }) => void}
+        onValueChange={
+          onValueChange as (v: { operator: string; value: string }) => void
+        }
         onRemove={onRemove}
       />
     );
@@ -625,7 +709,9 @@ function FilterCondition({
       <NumberFilterField
         condition={condition}
         definition={definition}
-        onValueChange={onValueChange as (v: { operator: string; value: number }) => void}
+        onValueChange={
+          onValueChange as (v: { operator: string; value: number }) => void
+        }
         onRemove={onRemove}
       />
     );
@@ -647,204 +733,15 @@ function FilterCondition({
       <DateFilterField
         condition={condition}
         definition={definition}
-        onValueChange={onValueChange as (v: { operator: string; value: string }) => void}
+        onValueChange={
+          onValueChange as (v: { operator: string; value: string }) => void
+        }
         onRemove={onRemove}
       />
     );
   }
 
   return null;
-}
-
-// ============================================================================
-// Filter Group Renderer
-// ============================================================================
-
-function FilterGroup({
-  group,
-  filter,
-  isRoot = false,
-}: {
-  group: Group<Schema>;
-  filter: ReturnType<typeof useFilterHook<Schema>>;
-  isRoot?: boolean;
-}) {
-  const [addOpen, setAddOpen] = useState(false);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const availableFields = [
-    { field: "name" as const, label: "Name" },
-    { field: "email" as const, label: "Email" },
-    { field: "age" as const, label: "Age" },
-    { field: "score" as const, label: "Score" },
-    { field: "active" as const, label: "Active" },
-    { field: "joinedAt" as const, label: "Joined" },
-  ];
-
-  const getDefaultValue = (field: keyof Schema): FilterValue<Schema[typeof field]> => {
-    const def = schema[field];
-    if (def.id === "string") return { operator: "contains", value: "" } as StringValue;
-    if (def.id === "number") return { operator: "eq", value: 0 } as NumberValue;
-    if (def.id === "boolean") return true;
-    if (def.id === "date") return { operator: "gte", value: new Date().toISOString().split("T")[0] } as DateValue;
-    return { operator: "eq", value: "" } as StringValue;
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      const oldIndex = group.filters.findIndex((f) => f.id === active.id);
-      const newIndex = group.filters.findIndex((f) => f.id === over.id);
-
-      if (oldIndex !== -1 && newIndex !== -1) {
-        filter.moveFilter({
-          id: active.id as string,
-          targetGroupId: group.id,
-          index: newIndex,
-        });
-      }
-    }
-  };
-
-  const filterIds = group.filters.map((f) => f.id);
-
-  return (
-    <div
-      className={`space-y-2 ${!isRoot ? "ml-4 pl-4 border-l border-neutral-800" : ""}`}
-    >
-      {/* Group operator toggle */}
-      {group.filters.length > 1 && (
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-neutral-500">Match</span>
-          <button
-            type="button"
-            onClick={() =>
-              filter.setOperator({
-                id: group.id,
-                operator: group.operator === "and" ? "or" : "and",
-              })
-            }
-            className={`px-2 py-0.5 rounded transition-colors ${
-              group.operator === "and"
-                ? "bg-neutral-100 text-neutral-900"
-                : "bg-neutral-800 text-neutral-400"
-            }`}
-          >
-            ALL
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              filter.setOperator({
-                id: group.id,
-                operator: group.operator === "and" ? "or" : "and",
-              })
-            }
-            className={`px-2 py-0.5 rounded transition-colors ${
-              group.operator === "or"
-                ? "bg-neutral-100 text-neutral-900"
-                : "bg-neutral-800 text-neutral-400"
-            }`}
-          >
-            ANY
-          </button>
-          <span className="text-neutral-500">of the following</span>
-        </div>
-      )}
-
-      {/* Render filters with drag and drop */}
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={filterIds} strategy={verticalListSortingStrategy}>
-          {group.filters.map((item: FilterExpression<Schema>) => {
-            if (isCondition(item)) {
-              return (
-                <SortableItem key={item.id} id={item.id}>
-                  <FilterCondition
-                    condition={item}
-                    onRemove={() => filter.removeFilter({ id: item.id })}
-                    onValueChange={(value) =>
-                      filter.updateCondition({
-                        id: item.id,
-                        value: value as FilterValue<Schema[typeof item.field]>,
-                      })
-                    }
-                  />
-                </SortableItem>
-              );
-            }
-            if (isGroup(item)) {
-              return (
-                <SortableItem key={item.id} id={item.id}>
-                  <FilterGroup group={item} filter={filter} />
-                </SortableItem>
-              );
-            }
-            return null;
-          })}
-        </SortableContext>
-      </DndContext>
-
-      {/* Add filter button */}
-      <div className="flex items-center gap-2">
-        <Dropdown
-          open={addOpen}
-          onOpenChange={setAddOpen}
-          trigger={
-            <span className="flex items-center gap-1 px-3 py-1.5 text-sm text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 rounded transition-colors">
-              <Plus size={14} />
-              Add filter
-            </span>
-          }
-        >
-          {availableFields.map(({ field, label }) => (
-            <DropdownItem
-              key={field}
-              onClick={() => {
-                filter.addCondition({
-                  field,
-                  value: getDefaultValue(field),
-                  groupId: group.id,
-                });
-                setAddOpen(false);
-              }}
-            >
-              {label}
-            </DropdownItem>
-          ))}
-          <div className="border-t border-neutral-800 my-1" />
-          <DropdownItem
-            onClick={() => {
-              filter.addGroup({ operator: "and", groupId: group.id });
-              setAddOpen(false);
-            }}
-          >
-            Add group
-          </DropdownItem>
-        </Dropdown>
-
-        {!isRoot && (
-          <button
-            type="button"
-            onClick={() => filter.removeFilter({ id: group.id })}
-            className="p-1 text-neutral-500 hover:text-neutral-300 hover:bg-neutral-800 rounded transition-colors"
-          >
-            <Trash2 size={14} />
-          </button>
-        )}
-      </div>
-    </div>
-  );
 }
 
 // ============================================================================
@@ -863,18 +760,33 @@ function DataTable({ data, total }: { data: Person[]; total: number }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-neutral-900/30 border-b border-neutral-800">
-              <th className="px-4 py-2 text-left text-xs font-medium text-neutral-400">Name</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-neutral-400">Email</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-neutral-400">Age</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-neutral-400">Score</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-neutral-400">Active</th>
-              <th className="px-4 py-2 text-left text-xs font-medium text-neutral-400">Joined</th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-neutral-400">
+                Name
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-neutral-400">
+                Email
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-neutral-400">
+                Age
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-neutral-400">
+                Score
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-neutral-400">
+                Active
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-neutral-400">
+                Joined
+              </th>
             </tr>
           </thead>
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-neutral-500">
+                <td
+                  colSpan={6}
+                  className="px-4 py-8 text-center text-neutral-500"
+                >
                   No results match your filters
                 </td>
               </tr>
@@ -998,7 +910,7 @@ function FilterGroupWithSelection({
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const availableFields = [
@@ -1010,12 +922,19 @@ function FilterGroupWithSelection({
     { field: "joinedAt" as const, label: "Joined" },
   ];
 
-  const getDefaultValue = (field: keyof Schema): FilterValue<Schema[typeof field]> => {
+  const getDefaultValue = (
+    field: keyof Schema,
+  ): FilterValue<Schema[typeof field]> => {
     const def = schema[field];
-    if (def.id === "string") return { operator: "contains", value: "" } as StringValue;
+    if (def.id === "string")
+      return { operator: "contains", value: "" } as StringValue;
     if (def.id === "number") return { operator: "eq", value: 0 } as NumberValue;
     if (def.id === "boolean") return true;
-    if (def.id === "date") return { operator: "gte", value: new Date().toISOString().split("T")[0] } as DateValue;
+    if (def.id === "date")
+      return {
+        operator: "gte",
+        value: new Date().toISOString().split("T")[0],
+      } as DateValue;
     return { operator: "eq", value: "" } as StringValue;
   };
 
@@ -1088,7 +1007,10 @@ function FilterGroupWithSelection({
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <SortableContext items={filterIds} strategy={verticalListSortingStrategy}>
+        <SortableContext
+          items={filterIds}
+          strategy={verticalListSortingStrategy}
+        >
           {group.filters.map((item: FilterExpression<Schema>) => {
             if (isCondition(item)) {
               return (
@@ -1196,7 +1118,11 @@ const presets: { name: string; filter: GroupInput<Schema> }[] = [
       type: "group",
       operator: "and",
       filters: [
-        { type: "condition", field: "score", value: { operator: "gte", value: 80 } },
+        {
+          type: "condition",
+          field: "score",
+          value: { operator: "gte", value: 80 },
+        },
         { type: "condition", field: "active", value: true },
       ],
     },
@@ -1207,7 +1133,11 @@ const presets: { name: string; filter: GroupInput<Schema> }[] = [
       type: "group",
       operator: "and",
       filters: [
-        { type: "condition", field: "joinedAt", value: { operator: "gte", value: "2023-01-01" } },
+        {
+          type: "condition",
+          field: "joinedAt",
+          value: { operator: "gte", value: "2023-01-01" },
+        },
       ],
     },
   },
@@ -1217,8 +1147,16 @@ const presets: { name: string; filter: GroupInput<Schema> }[] = [
       type: "group",
       operator: "or",
       filters: [
-        { type: "condition", field: "age", value: { operator: "lt", value: 30 } },
-        { type: "condition", field: "score", value: { operator: "gte", value: 90 } },
+        {
+          type: "condition",
+          field: "age",
+          value: { operator: "lt", value: 30 },
+        },
+        {
+          type: "condition",
+          field: "score",
+          value: { operator: "gte", value: 90 },
+        },
       ],
     },
   },
@@ -1233,8 +1171,16 @@ const presets: { name: string; filter: GroupInput<Schema> }[] = [
           type: "group",
           operator: "or",
           filters: [
-            { type: "condition", field: "age", value: { operator: "lt", value: 30 } },
-            { type: "condition", field: "score", value: { operator: "gte", value: 85 } },
+            {
+              type: "condition",
+              field: "age",
+              value: { operator: "lt", value: 30 },
+            },
+            {
+              type: "condition",
+              field: "score",
+              value: { operator: "gte", value: 85 },
+            },
           ],
         },
       ],
@@ -1253,7 +1199,7 @@ export default function FilterPlaygroundPage() {
 
   const filteredData = useMemo(
     () => applyFilter(sampleData, currentFilter),
-    [currentFilter]
+    [currentFilter],
   );
 
   const toggleSelection = (id: string) => {
@@ -1287,11 +1233,13 @@ export default function FilterPlaygroundPage() {
   };
 
   const canGroup = selectedIds.size >= 2;
-  const canUngroup = selectedIds.size === 1 && (() => {
-    const id = Array.from(selectedIds)[0];
-    const item = filter.getFilterById(id);
-    return item && isGroup(item) && !item.root;
-  })();
+  const canUngroup =
+    selectedIds.size === 1 &&
+    (() => {
+      const id = Array.from(selectedIds)[0];
+      const item = filter.getFilterById(id);
+      return item && isGroup(item) && !item.root;
+    })();
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 p-8">
@@ -1403,7 +1351,9 @@ export default function FilterPlaygroundPage() {
 
           {/* Right Column: Filter State */}
           <div className="space-y-4">
-            <h2 className="text-sm font-medium text-neutral-300">Filter State</h2>
+            <h2 className="text-sm font-medium text-neutral-300">
+              Filter State
+            </h2>
             <pre className="p-4 bg-neutral-900/50 border border-neutral-800 rounded-lg text-xs font-mono text-neutral-400 overflow-auto max-h-[400px]">
               {JSON.stringify(currentFilter, null, 2)}
             </pre>
@@ -1412,7 +1362,9 @@ export default function FilterPlaygroundPage() {
 
         {/* Data Table */}
         <div className="space-y-4">
-          <h2 className="text-sm font-medium text-neutral-300">Filtered Data</h2>
+          <h2 className="text-sm font-medium text-neutral-300">
+            Filtered Data
+          </h2>
           <DataTable data={filteredData} total={sampleData.length} />
         </div>
       </div>
