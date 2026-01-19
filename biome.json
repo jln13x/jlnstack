@@ -24,6 +24,9 @@
       },
       "complexity": {
         "noBannedTypes": "off"
+      },
+      "style": {
+        "noInferrableTypes": "error"
       }
     },
     "domains": {

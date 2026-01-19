@@ -11,3 +11,4 @@
 - [@jlnstack/routes](./packages/routes/README.md) - Type-safe route builder
 - [@jlnstack/schema](./packages/schema/README.md) - Schema migration utilities
 - [@jlnstack/store](./packages/store/README.md) - Type-safe store
+- [@jlnstack/crypto](./packages/crypto/README.md) - Type-safe cryptography utilities
