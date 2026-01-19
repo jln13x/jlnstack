@@ -49,13 +49,13 @@
         "id": 8,
         "title": "Next.js getLocale",
         "description": "Async function to get locale from headers/cookies",
-        "done": false
+        "done": true
       },
       {
         "id": 9,
         "title": "Next.js getTranslation",
         "description": "Async function for RSC that accepts dicts and returns translate function",
-        "done": false
+        "done": true
       },
       {
         "id": 10,
