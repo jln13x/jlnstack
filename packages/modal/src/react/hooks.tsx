@@ -65,7 +65,10 @@ export function useModal<
         const dynamicDef = {
           _type: "modal" as const,
           _def: {
-            component: (_input: TInput, _opts: ModalComponentOptions<TOutput>) => {
+            component: (
+              _input: TInput,
+              _opts: ModalComponentOptions<TOutput>,
+            ) => {
               return (
                 <Suspense fallback={null}>
                   <ServerContent promise={contentPromise} />
@@ -80,7 +83,10 @@ export function useModal<
       }
 
       // Client modal - use directly
-      return manager.open(modal as Modal<TInput, TOutput, TDefaults>, input as TInput);
+      return manager.open(
+        modal as Modal<TInput, TOutput, TDefaults>,
+        input as TInput,
+      );
     },
     [manager, modal],
   );

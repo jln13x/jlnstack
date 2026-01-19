@@ -39,10 +39,12 @@ export type AnyModal<
   TInput,
   TOutput,
   TInputDefaults extends Partial<TInput> = {},
-> = Modal<TInput, TOutput, TInputDefaults> | ServerModal<TInput, TOutput, TInputDefaults>;
+> =
+  | Modal<TInput, TOutput, TInputDefaults>
+  | ServerModal<TInput, TOutput, TInputDefaults>;
 
 export function isServerModal(
-  value: unknown
+  value: unknown,
 ): value is ServerModal<unknown, unknown> {
   return (
     typeof value === "object" &&

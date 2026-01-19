@@ -68,8 +68,11 @@ function PostsSkeleton() {
   return (
     <div className="space-y-2">
       <div className="w-20 h-4 bg-neutral-700 rounded animate-pulse" />
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="p-2 bg-neutral-800 rounded animate-pulse h-10" />
+      {["one", "two", "three"].map((key) => (
+        <div
+          key={key}
+          className="p-2 bg-neutral-800 rounded animate-pulse h-10"
+        />
       ))}
     </div>
   );
@@ -136,8 +139,11 @@ export async function renderInvoice({ invoiceId }: { invoiceId: string }) {
           </tr>
         </thead>
         <tbody>
-          {invoice.items.map((item, i) => (
-            <tr key={i} className="border-b border-neutral-800">
+          {invoice.items.map((item) => (
+            <tr
+              key={`${item.description}-${item.amount}`}
+              className="border-b border-neutral-800"
+            >
               <td className="py-2 text-neutral-200">{item.description}</td>
               <td className="py-2 text-right text-neutral-200">
                 ${item.amount.toFixed(2)}

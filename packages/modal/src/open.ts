@@ -16,14 +16,14 @@ export function openModal<TInput, TOutput>(
   // Safety check: server modals should be wrapped by useModal hook before reaching here
   if (isServerModal(modal)) {
     throw new Error(
-      "Server modals cannot be opened directly. Use the useModal hook instead."
+      "Server modals cannot be opened directly. Use the useModal hook instead.",
     );
   }
 
   // Safety check: ensure modal has required structure
   if (!modal._def?.component) {
     throw new Error(
-      "Invalid modal: missing _def.component. Make sure the modal was created with modal.create()."
+      "Invalid modal: missing _def.component. Make sure the modal was created with modal.create().",
     );
   }
 

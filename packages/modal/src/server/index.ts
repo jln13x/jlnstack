@@ -19,7 +19,10 @@ export const isServerModalDef = isServerModal;
 /**
  * @deprecated Use `ServerModal` from "@jlnstack/modal" instead
  */
-export type ServerModalDef<TInput, TOutput = void> = ServerModal<TInput, TOutput>;
+export type ServerModalDef<TInput, TOutput = void> = ServerModal<
+  TInput,
+  TOutput
+>;
 
 /**
  * @deprecated Use the type inference from the modal definition directly

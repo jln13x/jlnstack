@@ -436,26 +436,27 @@ function Taskbar() {
       {sortedModals.map((modal) => (
         <div
           key={modal.id}
-          role="button"
-          tabIndex={0}
-          onClick={() => bringToFront(modal.id)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") bringToFront(modal.id);
-          }}
-          className={`group flex items-center gap-2 px-3 py-1.5 text-xs font-mono rounded transition-colors cursor-pointer ${
+          className={`group flex items-center rounded transition-colors ${
             isOnTop(modal.id)
               ? "bg-neutral-700 text-neutral-100"
               : "bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200"
           }`}
         >
-          <span>{modal.id}</span>
           <button
             type="button"
+            onClick={() => bringToFront(modal.id)}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono"
+          >
+            <span>{modal.id}</span>
+          </button>
+          <button
+            type="button"
+            aria-label={`Close ${modal.id}`}
             onClick={(e) => {
               e.stopPropagation();
               close(modal.id);
             }}
-            className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-neutral-600 rounded transition-opacity"
+            className="mr-2 p-0.5 opacity-0 group-hover:opacity-100 hover:bg-neutral-600 rounded transition-opacity"
           >
             <X size={12} />
           </button>

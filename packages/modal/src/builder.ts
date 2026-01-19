@@ -142,11 +142,11 @@ function createModalBuilder<TInput, TOutput, TTemplateProps = never>(
           return content;
         },
       };
-      return { _type: "modal", _def: def, _inputDefaults: inputDefaults } as Modal<
-        unknown,
-        unknown,
-        Record<string, unknown>
-      >;
+      return {
+        _type: "modal",
+        _def: def,
+        _inputDefaults: inputDefaults,
+      } as Modal<unknown, unknown, Record<string, unknown>>;
     },
     server(
       render: (input: unknown) => Promise<unknown>,

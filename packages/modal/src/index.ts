@@ -30,8 +30,8 @@ export {
   type ModalStoreOptions,
 } from "./store";
 export {
-  isServerModal,
   type AnyModal,
+  isServerModal,
   type Modal,
   type ModalComponentOptions,
   type ModalDef,
