@@ -1,0 +1,155 @@
+---
+title: React Hook Form
+description: Type-safe react-hook-form integration with Standard Schema
+---
+
+# React Hook Form
+
+Type-safe react-hook-form integration using Standard Schema.
+
+## Installation
+
+```bash
+npm install @jlnstack/form react-hook-form @hookform/resolvers
+```
+
+## Usage
+
+### Create a Form
+
+```tsx
+import { createForm } from "@jlnstack/form/react-hook-form";
+import { z } from "zod";
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+});
+
+const { useForm, useFormContext } = createForm(schema);
+```
+
+### useForm
+
+Returns a typed react-hook-form instance with the resolver pre-configured.
+
+```tsx
+function MyForm() {
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      email: "",
+    },
+  });
+
+  return (
+    <form onSubmit={form.handleSubmit((data) => {
+      // data is typed as { name: string; email: string }
+      console.log(data);
+    })}>
+      <input {...form.register("name")} />
+      {form.formState.errors.name && (
+        <span>{form.formState.errors.name.message}</span>
+      )}
+
+      <input {...form.register("email")} />
+      {form.formState.errors.email && (
+        <span>{form.formState.errors.email.message}</span>
+      )}
+
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+```
+
+### useFormContext
+
+Access form state from nested components. Use with react-hook-form's `FormProvider`.
+
+```tsx
+import { FormProvider } from "react-hook-form";
+
+function MyForm() {
+  const form = useForm();
+
+  return (
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(console.log)}>
+        <NameField />
+        <EmailField />
+        <button type="submit">Submit</button>
+      </form>
+    </FormProvider>
+  );
+}
+
+function NameField() {
+  const { register, formState } = useFormContext();
+
+  return (
+    <div>
+      <input {...register("name")} />
+      {formState.errors.name && <span>{formState.errors.name.message}</span>}
+    </div>
+  );
+}
+```
+
+## Other Schema Libraries
+
+Works with any Standard Schema compliant library:
+
+### Valibot
+
+```tsx
+import { createForm } from "@jlnstack/form/react-hook-form";
+import * as v from "valibot";
+
+const schema = v.object({
+  username: v.pipe(v.string(), v.minLength(3)),
+  password: v.pipe(v.string(), v.minLength(8)),
+});
+
+const { useForm } = createForm(schema);
+```
+
+### ArkType
+
+```tsx
+import { createForm } from "@jlnstack/form/react-hook-form";
+import { type } from "arktype";
+
+const schema = type({
+  username: "string>2",
+  password: "string>7",
+});
+
+const { useForm } = createForm(schema);
+```
+
+## Transform Types
+
+When your schema transforms input to a different output type, the types are correctly inferred:
+
+```tsx
+const schema = z.object({
+  age: z.string().transform((val) => parseInt(val, 10)),
+});
+
+const { useForm } = createForm(schema);
+
+function AgeForm() {
+  const form = useForm();
+
+  return (
+    <form onSubmit={form.handleSubmit((data) => {
+      // data.age is number (transformed)
+      console.log(data.age + 1);
+    })}>
+      {/* Input accepts string */}
+      <input {...form.register("age")} />
+    </form>
+  );
+}
+```
