@@ -1,0 +1,81 @@
+---
+title: Conversion
+description: Convert Standard Schema to Zod
+---
+
+# Conversion
+
+Convert any Standard Schema compatible schema into a Zod schema. This enables chaining Zod methods on schemas from Valibot, ArkType, or our versioned schema.
+
+Requires `zod` as a peer dependency.
+
+## toZod
+
+Convert any Standard Schema to a Zod schema.
+
+```ts
+import { toZod } from "@jlnstack/schema/zod"
+import * as v from "valibot"
+
+// Valibot schema
+const valibotUser = v.object({
+  name: v.string(),
+  age: v.number(),
+})
+
+// Convert to Zod and chain methods
+const adultUser = toZod(valibotUser)
+  .refine((u) => u.age >= 18, "Must be 18+")
+  .transform((u) => u.name.toUpperCase())
+
+await adultUser.parseAsync({ name: "John", age: 30 })
+// "JOHN"
+```
+
+## createVersionedZodSchema
+
+Create a versioned schema that returns a Zod schema directly. This combines versioning with Zod's chainable API.
+
+```ts
+import { createVersionedZodSchema } from "@jlnstack/schema/zod"
+import { z } from "zod"
+
+const userSchema = createVersionedZodSchema({
+  schema: z.object({ name: z.string(), age: z.number() }),
+  migrations: [
+    {
+      schema: z.object({ name: z.string() }),
+      up: (v1) => ({ name: v1.name, age: 0 }),
+    },
+  ],
+  allowUnversioned: true,
+})
+
+// Chain Zod methods directly
+const adultUser = userSchema
+  .refine((v) => v.data.age >= 18, "Must be 18+")
+  .transform((v) => v.data)
+
+await adultUser.parseAsync({ name: "John" })
+// { name: "John", age: 0 }
+```
+
+## API
+
+### `toZod(schema)`
+
+```ts
+function toZod<T>(
+  schema: StandardSchemaV1<unknown, T>
+): z.ZodType<T, z.ZodTypeDef, unknown>
+```
+
+### `createVersionedZodSchema(config)`
+
+```ts
+function createVersionedZodSchema<TSchema extends z.ZodType>(
+  config: VersionedZodSchemaConfig<TSchema>
+): z.ZodType<VersionedData<z.infer<TSchema>>, z.ZodTypeDef, unknown>
+```
+
+Config options are the same as `createVersionedSchema` but with Zod-specific types.
