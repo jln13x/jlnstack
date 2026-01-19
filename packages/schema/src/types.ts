@@ -1,6 +1,28 @@
 import type { StandardSchemaV1 } from "@standard-schema/spec";
 
 /**
+ * A value that may or may not be a Promise.
+ * Used internally to support both sync and async operations.
+ * @internal
+ */
+export type MaybePromise<T> = T | Promise<T>;
+
+/**
+ * Chain operations that may be sync or async.
+ * If the input is a Promise, returns a Promise. Otherwise returns sync.
+ * @internal
+ */
+export function andThen<T, U>(
+  value: MaybePromise<T>,
+  fn: (v: T) => MaybePromise<U>,
+): MaybePromise<U> {
+  if (value instanceof Promise) {
+    return value.then(fn);
+  }
+  return fn(value);
+}
+
+/**
  * Extract the output type from a StandardSchemaV1.
  * @internal
  */
