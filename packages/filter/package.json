@@ -9,7 +9,8 @@
     "url": "https://github.com/jln13x/jlnstack"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "files": [
     "dist",
