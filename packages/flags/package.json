@@ -1,0 +1,106 @@
+{
+  "name": "@jlnstack/flags",
+  "description": "Type-safe feature flags",
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": "jln13x",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jln13x/jlnstack"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run"
+  },
+  "peerDependencies": {
+    "@upstash/redis": ">=1",
+    "ioredis": ">=5",
+    "next": ">=14",
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "@upstash/redis": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.16",
+    "next": "^16.0.10",
+    "tsdown": "^0.15.4",
+    "typescript": "catalog:",
+    "vitest": "^2.1.8"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./upstash": {
+      "import": {
+        "types": "./dist/adapters/upstash.d.mts",
+        "default": "./dist/adapters/upstash.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/upstash.d.cts",
+        "default": "./dist/adapters/upstash.cjs"
+      }
+    },
+    "./redis": {
+      "import": {
+        "types": "./dist/adapters/redis.d.mts",
+        "default": "./dist/adapters/redis.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/redis.d.cts",
+        "default": "./dist/adapters/redis.cjs"
+      }
+    },
+    "./react": {
+      "import": {
+        "types": "./dist/react/index.d.mts",
+        "default": "./dist/react/index.mjs"
+      },
+      "require": {
+        "types": "./dist/react/index.d.cts",
+        "default": "./dist/react/index.cjs"
+      }
+    },
+    "./next": {
+      "import": {
+        "types": "./dist/next/index.d.mts",
+        "default": "./dist/next/index.mjs"
+      },
+      "require": {
+        "types": "./dist/next/index.d.cts",
+        "default": "./dist/next/index.cjs"
+      }
+    }
+  }
+}
