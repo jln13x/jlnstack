@@ -1,0 +1,90 @@
+{
+  "name": "@jlnstack/flags",
+  "description": "Type-safe feature flag management",
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": "jln13x",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jln13x/jlnstack"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui"
+  },
+  "peerDependencies": {
+    "ioredis": ">=5",
+    "@upstash/redis": ">=1"
+  },
+  "peerDependenciesMeta": {
+    "ioredis": {
+      "optional": true
+    },
+    "@upstash/redis": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@upstash/redis": "^1.34.0",
+    "@vitest/ui": "^2.1.8",
+    "ioredis": "^5.4.1",
+    "tsdown": "^0.15.4",
+    "typescript": "catalog:",
+    "vitest": "^2.1.8"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./redis": {
+      "import": {
+        "types": "./dist/adapters/redis.d.mts",
+        "default": "./dist/adapters/redis.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/redis.d.cts",
+        "default": "./dist/adapters/redis.cjs"
+      }
+    },
+    "./upstash": {
+      "import": {
+        "types": "./dist/adapters/upstash.d.mts",
+        "default": "./dist/adapters/upstash.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/upstash.d.cts",
+        "default": "./dist/adapters/upstash.cjs"
+      }
+    },
+    "./memory": {
+      "import": {
+        "types": "./dist/adapters/memory.d.mts",
+        "default": "./dist/adapters/memory.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/memory.d.cts",
+        "default": "./dist/adapters/memory.cjs"
+      }
+    }
+  }
+}
