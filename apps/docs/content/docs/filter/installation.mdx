@@ -1,0 +1,40 @@
+---
+title: Installation
+description: Install @jlnstack/filter in your project
+---
+
+# Installation
+
+```npm
+npm install @jlnstack/filter
+```
+
+## Entry Points
+
+```ts
+// Core filter definitions and expression helpers (no React dependency)
+import { 
+  defineFilters, 
+  createFilter, 
+  and, 
+  or, 
+  condition 
+} from "@jlnstack/filter"
+
+// React hooks and components
+import {
+  useFilterHook,
+  FilterProvider,
+  createFilterHooks,
+  useFilterContext,
+  useFilter,
+  useFilterById,
+  useFilterDefinitions,
+} from "@jlnstack/filter/react"
+
+// Drizzle ORM integration
+import { toWhere } from "@jlnstack/filter/drizzle"
+
+// Devtools for visualization
+import { generateMermaid, getMermaidLiveUrl } from "@jlnstack/filter/devtools"
+```

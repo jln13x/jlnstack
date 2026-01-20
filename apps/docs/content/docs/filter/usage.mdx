@@ -1,0 +1,255 @@
+---
+title: Basic Usage
+description: Learn how to use useFilterHook and reactive hooks
+---
+
+# Basic Usage
+
+The `useFilterHook` hook is the primary way to create a filter store in React. It returns a **stable reference** by default — meaning the returned object won't change between renders. Reactivity is opt-in through hooks on the store.
+
+## Defining Filters
+
+First, define your filter schema using `defineFilters`:
+
+```ts
+import { defineFilters, stringFilter, booleanFilter, numberFilter } from "@jlnstack/filter"
+
+export const userFilters = defineFilters({
+  name: stringFilter({ label: "Name", operators: ["eq", "contains"] }),
+  verified: booleanFilter({ label: "Verified" }),
+  age: numberFilter({ label: "Age", min: 0, max: 120 }),
+})
+```
+
+## Using useFilterHook
+
+The `useFilterHook` hook creates a filter store from your schema:
+
+```tsx
+import { useFilterHook } from "@jlnstack/filter/react"
+import { and, condition } from "@jlnstack/filter"
+import { userFilters } from "./filters"
+
+function UsersPage() {
+  const filter = useFilterHook(userFilters, {
+    defaultFilter: and(
+      condition("verified", true)
+    ),
+    onFilterChange: (filter) => {
+      console.log("Filter changed:", filter)
+    },
+  })
+
+  return (
+    <div>
+      <button onClick={() => filter.addCondition({ field: "verified", value: false })}>
+        Add Unverified Filter
+      </button>
+      <button onClick={filter.reset}>Reset</button>
+    </div>
+  )
+}
+```
+
+### Options
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `defaultFilter` | `GroupInput<Schema>` | Initial filter expression |
+| `onFilterChange` | `(filter: Group) => void` | Callback when filters change |
+
+### Returned API
+
+| Property | Description |
+|----------|-------------|
+| `getFilter()` | Get the current filter tree |
+| `getFilterById(id)` | Get a specific filter/group by ID |
+| `addCondition({ field, value, groupId? })` | Add a filter condition |
+| `addGroup({ operator, groupId? })` | Add a nested group |
+| `updateCondition({ id, value })` | Update a condition's value |
+| `setOperator({ id, operator })` | Change a group's operator |
+| `removeFilter({ id })` | Remove a condition or group |
+| `setFilter(expression)` | Replace the entire filter |
+| `reset()` | Reset to default filter |
+| `Filter` | Render prop component |
+| `useFilter()` | Hook to subscribe to filter changes |
+| `useFilterById(id)` | Hook to subscribe to a specific filter |
+| `useFilterDefinitions()` | Hook to get filter definitions |
+| `schema` | The filter schema |
+| `rootId` | The root group's ID |
+
+## The Filter Component
+
+The `Filter` component renders an existing condition from the filter tree. Create conditions with `defaultFilter` or `addCondition`, then pass the condition into `Filter`.
+
+```tsx
+import { and, condition, isCondition } from "@jlnstack/filter"
+import { useFilterHook } from "@jlnstack/filter/react"
+
+function FilterPanel() {
+  const filter = useFilterHook(userFilters, {
+    defaultFilter: and(
+      condition("name", { operator: "contains", value: "" }),
+      condition("verified", true)
+    ),
+  })
+  const tree = filter.useFilter()
+
+  return (
+    <div>
+      {tree.filters.map((expr) => {
+        if (!isCondition(expr)) return null
+
+        if (expr.field === "name") {
+          return (
+            <filter.Filter
+              key={expr.id}
+              condition={expr}
+              render={({ value, onValueChange, definition }) => (
+                <div>
+                  <label>{definition.label}</label>
+                  <input
+                    value={value?.value ?? ""}
+                    onChange={(e) =>
+                      onValueChange({ operator: "contains", value: e.target.value })
+                    }
+                  />
+                </div>
+              )}
+            />
+          )
+        }
+
+        if (expr.field === "verified") {
+          return (
+            <filter.Filter
+              key={expr.id}
+              condition={expr}
+              render={({ value, onValueChange, onRemove }) => (
+                <select
+                  value={value ? "true" : "false"}
+                  onChange={(e) =>
+                    e.target.value === "" ? onRemove() : onValueChange(e.target.value === "true")
+                  }
+                >
+                  <option value="">All</option>
+                  <option value="true">Verified</option>
+                  <option value="false">Unverified</option>
+                </select>
+              )}
+            />
+          )
+        }
+
+        return null
+      })}
+    </div>
+  )
+}
+```
+
+### Render Function Props
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `id` | `string` | Condition ID |
+| `field` | `keyof Schema` | The filter field |
+| `value` | `Value` | Current filter value |
+| `onValueChange` | `(value) => void` | Update the filter value |
+| `onRemove` | `() => void` | Remove the condition |
+| `definition` | `FilterDef` | Full filter definition with options |
+
+## Reactive Hooks
+
+### useFilter (reactive)
+
+Subscribe to filter tree changes:
+
+```tsx
+function FilterSummary() {
+  const filter = useFilterHook(userFilters)
+  const currentFilter = filter.useFilter()
+
+  return (
+    <div>
+      {currentFilter.filters.length} root filters active
+    </div>
+  )
+}
+```
+
+### useFilterById
+
+Subscribe to a specific filter by ID:
+
+```tsx
+function ConditionEditor({ conditionId }) {
+  const filter = useFilterHook(userFilters)
+  const condition = filter.useFilterById(conditionId)
+
+  if (!condition) return null
+
+  return <div>Editing: {JSON.stringify(condition)}</div>
+}
+```
+
+### useFilterDefinitions
+
+Get an array of all filter definitions:
+
+```tsx
+function AddFilterMenu() {
+  const filter = useFilterHook(userFilters)
+  const definitions = filter.useFilterDefinitions()
+  const defaultValues = {
+    name: { operator: "contains", value: "" },
+    verified: true,
+    age: { operator: "gte", value: 18 },
+  } as const
+
+  return (
+    <select
+      onChange={(e) => {
+        const field = e.target.value as keyof typeof defaultValues
+        if (field) {
+          filter.addCondition({ field, value: defaultValues[field] })
+        }
+      }}
+    >
+      <option value="">Add filter...</option>
+      {definitions.map((def) => (
+        <option key={def.name} value={def.name}>
+          {def.label ?? def.name}
+        </option>
+      ))}
+    </select>
+  )
+}
+```
+
+## Why Stable by Default?
+
+The `useFilterHook` hook returns a stable object reference. This design choice:
+
+1. **Prevents unnecessary re-renders** — Components using only imperative methods won't re-render.
+2. **Optimizes performance** — Only components using reactive hooks re-render on changes.
+3. **Gives you control** — Choose where you need reactivity.
+
+```tsx
+// ❌ This component won't re-render when filters change
+function ExportButton() {
+  const filter = useFilterHook(userFilters)
+  return (
+    <button onClick={() => exportData(filter.getFilter())}>
+      Export
+    </button>
+  )
+}
+
+// ✅ This component re-renders when filters change
+function ActiveFilterCount() {
+  const filter = useFilterHook(userFilters)
+  const currentFilter = filter.useFilter()
+  return <span>{currentFilter.filters.length} active filters</span>
+}
+```

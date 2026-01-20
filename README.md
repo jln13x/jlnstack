@@ -5,6 +5,7 @@
 ## Packages
 
 - [@jlnstack/cookies](./packages/cookies/README.md) - Type-safe cookie management
+- [@jlnstack/filter](./packages/filter/README.md) - Type-safe filter state management
 - [@jlnstack/form](./packages/form/README.md) - Type-safe form utilities for React
 - [@jlnstack/modal](./packages/modal/README.md) - Type-safe modal management
 - [@jlnstack/procedure](./packages/procedure/README.md) - Type-safe procedure builder

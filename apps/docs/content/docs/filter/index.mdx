@@ -1,0 +1,68 @@
+---
+title: Introduction
+description: Type-safe filter state management
+---
+
+# Filter
+
+Filter is a type-safe filter state management library. Define your filter schema once and get full type inference across your application.
+
+## Why Filter?
+
+- **Type-safe** — Full TypeScript inference for filter values and definitions.
+- **Expression-based** — Build complex filter trees with `and()`, `or()`, and nested groups.
+- **Built-in filters** — Ready-to-use filters for strings, numbers, dates, and booleans.
+- **Extensible** — Create custom filters with your own value types and options.
+- **Framework agnostic** — Core logic works anywhere. Import from `@jlnstack/filter` for the core, `@jlnstack/filter/react` for React bindings.
+
+## Quick Example
+
+```tsx
+import { defineFilters, stringFilter, booleanFilter, isCondition } from "@jlnstack/filter"
+import { useFilterHook } from "@jlnstack/filter/react"
+
+const schema = defineFilters({
+  name: stringFilter({ label: "Name" }),
+  active: booleanFilter({ label: "Active" }),
+})
+
+function MyComponent() {
+  const filter = useFilterHook(schema)
+  const tree = filter.useFilter()
+
+  return (
+    <div>
+      <button
+        onClick={() =>
+          filter.addCondition({
+            field: "name",
+            value: { operator: "contains", value: "john" },
+          })
+        }
+      >
+        Add Name Filter
+      </button>
+
+      {tree.filters.map((expr) =>
+        isCondition(expr) ? (
+          <filter.Filter
+            key={expr.id}
+            condition={expr}
+            render={({ value, onValueChange }) => (
+              <input
+                value={value?.value ?? ""}
+                onChange={(e) =>
+                  onValueChange({
+                    operator: "contains",
+                    value: e.target.value,
+                  })
+                }
+              />
+            )}
+          />
+        ) : null
+      )}
+    </div>
+  )
+}
+```

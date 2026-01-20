@@ -1,0 +1,185 @@
+---
+title: nuqs Integration
+description: Sync filter state with URL search params using nuqs
+---
+
+# nuqs Integration
+
+[nuqs](https://nuqs.47ng.com) is a type-safe search params state manager for Next.js. Integrating with `@jlnstack/filter` allows you to persist filter state in the URL.
+
+## Setup
+
+First, install nuqs:
+
+```bash
+pnpm add nuqs
+```
+
+## Define Search Params
+
+Create a search params parser for your filters:
+
+```ts title="search-params.ts"
+import type { GroupInput } from "@jlnstack/filter"
+import { createLoader, parseAsJson } from "nuqs/server"
+import { z } from "zod"
+import type { userFilters } from "./filters"
+
+export type UserFilterInput = GroupInput<typeof userFilters>
+
+export const searchParams = {
+  filters: parseAsJson(z.any().optional()),
+}
+
+export const loadSearchParams = createLoader(searchParams)
+```
+
+## Server Component
+
+Load initial filters from the URL:
+
+```tsx title="page.tsx"
+import type { SearchParams } from "nuqs/server"
+import { loadSearchParams } from "./search-params"
+import { UsersTable } from "./users-table"
+
+type PageProps = {
+  searchParams: Promise<SearchParams>
+}
+
+export default async function UsersPage({ searchParams }: PageProps) {
+  const { filters } = await loadSearchParams(searchParams)
+
+  return <UsersTable initialFilter={filters ?? undefined} />
+}
+```
+
+## Client Component
+
+Sync filter changes to the URL:
+
+```tsx title="users-table.tsx"
+"use client"
+
+import { isGroup, type GroupInput } from "@jlnstack/filter"
+import { createFilterHooks, FilterProvider } from "@jlnstack/filter/react"
+import { useQueryStates } from "nuqs"
+import { userFilters } from "./filters"
+import { searchParams } from "./search-params"
+
+const hooks = createFilterHooks(userFilters)
+
+interface Props {
+  initialFilter?: GroupInput<typeof userFilters>
+}
+
+function toInput(group) {
+  return {
+    type: "group",
+    operator: group.operator,
+    filters: group.filters.map((expr) =>
+      isGroup(expr)
+        ? toInput(expr)
+        : { type: "condition", field: expr.field, value: expr.value }
+    ),
+  }
+}
+
+export function UsersTable({ initialFilter }: Props) {
+  const [, setSearchParams] = useQueryStates(searchParams)
+
+  const filter = hooks.useFilter({
+    defaultFilter: initialFilter,
+    onFilterChange: (filterTree) => {
+      setSearchParams({ filters: toInput(filterTree) })
+    },
+  })
+
+  return (
+    <FilterProvider {...filter}>
+      <FilterToolbar />
+      <DataTable />
+    </FilterProvider>
+  )
+}
+
+function FilterToolbar() {
+  const filter = hooks.useFilterContext()
+  const tree = hooks.useFilterTree()
+  const nameCondition = tree.filters.find(
+    (expr) => !isGroup(expr) && expr.field === "name"
+  )
+
+  return (
+    <div>
+      {nameCondition ? (
+        <filter.Filter
+          condition={nameCondition}
+          render={({ value, onValueChange }) => (
+            <input
+              placeholder="Search by name..."
+              value={value?.value ?? ""}
+              onChange={(e) =>
+                onValueChange({ operator: "contains", value: e.target.value })
+              }
+            />
+          )}
+        />
+      ) : (
+        <button
+          onClick={() =>
+            filter.addCondition({
+              field: "name",
+              value: { operator: "contains", value: "" },
+            })
+          }
+        >
+          Add name filter
+        </button>
+      )}
+      <button onClick={filter.reset}>Clear filters</button>
+    </div>
+  )
+}
+```
+
+## With Drizzle
+
+Combine URL-based filters with server-side querying:
+
+```tsx title="page.tsx"
+import { db } from "@/db"
+import { users } from "@/db/schema"
+import { createFilterStore } from "@jlnstack/filter"
+import { toWhere } from "@jlnstack/filter/drizzle"
+import { like, eq } from "drizzle-orm"
+import type { SearchParams } from "nuqs/server"
+import { loadSearchParams } from "./search-params"
+import { userFilters } from "./filters"
+import { UsersTable } from "./users-table"
+
+export default async function UsersPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const { filters } = await loadSearchParams(searchParams)
+
+  const filterStore = createFilterStore({
+    definitions: userFilters,
+    defaultFilter: filters ?? undefined,
+  })
+
+  const conditions = toWhere(userFilters, filterStore.getFilter(), {
+    name: (v) => like(users.name, `%${v.value}%`),
+    verified: (v) => eq(users.emailVerified, v),
+  })
+
+  const data = await db.select().from(users).where(conditions)
+
+  return <UsersTable users={data} initialFilter={filters ?? undefined} />
+}
+```
+
+## Benefits
+
+- **Shareable URLs** — Users can share filtered views
+- **Browser history** — Back/forward navigation works with filters
+- **SSR support** — Filters are applied on the server
+- **Type safety** — Full TypeScript support with nuqs

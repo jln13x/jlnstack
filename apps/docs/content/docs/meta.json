@@ -3,6 +3,7 @@
     "procedure",
     "routes",
     "cookies",
+    "filter",
     "schema",
     "store",
     "modal",

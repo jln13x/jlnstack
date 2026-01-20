@@ -1,0 +1,98 @@
+{
+  "name": "@jlnstack/filter",
+  "description": "Type-safe filter management",
+  "version": "0.0.0",
+  "license": "MIT",
+  "author": "jln13x",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jln13x/jlnstack"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui"
+  },
+  "peerDependencies": {
+    "drizzle-orm": ">=0.30.0",
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "drizzle-orm": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@standard-schema/spec": "^1.0.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19.0.0",
+    "@vitest/ui": "^2.1.8",
+    "drizzle-orm": "^0.38.3",
+    "jsdom": "^27.4.0",
+    "react": "^19.0.0",
+    "tsdown": "^0.15.4",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./drizzle": {
+      "import": {
+        "types": "./dist/drizzle.d.mts",
+        "default": "./dist/drizzle.mjs"
+      },
+      "require": {
+        "types": "./dist/drizzle.d.cts",
+        "default": "./dist/drizzle.cjs"
+      }
+    },
+    "./react": {
+      "import": {
+        "types": "./dist/react/index.d.mts",
+        "default": "./dist/react/index.mjs"
+      },
+      "require": {
+        "types": "./dist/react/index.d.cts",
+        "default": "./dist/react/index.cjs"
+      }
+    },
+    "./devtools": {
+      "import": {
+        "types": "./dist/devtools.d.mts",
+        "default": "./dist/devtools.mjs"
+      },
+      "require": {
+        "types": "./dist/devtools.d.cts",
+        "default": "./dist/devtools.cjs"
+      }
+    }
+  },
+  "dependencies": {
+    "@jlnstack/store": "workspace:*"
+  }
+}
