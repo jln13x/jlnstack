@@ -5,5 +5,6 @@ export function baseOptions(): BaseLayoutProps {
     nav: {
       title: "jlnstack",
     },
+    githubUrl: "https://github.com/jln13x/jlnstack",
   };
 }
