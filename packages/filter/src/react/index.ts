@@ -1,6 +1,6 @@
 "use client";
 
-export { createFilterStore, FilterStore } from "../filter-client";
+export { createFilterStore, type FilterStore } from "../filter-client";
 export type { FilterDefinitions, FilterStoreOptions } from "../types";
 export { createFilterHooks } from "./create-filter-hooks";
 export type { FilterProviderProps } from "./filter-context";

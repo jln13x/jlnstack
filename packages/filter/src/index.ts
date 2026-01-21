@@ -102,7 +102,7 @@ function defineFilters<const Schema extends FilterSchemaConstraint>(
 }
 
 export { createFilter, defineFilters };
-export { createFilterStore, FilterStore } from "./filter-client";
+export { createFilterStore, type FilterStore } from "./filter-client";
 export type {
   AnyFilterDef,
   FilterBuilder,

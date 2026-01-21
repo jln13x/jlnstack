@@ -3,6 +3,7 @@
     "procedure",
     "routes",
     "cookies",
+    "crypto",
     "filter",
     "schema",
     "store",
