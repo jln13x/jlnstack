@@ -2,36 +2,75 @@
 
 Instructions for AI agents working with this codebase.
 
-## TypeScript
+## Documentation Requirements
 
-### Prefer Type Inference
+Every package must be properly documented in the docs app (`apps/docs`).
 
-Always prefer type inference over manual type annotations when possible. TypeScript's type inference is powerful and reduces redundancy.
+### Required Documentation Steps
+
+1. **Create package documentation folder**: `apps/docs/content/docs/<package-name>/`
+2. **Add to navigation**: Add the package to `apps/docs/content/docs/meta.json` in the `pages` array
+3. **Link from index**: Add a `<Card>` entry in `apps/docs/content/docs/index.mdx` with title, href, and description
+4. **Create package meta.json**: Add `apps/docs/content/docs/<package-name>/meta.json` with:
+   ```json
+   {
+     "title": "Package Name",
+     "description": "Brief description",
+     "root": true,
+     "pages": ["index", "installation", ...]
+   }
+   ```
+
+## Package Guidelines
+
+### Type Declarations
+
+1. **Prefer inference over explicit type declarations** when possible. TypeScript's type inference is powerful and reduces redundancy.
+
+   ```ts
+   // Good - let TypeScript infer
+   const count = 0;
+   const result = someFunction();
+
+   // Bad - unnecessary annotations
+   const count: number = 0;
+   const result: ReturnType<typeof someFunction> = someFunction();
+   ```
+
+2. **Co-locate types with implementation**. Don't create separate type files unless:
+   - Required to avoid circular dependencies
+   - Types need to be shared across multiple unrelated files
+   - The type definitions are extensive and would clutter the implementation
+
+   ```ts
+   // Good - types next to implementation
+   type FilterOptions = { ... };
+   function createFilter(options: FilterOptions) { ... }
+
+   // Avoid - separate types.ts file for no reason
+   // types.ts
+   export type FilterOptions = { ... };
+   // filter.ts
+   import type { FilterOptions } from "./types";
+   ```
+
+3. **Only add explicit type annotations when**:
+   - The type cannot be inferred (function parameters, empty arrays/objects)
+   - You need to widen or narrow the inferred type
+   - It improves readability for complex types
+   - It's required for public API boundaries
+
+### Exports
+
+Only export functions and types that are useful for consumers. Internal utilities should remain unexported.
 
 ```ts
-// Good - let TypeScript infer the type
-const count = 0;
-const items = ["a", "b", "c"];
-const result = someFunction();
+// Good - only export what consumers need
+export { createStore } from "./store";
+export type { StoreOptions } from "./store";
 
-// Bad - unnecessary manual type annotations
-const count: number = 0;
-const items: string[] = ["a", "b", "c"];
-const result: ReturnType<typeof someFunction> = someFunction();
-```
-
-Only add explicit type annotations when:
-
-- The type cannot be inferred (e.g., function parameters, empty arrays/objects)
-- You need to widen or narrow the inferred type
-- It improves readability for complex types
-- It's required for public API boundaries
-
-```ts
-// Explicit types are needed here
-function process(input: string): void { ... }
-const emptyItems: string[] = [];
-const config: Config = {}; // when {} doesn't match the shape
+// Bad - exporting internal helpers
+export { createStore, internalHelper, debugUtil } from "./store";
 ```
 
 ### Use `const` Type Parameter Modifier
@@ -46,14 +85,30 @@ function createRoutes<const R extends string>(): Routes<R>
 function createRoutes<R extends string>(): Routes<R>
 ```
 
-### Prefer `infer` Over Manual Type Extraction
+## Testing Requirements
 
-Use conditional types with `infer` to extract types rather than manual indexing when it improves readability:
+Every package must have comprehensive tests.
+
+### Runtime Tests
+
+- Test core functionality and edge cases
+- Use Vitest as the test runner
+- Place tests in `test/` directory or co-locate with `*.test.ts` suffix
+
+### Type Tests
+
+Use type tests (`.test-d.ts` files) when:
+- The package has complex type inference that should be verified
+- Public API types need to be stable and tested
+- Generic types need to produce correct output types
 
 ```ts
-// Good
-type ExtractParams<T> = T extends { params: infer P } ? P : never;
+// example.test-d.ts
+import { expectTypeOf } from "vitest";
+import { createStore } from "./store";
 
-// Acceptable but more verbose
-type ExtractParams<T> = T extends { params: unknown } ? T["params"] : never;
+test("store state type is inferred correctly", () => {
+  const store = createStore({ count: 0 });
+  expectTypeOf(store.getState()).toEqualTypeOf<{ count: number }>();
+});
 ```
