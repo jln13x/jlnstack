@@ -2,6 +2,7 @@ import type {
   Modal,
   ModalComponentOptions,
   ModalDef,
+  ServerModal,
   TemplateWrapper,
 } from "./types";
 
@@ -63,6 +64,35 @@ type ModalBuilder<TInput, TOutput, TTemplateProps = never> = {
           defaultValues?: { modal?: TDefaults };
         },
       ) => Modal<TInput, TOutput, TDefaults>;
+  /**
+   * Create a server modal with an async render function.
+   *
+   * IMPORTANT: This must be called in a file with "use server" directive
+   * for the render function to become a server action.
+   *
+   * @example
+   * ```tsx
+   * // modals.server.ts
+   * "use server"
+   * import { modal } from "@jlnstack/modal";
+   *
+   * export const userModal = modal
+   *   .input<{ userId: string }>()
+   *   .server(async ({ userId }) => {
+   *     const user = await db.users.get(userId);
+   *     return <UserProfile user={user} />;
+   *   });
+   * ```
+   */
+  server: [TInput] extends [never]
+    ? <I, TDefaults extends Partial<I> = {}>(
+        render: (input: I) => Promise<unknown>,
+        options?: { defaultValues?: TDefaults },
+      ) => ServerModal<I, TOutput, TDefaults>
+    : <TDefaults extends Partial<TInput> = {}>(
+        render: (input: TInput) => Promise<unknown>,
+        options?: { defaultValues?: TDefaults },
+      ) => ServerModal<TInput, TOutput, TDefaults>;
 };
 
 function createModalBuilder<TInput, TOutput, TTemplateProps = never>(
@@ -112,11 +142,22 @@ function createModalBuilder<TInput, TOutput, TTemplateProps = never>(
           return content;
         },
       };
-      return { _def: def, _inputDefaults: inputDefaults } as Modal<
-        unknown,
-        unknown,
-        Record<string, unknown>
-      >;
+      return {
+        _type: "modal",
+        _def: def,
+        _inputDefaults: inputDefaults,
+      } as Modal<unknown, unknown, Record<string, unknown>>;
+    },
+    server(
+      render: (input: unknown) => Promise<unknown>,
+      options?: { defaultValues?: Record<string, unknown> },
+    ) {
+      const inputDefaults = options?.defaultValues ?? {};
+      return {
+        _type: "serverModal",
+        _action: render,
+        _inputDefaults: inputDefaults,
+      } as ServerModal<unknown, unknown, Record<string, unknown>>;
     },
   } as ModalBuilder<TInput, TOutput, TTemplateProps>;
 }

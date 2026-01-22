@@ -2,7 +2,14 @@
 
 export type { ModalManager } from "../manager";
 // Re-export types from core
-export type { Modal, ModalComponentOptions, ModalInstance } from "../types";
+export type {
+  AnyModal,
+  Modal,
+  ModalComponentOptions,
+  ModalInstance,
+  ServerModal,
+} from "../types";
+export { isServerModal } from "../types";
 export { ActiveModalProvider, useActiveModal } from "./active-modal-context";
 export { ModalProvider, useModalManager } from "./context";
 // Hooks

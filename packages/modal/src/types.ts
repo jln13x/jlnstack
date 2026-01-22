@@ -18,9 +18,41 @@ export type Modal<
   TOutput,
   TInputDefaults extends Partial<TInput> = {},
 > = {
+  _type: "modal";
   _def: ModalDef<TInput, TOutput>;
   _inputDefaults: TInputDefaults;
 };
+
+export type ServerModal<
+  TInput,
+  TOutput,
+  TInputDefaults extends Partial<TInput> = {},
+> = {
+  _type: "serverModal";
+  _action: (input: TInput) => Promise<unknown>;
+  _inputDefaults: TInputDefaults;
+  _inputType?: TInput;
+  _outputType?: TOutput;
+};
+
+export type AnyModal<
+  TInput,
+  TOutput,
+  TInputDefaults extends Partial<TInput> = {},
+> =
+  | Modal<TInput, TOutput, TInputDefaults>
+  | ServerModal<TInput, TOutput, TInputDefaults>;
+
+export function isServerModal(
+  value: unknown,
+): value is ServerModal<unknown, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "_type" in value &&
+    (value as any)._type === "serverModal"
+  );
+}
 
 export type TemplateContext<TOutput = unknown, TTemplateProps = unknown> = {
   modal: unknown;

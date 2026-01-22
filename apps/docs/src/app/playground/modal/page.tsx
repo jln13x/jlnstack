@@ -10,9 +10,24 @@ import {
   modal,
 } from "@jlnstack/modal";
 import { ModalProvider, useModal, useModals } from "@jlnstack/modal/react";
-import { FileText, HelpCircle, MessageSquare, Settings, X } from "lucide-react";
+import {
+  FileText,
+  HelpCircle,
+  LayoutDashboard,
+  MessageSquare,
+  Receipt,
+  Settings,
+  User,
+  X,
+} from "lucide-react";
 import { Dialog } from "radix-ui";
 import { type ReactNode, useCallback, useRef, useState } from "react";
+// Server modal definitions using the unified builder
+import {
+  dashboardModal,
+  invoiceModal,
+  userProfileModal,
+} from "./modals.server";
 
 // ============================================================================
 // Sample Modals
@@ -423,28 +438,33 @@ function Taskbar() {
   return (
     <div className="fixed bottom-0 inset-x-0 h-10 bg-neutral-900 border-t border-neutral-800 flex items-center px-2 gap-1">
       {sortedModals.map((modal) => (
-        <button
+        <div
           key={modal.id}
-          type="button"
-          onClick={() => bringToFront(modal.id)}
-          className={`group flex items-center gap-2 px-3 py-1.5 text-xs font-mono rounded transition-colors ${
+          className={`group flex items-center rounded transition-colors ${
             isOnTop(modal.id)
               ? "bg-neutral-700 text-neutral-100"
               : "bg-neutral-800 text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200"
           }`}
         >
-          <span>{modal.id}</span>
           <button
             type="button"
+            onClick={() => bringToFront(modal.id)}
+            className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono"
+          >
+            <span>{modal.id}</span>
+          </button>
+          <button
+            type="button"
+            aria-label={`Close ${modal.id}`}
             onClick={(e) => {
               e.stopPropagation();
               close(modal.id);
             }}
-            className="p-0.5 opacity-0 group-hover:opacity-100 hover:bg-neutral-600 rounded transition-opacity"
+            className="mr-2 p-0.5 opacity-0 group-hover:opacity-100 hover:bg-neutral-600 rounded transition-opacity"
           >
             <X size={12} />
           </button>
-        </button>
+        </div>
       ))}
     </div>
   );
@@ -459,6 +479,11 @@ function Desktop() {
   const confirm = useModal(confirmModal);
   const form = useModal(formModal);
   const settings = useModal(settingsModal);
+
+  // Server modals - same useModal hook works for both!
+  const userProfile = useModal(userProfileModal);
+  const invoice = useModal(invoiceModal);
+  const dashboard = useModal(dashboardModal);
 
   const [lastResult, setLastResult] = useState<string | null>(null);
 
@@ -490,33 +515,84 @@ function Desktop() {
     setLastResult("Settings closed");
   };
 
+  // Server modal handlers
+  const handleUserProfile = async () => {
+    await userProfile.open({ userId: "user-123" });
+    setLastResult("User Profile closed");
+  };
+
+  const handleInvoice = async () => {
+    await invoice.open({ invoiceId: "abc123" });
+    setLastResult("Invoice closed");
+  };
+
+  const handleDashboard = async () => {
+    await dashboard.open({ userId: "user-123" });
+    setLastResult("Dashboard closed");
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-lg font-medium text-neutral-100 mb-6">
         Modal Playground
       </h1>
-      <div className="grid grid-cols-4 gap-4 max-w-md">
-        <DesktopIcon
-          icon={<MessageSquare size={24} />}
-          label="Alert"
-          onClick={handleAlert}
-        />
-        <DesktopIcon
-          icon={<HelpCircle size={24} />}
-          label="Confirm"
-          onClick={handleConfirm}
-        />
-        <DesktopIcon
-          icon={<FileText size={24} />}
-          label="Form"
-          onClick={handleForm}
-        />
-        <DesktopIcon
-          icon={<Settings size={24} />}
-          label="Settings"
-          onClick={handleSettings}
-        />
+
+      {/* Client Modals */}
+      <div className="mb-6">
+        <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">
+          Client Modals
+        </h2>
+        <div className="grid grid-cols-4 gap-4 max-w-md">
+          <DesktopIcon
+            icon={<MessageSquare size={24} />}
+            label="Alert"
+            onClick={handleAlert}
+          />
+          <DesktopIcon
+            icon={<HelpCircle size={24} />}
+            label="Confirm"
+            onClick={handleConfirm}
+          />
+          <DesktopIcon
+            icon={<FileText size={24} />}
+            label="Form"
+            onClick={handleForm}
+          />
+          <DesktopIcon
+            icon={<Settings size={24} />}
+            label="Settings"
+            onClick={handleSettings}
+          />
+        </div>
       </div>
+
+      {/* Server Modals */}
+      <div className="mb-6">
+        <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">
+          Server Modals (RSC)
+        </h2>
+        <div className="grid grid-cols-4 gap-4 max-w-md">
+          <DesktopIcon
+            icon={<User size={24} />}
+            label="User Profile"
+            onClick={handleUserProfile}
+            accent
+          />
+          <DesktopIcon
+            icon={<Receipt size={24} />}
+            label="Invoice"
+            onClick={handleInvoice}
+            accent
+          />
+          <DesktopIcon
+            icon={<LayoutDashboard size={24} />}
+            label="Dashboard"
+            onClick={handleDashboard}
+            accent
+          />
+        </div>
+      </div>
+
       {lastResult && (
         <p className="mt-6 text-xs text-neutral-500 font-mono">
           Last result: {lastResult}
@@ -530,21 +606,39 @@ function DesktopIcon({
   icon,
   label,
   onClick,
+  accent,
 }: {
   icon: ReactNode;
   label: string;
   onClick: () => void;
+  accent?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col items-center gap-2 p-4 rounded-lg hover:bg-neutral-800/50 transition-colors group"
+      className={`flex flex-col items-center gap-2 p-4 rounded-lg transition-colors group ${
+        accent
+          ? "hover:bg-blue-900/30 border border-transparent hover:border-blue-700/50"
+          : "hover:bg-neutral-800/50"
+      }`}
     >
-      <div className="text-neutral-400 group-hover:text-neutral-200 transition-colors">
+      <div
+        className={`transition-colors ${
+          accent
+            ? "text-blue-400 group-hover:text-blue-300"
+            : "text-neutral-400 group-hover:text-neutral-200"
+        }`}
+      >
         {icon}
       </div>
-      <span className="text-xs text-neutral-400 group-hover:text-neutral-200 transition-colors">
+      <span
+        className={`text-xs transition-colors ${
+          accent
+            ? "text-blue-400 group-hover:text-blue-300"
+            : "text-neutral-400 group-hover:text-neutral-200"
+        }`}
+      >
         {label}
       </span>
     </button>
