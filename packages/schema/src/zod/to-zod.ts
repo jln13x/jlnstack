@@ -28,7 +28,6 @@ export function toZod<T>(
   return z.unknown().transform((input, ctx) => {
     const result = schema["~standard"].validate(input);
 
-    // Handle validation result (sync or async)
     const handleResult = (
       res: { value: T } | { issues: Array<{ message: string }> },
     ): T => {
@@ -45,12 +44,10 @@ export function toZod<T>(
       return z.NEVER;
     };
 
-    // If result is a Promise, return a Promise (requires parseAsync)
     if (result instanceof Promise) {
       return result.then(handleResult);
     }
 
-    // Sync result (works with parse)
     return handleResult(result);
   }) as z.ZodType<T, z.ZodTypeDef, unknown>;
 }

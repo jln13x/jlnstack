@@ -37,13 +37,7 @@ export interface CreateCookieOptions<T> {
   serializer?: Serializer<T>;
 }
 
-export type InferCookieValue<TSchema> = TSchema extends StandardSchemaV1<
-  infer T
->
-  ? T
-  : never;
-
-export type CookieValues<T extends Record<string, Cookie<unknown>>> = {
+type CookieValues<T extends Record<string, Cookie<unknown>>> = {
   [K in keyof T]: Parameters<T[K]["set"]>[0];
 };
 
@@ -52,11 +46,11 @@ export interface CookieGroupOptions {
   defaults?: CookieOptions;
 }
 
-export interface _CookieGroup<T extends Record<string, Cookie<unknown>>> {
+interface CookieGroupMethods<T extends Record<string, Cookie<unknown>>> {
   get(): Promise<{ [K in keyof T]: Awaited<ReturnType<T[K]["get"]>> }>;
   set(values: Partial<CookieValues<T>>, options?: CookieOptions): Promise<void>;
   deleteAll(): Promise<void>;
 }
 
 export type CookieGroup<T extends Record<string, Cookie<unknown>>> =
-  _CookieGroup<T> & T;
+  CookieGroupMethods<T> & T;

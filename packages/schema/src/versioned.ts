@@ -117,15 +117,13 @@ export function createVersionedSchema<
 
   const { schema, migrations = [], allowUnversioned } = config;
 
-  // Current version is derived from migrations array length + 1
   const currentVersion = migrations.length + 1;
 
-  // Build a map of version number -> migration for quick lookup
   const migrationMap = new Map<number, VersionMigration>();
   for (let i = 0; i < migrations.length; i++) {
     const migration = migrations[i];
     if (migration) {
-      migrationMap.set(i + 1, migration); // Version is index + 1
+      migrationMap.set(i + 1, migration);
     }
   }
 
@@ -164,12 +162,10 @@ export function createVersionedSchema<
         let inputVersion: number;
         let inputData: unknown;
 
-        // Check if input is already versioned
         if (isVersionedData(value)) {
           inputVersion = value.version;
           inputData = value.data;
         } else if (allowUnversioned) {
-          // Treat as unversioned data (version 1)
           inputVersion = 1;
           inputData = value;
         } else {
@@ -183,7 +179,6 @@ export function createVersionedSchema<
           };
         }
 
-        // Validate version is within range
         if (inputVersion < 1 || inputVersion > currentVersion) {
           return {
             issues: [
@@ -194,7 +189,6 @@ export function createVersionedSchema<
           };
         }
 
-        // If already at current version, validate directly
         if (inputVersion === currentVersion) {
           return andThen(
             schema["~standard"].validate(inputData),
@@ -214,7 +208,6 @@ export function createVersionedSchema<
           );
         }
 
-        // Get the starting migration
         const startMigration = migrationMap.get(inputVersion);
         if (!startMigration) {
           return {
@@ -224,7 +217,6 @@ export function createVersionedSchema<
           };
         }
 
-        // Validate against the starting version's schema
         return andThen(
           startMigration.schema["~standard"].validate(inputData),
           (initialResult): MaybePromise<Result> => {
@@ -239,7 +231,6 @@ export function createVersionedSchema<
             const validatedData =
               "value" in initialResult ? initialResult.value : inputData;
 
-            // Run the migration chain
             return andThen(
               runMigrations(
                 validatedData,
@@ -248,12 +239,10 @@ export function createVersionedSchema<
                 migrationMap,
               ),
               (migratedData): MaybePromise<Result> => {
-                // Check if migration returned an error
                 if (isErrorResult(migratedData)) {
                   return migratedData;
                 }
 
-                // Validate final result against current schema
                 return andThen(
                   schema["~standard"].validate(migratedData),
                   (finalResult) => wrapFinalResult(finalResult, migratedData),

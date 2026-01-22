@@ -63,7 +63,6 @@ export function createVersionedZodSchema<TSchema extends z.ZodType>(
 ): z.ZodType<VersionedData<z.infer<TSchema>>, z.ZodTypeDef, unknown> {
   const { schema, migrations = [], allowUnversioned } = config;
 
-  // Convert Zod migrations to VersionMigration format
   const standardMigrations: VersionMigration<unknown>[] = migrations.map(
     (m) => ({
       schema: m.schema,
@@ -71,13 +70,11 @@ export function createVersionedZodSchema<TSchema extends z.ZodType>(
     }),
   );
 
-  // Create the Standard Schema versioned schema
   const versionedSchema = createVersionedSchema({
     schema,
     migrations: standardMigrations,
     allowUnversioned,
   });
 
-  // Convert to Zod and return
   return toZod(versionedSchema);
 }

@@ -18,7 +18,6 @@ function error(message: string): never {
   throw new Error(message);
 }
 
-// Helper functions for tree operations (work with immer drafts)
 function findById<Schema extends FilterSchemaConstraint>(
   root: Group<Schema>,
   id: string,
@@ -133,7 +132,6 @@ function createFilterStore<Schema extends FilterSchemaConstraint>(
     ? hydrateGroup(options.defaultFilter, true)
     : createEmptyRoot();
 
-  // Define actions factory with explicit state type for proper inference
   const createActions = (api: {
     getState: () => { root: Group<Schema> };
     setState: (
