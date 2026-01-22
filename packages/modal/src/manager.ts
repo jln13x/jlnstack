@@ -15,6 +15,7 @@ export type ModalManager = {
   ) => Promise<TOutput | undefined>;
 
   getAll: () => ModalInstance[];
+  getInstance: (id: string) => ModalInstance | undefined;
   getTopModal: () => ModalInstance | undefined;
   has: (id: string) => boolean;
   isOnTop: (id: string) => boolean;
@@ -72,6 +73,8 @@ export function createModalManager(
         return instance;
       });
     },
+
+    getInstance: (id: string) => instances.get(id),
 
     getTopModal: () => {
       const top = store.actions.getTopModal();
