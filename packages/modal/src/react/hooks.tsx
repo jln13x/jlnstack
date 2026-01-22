@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
 import type { Modal, ModalInstance, WithDefaults } from "../types";
 import { useModalManager } from "./context";
 
@@ -26,24 +26,9 @@ export function useModal<
 export function useModals() {
   const manager = useModalManager();
 
-  const cache = useRef<ModalInstance[]>(EMPTY_MODALS);
-
-  const subscribe = useCallback(
-    (cb: () => void) => {
-      cache.current = manager.getAll();
-      return manager.subscribe(() => {
-        cache.current = manager.getAll();
-        cb();
-      });
-    },
-    [manager],
-  );
-
-  const getSnapshot = useCallback(() => cache.current, []);
-
   const modals = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
+    (cb) => manager.subscribe(cb),
+    () => manager.getAll(),
     () => EMPTY_MODALS,
   );
 
