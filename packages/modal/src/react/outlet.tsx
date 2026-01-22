@@ -4,13 +4,15 @@ import { type ReactNode, useCallback, useSyncExternalStore } from "react";
 import type { ModalInstance, Position, Size } from "../types";
 import { useModalManager } from "./context";
 
+const EMPTY_MODALS: ModalInstance[] = [];
+
 export function ModalOutlet() {
   const manager = useModalManager();
 
   const modals = useSyncExternalStore(
     (cb) => manager.subscribe(cb),
     () => manager.getAll(),
-    () => [],
+    () => EMPTY_MODALS,
   );
 
   return (
