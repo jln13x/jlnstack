@@ -7,43 +7,44 @@ description: Convert filter values to Drizzle ORM where conditions
 
 The `@jlnstack/filter/drizzle` entry point provides utilities for converting filter values to Drizzle ORM SQL conditions.
 
-## toWhere
+## createWhereBuilder
 
-Convert filter values to a Drizzle `where` clause:
+Create a reusable where clause builder by mapping your filter schema to database columns:
 
 ```ts
-import { toWhere } from "@jlnstack/filter/drizzle"
-import { eq, like, and, sql } from "drizzle-orm"
+import { createWhereBuilder } from "@jlnstack/filter/drizzle"
+import { stringFilter, numberFilter, booleanFilter } from "@jlnstack/filter"
 import { users } from "./schema"
 
-const conditions = toWhere(userFilters, filterValues, {
-  name: (value) => like(users.name, `%${value.value}%`),
-  verified: (value) => eq(users.emailVerified, value),
-  age: (value) => {
-    switch (value.operator) {
-      case "eq": return eq(users.age, value.value)
-      case "gt": return sql`${users.age} > ${value.value}`
-      case "lt": return sql`${users.age} < ${value.value}`
-      default: return undefined
-    }
-  },
+const schema = {
+  name: stringFilter(),
+  age: numberFilter(),
+  verified: booleanFilter(),
+}
+
+// Map filter fields to database columns
+const toWhere = createWhereBuilder(schema, {
+  name: users.name,
+  age: users.age,
+  verified: users.emailVerified,
 })
 
+// Convert filters to SQL - built-in filters work automatically!
+const where = toWhere(filter)
+
 // Use in query
-const results = await db
-  .select()
-  .from(users)
-  .where(conditions)
+const results = await db.select().from(users).where(where)
 ```
+
+Built-in filters (`stringFilter`, `numberFilter`, `dateFilter`, `booleanFilter`) are automatically converted to the appropriate SQL conditions based on their operators. No manual handlers needed.
 
 ## API
 
 ```ts
-function toWhere<Schema>(
+function createWhereBuilder<Schema>(
   schema: Schema,
-  filters: FilterInput<Schema>,
-  handlers: FilterHandlers<Schema>
-): SQL | undefined
+  columns: ColumnMapping<Schema>
+): ToWhereFn<Schema>
 ```
 
 ### Parameters
@@ -51,68 +52,173 @@ function toWhere<Schema>(
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `schema` | `Schema` | Your filter schema |
-| `filters` | `FilterInput<Schema>` | Current filter values |
-| `handlers` | `FilterHandlers<Schema>` | Object mapping filter keys to SQL generators |
+| `columns` | `ColumnMapping<Schema>` | Mapping of filter field names to Drizzle columns |
 
 ### Return Value
 
-Returns a combined SQL condition using `and()`, or `undefined` if no filters are active.
-
-## Handler Functions
-
-Each handler receives the filter value and should return a SQL condition or `undefined`:
+Returns a function that converts a filter tree to SQL:
 
 ```ts
-type FilterHandlers<Schema> = {
-  [K in keyof Schema]?: (value: FilterValue<Schema[K]>) => SQL | undefined
-}
+// If schema has only built-in filters:
+(filter: Group<Schema>, options?: { handlers?: CustomHandlers }) => SQL | undefined
+
+// If schema has custom filters:
+(filter: Group<Schema>, options: { handlers: CustomHandlers }) => SQL | undefined
 ```
 
-Return `undefined` to skip a filter:
+## Built-in Filter Conversions
+
+The following conversions are applied automatically:
+
+### String Filter
+
+| Operator | SQL |
+|----------|-----|
+| `eq` | `column = value` |
+| `neq` | `column <> value` |
+| `contains` | `column LIKE '%value%'` |
+| `startsWith` | `column LIKE 'value%'` |
+| `endsWith` | `column LIKE '%value'` |
+
+### Number Filter
+
+| Operator | SQL |
+|----------|-----|
+| `eq` | `column = value` |
+| `neq` | `column <> value` |
+| `gt` | `column > value` |
+| `gte` | `column >= value` |
+| `lt` | `column < value` |
+| `lte` | `column <= value` |
+
+### Date Filter
+
+| Operator | SQL |
+|----------|-----|
+| `eq` | `column = value` |
+| `neq` | `column <> value` |
+| `gt` | `column > value` |
+| `gte` | `column >= value` |
+| `lt` | `column < value` |
+| `lte` | `column <= value` |
+
+### Boolean Filter
+
+Boolean values are converted directly to equality checks: `column = value`
+
+## Custom Filters
+
+For custom filter types, you must provide handlers:
 
 ```ts
-const handlers = {
-  name: (value) => {
-    if (!value.value.trim()) return undefined // Skip empty strings
-    return like(users.name, `%${value.value}%`)
-  },
+import { createFilter } from "@jlnstack/filter"
+import { createWhereBuilder } from "@jlnstack/filter/drizzle"
+import { and, gte, lte } from "drizzle-orm"
+
+const dateRangeFilter = createFilter("dateRange")
+  .input<{ from: string; to: string }>()
+  .options()()
+
+const schema = {
+  name: stringFilter(),
+  dateRange: dateRangeFilter,
 }
+
+const toWhere = createWhereBuilder(schema, {
+  name: users.name,
+})
+
+// Custom filters require handlers - TypeScript enforces this
+const where = toWhere(filter, {
+  handlers: {
+    dateRange: (v) => and(
+      gte(users.createdAt, v.from),
+      lte(users.createdAt, v.to)
+    ),
+  },
+})
+```
+
+TypeScript will require the `handlers` option when your schema includes custom filters.
+
+## Overriding Built-in Behavior
+
+You can override the default handling for built-in filters:
+
+```ts
+const toWhere = createWhereBuilder(schema, {
+  name: users.name,
+  age: users.age,
+})
+
+// Override the name filter with custom logic
+const where = toWhere(filter, {
+  handlers: {
+    name: (v) => {
+      // Custom case-insensitive search
+      return ilike(users.name, `%${v.value}%`)
+    },
+  },
+})
 ```
 
 ## Complete Example
 
 ```ts
 // filters.ts
-import { defineFilters, stringFilter, booleanFilter, dateFilter } from "@jlnstack/filter"
+import { defineFilters, stringFilter, booleanFilter, dateFilter, createFilter } from "@jlnstack/filter"
+
+const dateRangeFilter = createFilter("dateRange")
+  .input<{ from: string; to: string }>()
+  .options()()
 
 export const userFilters = defineFilters({
   name: stringFilter({ label: "Name" }),
   verified: booleanFilter({ label: "Verified" }),
-  createdAfter: dateFilter({ label: "Created After", operators: ["gte"] }),
+  createdAt: dateFilter({ label: "Created" }),
+  dateRange: dateRangeFilter,
 })
 ```
 
 ```ts
+// db.ts
+import { createWhereBuilder } from "@jlnstack/filter/drizzle"
+import { and, gte, lte } from "drizzle-orm"
+import { users } from "./schema"
+import { userFilters } from "./filters"
+
+export const toWhere = createWhereBuilder(userFilters, {
+  name: users.name,
+  verified: users.emailVerified,
+  createdAt: users.createdAt,
+})
+
+export function getUsersWhere(filter: Group<typeof userFilters>) {
+  return toWhere(filter, {
+    handlers: {
+      dateRange: (v) => and(
+        gte(users.createdAt, v.from),
+        lte(users.createdAt, v.to)
+      ),
+    },
+  })
+}
+```
+
+```tsx
 // page.tsx (Server Component)
 import { db } from "@/db"
 import { users } from "@/db/schema"
-import { toWhere } from "@jlnstack/filter/drizzle"
-import { eq, like, gte } from "drizzle-orm"
-import { userFilters } from "./filters"
+import { getUsersWhere } from "@/db"
 
 export default async function UsersPage({ searchParams }) {
-  const filters = parseFiltersFromSearchParams(searchParams)
-
-  const conditions = toWhere(userFilters, filters, {
-    name: (v) => like(users.name, `%${v.value}%`),
-    verified: (v) => eq(users.emailVerified, v),
-    createdAfter: (v) => gte(users.createdAt, new Date(v.value)),
-  })
+  const filter = parseFiltersFromSearchParams(searchParams)
+  const where = getUsersWhere(filter)
 
   const data = await db
     .select()
     .from(users)
-    .where(conditions)
+    .where(where)
 
   return <UsersTable data={data} />
 }
@@ -120,39 +226,12 @@ export default async function UsersPage({ searchParams }) {
 
 ## Tips
 
-### Handle All Operators
-
-For filters with multiple operators, handle each case:
-
-```ts
-import { eq, ne, gt, gte, lt, lte, like } from "drizzle-orm"
-
-const handlers = {
-  age: (value) => {
-    const ops = { eq, neq: ne, gt, gte, lt, lte }
-    const op = ops[value.operator]
-    return op?.(users.age, value.value)
-  },
-  
-  name: (value) => {
-    switch (value.operator) {
-      case "eq": return eq(users.name, value.value)
-      case "neq": return ne(users.name, value.value)
-      case "contains": return like(users.name, `%${value.value}%`)
-      case "startsWith": return like(users.name, `${value.value}%`)
-      case "endsWith": return like(users.name, `%${value.value}`)
-      default: return undefined
-    }
-  },
-}
-```
-
 ### Combine with Other Conditions
 
 The result can be combined with other conditions:
 
 ```ts
-const filterConditions = toWhere(userFilters, filters, handlers)
+const filterConditions = toWhere(filter)
 
 const results = await db
   .select()
@@ -161,4 +240,13 @@ const results = await db
     eq(users.deletedAt, null), // Always exclude deleted
     filterConditions,
   ))
+```
+
+### Handle Empty Results
+
+`toWhere` returns `undefined` if no filters are active, which Drizzle handles correctly (no WHERE clause):
+
+```ts
+const where = toWhere(emptyFilter) // undefined
+await db.select().from(users).where(where) // SELECT * FROM users
 ```
