@@ -1,7 +1,7 @@
 // Builder
 export { modal } from "./builder";
 // Lazy loading
-export { lazy, type LazyModalOptions } from "./lazy";
+export { type LazyModalOptions, lazy } from "./lazy";
 // Manager
 export {
   createModalManager,
