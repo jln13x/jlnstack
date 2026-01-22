@@ -17,10 +17,6 @@ export type {
   PluginResult,
 } from "./plugins/plugin";
 
-export type { Plugin } from "./plugins/types";
-
-export { plugins } from "./plugins/utils";
-
 export type Store<TState, TActions, TResults extends PluginResult[]> = {
   state: TState;
   actions: TActions;

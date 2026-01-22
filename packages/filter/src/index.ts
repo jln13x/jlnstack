@@ -28,8 +28,6 @@ type FilterSchemaConstraint = Record<string, AnyFilterDef>;
 
 type Filters<Schema extends FilterSchemaConstraint> = Schema;
 
-type InferFilterKeys<F extends Filters<any>> = keyof F;
-
 type FilterInput<Schema extends FilterSchemaConstraint> = {
   [K in keyof Schema]?: FilterValue<Schema[K]>;
 };
@@ -112,26 +110,9 @@ export type {
   FilterSchemaConstraint,
   Filters,
   FilterValue,
-  InferFilterKeys,
 };
 
 export * from "./built-in";
-export type { BooleanFilterOptions } from "./built-in/boolean-filter";
-export type {
-  DateFilterOptions,
-  DateOperators,
-  DateValue,
-} from "./built-in/date-filter";
-export type {
-  NumberFilterOptions,
-  NumberOperators,
-  NumberValue,
-} from "./built-in/number-filter";
-export type {
-  StringFilterOptions,
-  StringOperators,
-  StringValue,
-} from "./built-in/string-filter";
 export type {
   Condition,
   ConditionInput,
@@ -150,7 +131,6 @@ export {
   isGroupInput,
 } from "./types";
 
-// Helper functions for building filters
 function condition<
   Schema extends FilterSchemaConstraint,
   K extends keyof Schema,

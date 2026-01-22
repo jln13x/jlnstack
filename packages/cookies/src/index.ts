@@ -5,7 +5,6 @@ import type {
   CookieGroup,
   CookieGroupOptions,
   CookieOptions,
-  CookieValues,
   Serializer,
 } from "./types";
 
@@ -118,7 +117,10 @@ export function createCookieGroup<T extends Record<string, Cookie<unknown>>>(
         [K in keyof T]: Awaited<ReturnType<T[K]["get"]>>;
       };
     },
-    async set(values: Partial<CookieValues<T>>, opts?: CookieOptions) {
+    async set(
+      values: Partial<{ [K in keyof T]: Parameters<T[K]["set"]>[0] }>,
+      opts?: CookieOptions,
+    ) {
       const promises: Promise<void>[] = [];
       for (const [key, value] of Object.entries(values)) {
         const cookie = prefixedCookies[key as keyof T];

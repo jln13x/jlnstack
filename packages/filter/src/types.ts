@@ -8,7 +8,6 @@ type Listener = () => void;
 
 type FilterOperator = "and" | "or";
 
-// Input types (no IDs) - for building filters, defaults, persistence
 type ConditionInput<Schema extends FilterSchemaConstraint> = {
   [K in keyof Schema]: {
     type: "condition";
@@ -27,7 +26,6 @@ type FilterExpressionInput<Schema extends FilterSchemaConstraint> =
   | ConditionInput<Schema>
   | GroupInput<Schema>;
 
-// Runtime types (with IDs) - for UI operations
 type Condition<Schema extends FilterSchemaConstraint> = {
   [K in keyof Schema]: {
     type: "condition";
@@ -49,7 +47,6 @@ type FilterExpression<Schema extends FilterSchemaConstraint> =
   | Condition<Schema>
   | Group<Schema>;
 
-// Type guards
 function isCondition<Schema extends FilterSchemaConstraint>(
   filter: FilterExpression<Schema>,
 ): filter is Condition<Schema> {
@@ -74,7 +71,6 @@ function isGroupInput<Schema extends FilterSchemaConstraint>(
   return filter.type === "group";
 }
 
-// Store options
 type FilterStoreOptions<Schema extends FilterSchemaConstraint> = {
   definitions: FilterDefinitions<Schema>;
   defaultFilter?: GroupInput<Schema>;

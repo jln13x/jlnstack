@@ -51,12 +51,10 @@ export function openModal<TInput, TOutput>(
     },
   };
 
-  // Register instance BEFORE adding to store (avoids race condition with subscribers)
   onInstanceCreated(id, instance);
 
   store.actions.add(id);
 
-  // Update from store
   const storeModal = store.actions.get(id);
   if (storeModal) {
     instance.order = storeModal.order;
