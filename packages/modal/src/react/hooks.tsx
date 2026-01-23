@@ -47,6 +47,7 @@ export function useModals() {
       setSize: manager.setSize,
       close: manager.close,
       closeAll: manager.closeAll,
+      getInstance: manager.getInstance,
     }),
     [manager],
   );

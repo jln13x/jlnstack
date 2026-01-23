@@ -372,7 +372,7 @@ const MIN_WIDTH = 200;
 const MIN_HEIGHT = 150;
 
 function PlaygroundOutlet() {
-  const { modals, isOnTop, bringToFront, setSize } = useModals();
+  const { modals, isOnTop, bringToFront, setSize, getInstance } = useModals();
 
   const handleResize = (
     id: string,
@@ -387,21 +387,25 @@ function PlaygroundOutlet() {
 
   return (
     <>
-      {modals.map((modal) => (
-        <DraggableModal
-          key={modal.id}
-          instance={modal}
-          isTop={isOnTop(modal.id)}
-          onBringToFront={() => bringToFront(modal.id)}
-          onResize={(delta) =>
-            handleResize(
-              modal.id,
-              modal.size ?? { width: 320, height: 200 },
-              delta,
-            )
-          }
-        />
-      ))}
+      {modals.map((modal) => {
+        const instance = getInstance(modal.id);
+        if (!instance) return null;
+        return (
+          <DraggableModal
+            key={modal.id}
+            instance={instance}
+            isTop={isOnTop(modal.id)}
+            onBringToFront={() => bringToFront(modal.id)}
+            onResize={(delta) =>
+              handleResize(
+                modal.id,
+                modal.size ?? { width: 320, height: 200 },
+                delta,
+              )
+            }
+          />
+        );
+      })}
     </>
   );
 }
