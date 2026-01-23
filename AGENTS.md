@@ -104,6 +104,52 @@ function createRoutes<const R extends string>(): Routes<R>
 function createRoutes<R extends string>(): Routes<R>
 ```
 
+## Code Comments & Documentation
+
+### Minimize Comments
+
+Only comment the **why**, not the **what**. Code should be self-explanatory:
+
+```ts
+// Good
+const timeout = 5000; // Allow time for user to see error before auto-closing
+
+// Bad
+const count = 0; // Set count to 0
+const users = users.filter(u => u.active); // Filter active users
+```
+
+### Avoid Redundant Docstrings
+
+Skip docstrings that just restate the signature. Only document meaningful details:
+
+```ts
+// Good - adds real information
+/** Retries with exponential backoff. @throws {MaxRetriesError} */
+function retry(fn: Function, maxAttempts: number) { ... }
+
+// Bad - redundant
+/** Gets the user. @param id - The user ID. @returns The user. */
+function getUser(id: string) { ... }
+```
+
+### Write Self-Documenting Code
+
+Use clear names and straightforward logic instead of relying on comments:
+
+```ts
+// Good
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Bad - unclear name, needs comment
+function validate(s: string): boolean {
+  // Check if string matches email pattern
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+```
+
 ## Testing Requirements
 
 Every package must have comprehensive tests.
