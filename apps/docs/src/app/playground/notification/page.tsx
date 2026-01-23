@@ -188,12 +188,11 @@ function NotificationItem({
 // Notification Inbox
 // ============================================================================
 
-function NotificationInbox({ userId }: { userId: string }) {
+function NotificationInbox({ userId: _userId }: { userId: string }) {
   const [filter, setFilter] = useState<"all" | "unread" | "archived">("all");
 
   const { manager, data, isPending, refetch } = useNotifications({
     filter: {
-      userId,
       ...(filter === "unread" ? { read: false } : {}),
       ...(filter === "archived" ? { archived: true } : {}),
     },
@@ -219,7 +218,7 @@ function NotificationInbox({ userId }: { userId: string }) {
   };
 
   const handleMarkAllAsRead = async () => {
-    await manager.markAllAsRead(userId);
+    await manager.markAllAsRead();
     refetch();
   };
 
@@ -231,7 +230,6 @@ function NotificationInbox({ userId }: { userId: string }) {
     if (!sample) return;
 
     await manager.send(sample.type, {
-      userId,
       title: sample.title,
       data: sample.data,
     });
@@ -340,8 +338,8 @@ function NotificationInbox({ userId }: { userId: string }) {
 // Send Notification Panel
 // ============================================================================
 
-function SendNotificationPanel({ userId }: { userId: string }) {
-  const { manager, refetch } = useNotifications({ filter: { userId } });
+function SendNotificationPanel({ userId: _userId }: { userId: string }) {
+  const { manager, refetch } = useNotifications();
   const [type, setType] = useState<"message" | "alert" | "system">("message");
   const [title, setTitle] = useState("");
   const [from, setFrom] = useState("");
@@ -353,7 +351,7 @@ function SendNotificationPanel({ userId }: { userId: string }) {
   const handleSend = async () => {
     if (!title) return;
 
-    let data: unknown;
+    let data: Record<string, unknown>;
     if (type === "message") {
       data = { from: from || "unknown", preview: preview || "" };
     } else if (type === "alert") {
@@ -362,7 +360,7 @@ function SendNotificationPanel({ userId }: { userId: string }) {
       data = {};
     }
 
-    await manager.send(type, { userId, title, data });
+    await manager.send(type, { title, data });
 
     setTitle("");
     setFrom("");

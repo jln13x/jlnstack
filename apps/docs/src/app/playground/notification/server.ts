@@ -46,8 +46,12 @@ function getManager(): ManagerType {
   return g[globalKey];
 }
 
+// Demo user ID for the playground
+const DEMO_USER_ID = "user_demo";
+
 const handlers = createNotificationHandlers({
   manager: getManager(),
+  getId: () => DEMO_USER_ID,
   transformer,
 });
 
