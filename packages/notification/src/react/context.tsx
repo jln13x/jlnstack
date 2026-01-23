@@ -1,14 +1,18 @@
 "use client";
 
 import { createContext, type ReactNode, use } from "react";
-import type { NotificationTypesConstraint } from "../manager";
 import type { HttpNotificationManager } from "../client/http-manager";
+import type { NotificationTypesConstraint } from "../manager";
 import type { NotificationClient } from "./client";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const NotificationClientContext = createContext<NotificationClient<any> | null>(null);
+const NotificationClientContext = createContext<NotificationClient<any> | null>(
+  null,
+);
 
-type NotificationClientProviderProps<Types extends NotificationTypesConstraint> = {
+type NotificationClientProviderProps<
+  Types extends NotificationTypesConstraint,
+> = {
   children: ReactNode;
   client: NotificationClient<Types>;
 };
@@ -30,10 +34,9 @@ type NotificationClientProviderProps<Types extends NotificationTypesConstraint> 
  * }
  * ```
  */
-export function NotificationClientProvider<Types extends NotificationTypesConstraint>({
-  children,
-  client,
-}: NotificationClientProviderProps<Types>) {
+export function NotificationClientProvider<
+  Types extends NotificationTypesConstraint,
+>({ children, client }: NotificationClientProviderProps<Types>) {
   return (
     <NotificationClientContext.Provider value={client}>
       {children}

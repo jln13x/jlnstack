@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { createNotificationHandlers } from "../src/server";
 import type { NotificationManager } from "../src";
+import { createNotificationHandlers } from "../src/server";
 
 type TestTypes = {
   message: { from: string };
@@ -8,7 +8,7 @@ type TestTypes = {
 };
 
 function createMockManager(
-  overrides: Partial<NotificationManager<TestTypes>> = {}
+  overrides: Partial<NotificationManager<TestTypes>> = {},
 ): NotificationManager<TestTypes> {
   return {
     send: vi.fn(),
@@ -32,7 +32,7 @@ function createMockManager(
 function createMockRequest(
   method: string,
   url: string,
-  body?: unknown
+  body?: unknown,
 ): { method: string; url: string; json: () => Promise<unknown> } {
   return {
     method,
@@ -41,9 +41,9 @@ function createMockRequest(
   };
 }
 
-function createMockContext(
-  path: string[] = []
-): { params: Promise<{ path?: string[] }> } {
+function createMockContext(path: string[] = []): {
+  params: Promise<{ path?: string[] }>;
+} {
   return {
     params: Promise.resolve({ path }),
   };
@@ -62,7 +62,7 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.GET(
         createMockRequest("GET", "/api/notifications"),
-        createMockContext()
+        createMockContext(),
       );
 
       expect(response.status).toBe(401);
@@ -80,11 +80,11 @@ describe("createNotificationHandlers", () => {
 
       await handlers.GET(
         createMockRequest("GET", "/api/notifications"),
-        createMockContext()
+        createMockContext(),
       );
 
       expect(mockList).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: "user_123" })
+        expect.objectContaining({ userId: "user_123" }),
       );
     });
   });
@@ -101,7 +101,7 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.GET(
         createMockRequest("GET", "/api/notifications"),
-        createMockContext()
+        createMockContext(),
       );
 
       expect(response.status).toBe(200);
@@ -120,9 +120,9 @@ describe("createNotificationHandlers", () => {
       await handlers.GET(
         createMockRequest(
           "GET",
-          "/api/notifications?type=message&read=false&limit=10&offset=5"
+          "/api/notifications?type=message&read=false&limit=10&offset=5",
         ),
-        createMockContext()
+        createMockContext(),
       );
 
       expect(mockList).toHaveBeenCalledWith({
@@ -145,7 +145,7 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.GET(
         createMockRequest("GET", "/api/notifications/count"),
-        createMockContext(["count"])
+        createMockContext(["count"]),
       );
 
       expect(response.status).toBe(200);
@@ -163,7 +163,7 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.GET(
         createMockRequest("GET", "/api/notifications/unread-count"),
-        createMockContext(["unread-count"])
+        createMockContext(["unread-count"]),
       );
 
       expect(response.status).toBe(200);
@@ -172,7 +172,11 @@ describe("createNotificationHandlers", () => {
     });
 
     it("should get single notification", async () => {
-      const notification = { id: "notif_1", userId: "user_123", type: "message" };
+      const notification = {
+        id: "notif_1",
+        userId: "user_123",
+        type: "message",
+      };
       const mockGet = vi.fn().mockResolvedValue(notification);
       const manager = createMockManager({ get: mockGet });
       const handlers = createNotificationHandlers({
@@ -182,7 +186,7 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.GET(
         createMockRequest("GET", "/api/notifications/notif_1"),
-        createMockContext(["notif_1"])
+        createMockContext(["notif_1"]),
       );
 
       expect(response.status).toBe(200);
@@ -200,14 +204,18 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.GET(
         createMockRequest("GET", "/api/notifications/notif_1"),
-        createMockContext(["notif_1"])
+        createMockContext(["notif_1"]),
       );
 
       expect(response.status).toBe(404);
     });
 
     it("should return 403 for notification belonging to another user", async () => {
-      const notification = { id: "notif_1", userId: "other_user", type: "message" };
+      const notification = {
+        id: "notif_1",
+        userId: "other_user",
+        type: "message",
+      };
       const mockGet = vi.fn().mockResolvedValue(notification);
       const manager = createMockManager({ get: mockGet });
       const handlers = createNotificationHandlers({
@@ -217,7 +225,7 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.GET(
         createMockRequest("GET", "/api/notifications/notif_1"),
-        createMockContext(["notif_1"])
+        createMockContext(["notif_1"]),
       );
 
       expect(response.status).toBe(403);
@@ -246,7 +254,7 @@ describe("createNotificationHandlers", () => {
           title: "Test",
           data: { from: "john" },
         }),
-        createMockContext(["send"])
+        createMockContext(["send"]),
       );
 
       expect(response.status).toBe(201);
@@ -269,7 +277,7 @@ describe("createNotificationHandlers", () => {
         createMockRequest("POST", "/api/notifications/send", {
           data: { from: "john" },
         }),
-        createMockContext(["send"])
+        createMockContext(["send"]),
       );
 
       expect(response.status).toBe(400);
@@ -277,9 +285,14 @@ describe("createNotificationHandlers", () => {
 
     it("should mark as read", async () => {
       const notification = { id: "notif_1", userId: "user_123", read: true };
-      const mockGet = vi.fn().mockResolvedValue({ id: "notif_1", userId: "user_123" });
+      const mockGet = vi
+        .fn()
+        .mockResolvedValue({ id: "notif_1", userId: "user_123" });
       const mockMarkAsRead = vi.fn().mockResolvedValue(notification);
-      const manager = createMockManager({ get: mockGet, markAsRead: mockMarkAsRead });
+      const manager = createMockManager({
+        get: mockGet,
+        markAsRead: mockMarkAsRead,
+      });
       const handlers = createNotificationHandlers({
         manager,
         getId: () => "user_123",
@@ -287,7 +300,7 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.POST(
         createMockRequest("POST", "/api/notifications/notif_1/read", {}),
-        createMockContext(["notif_1", "read"])
+        createMockContext(["notif_1", "read"]),
       );
 
       expect(response.status).toBe(200);
@@ -304,7 +317,7 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.POST(
         createMockRequest("POST", "/api/notifications/read-all", {}),
-        createMockContext(["read-all"])
+        createMockContext(["read-all"]),
       );
 
       expect(response.status).toBe(200);
@@ -312,8 +325,14 @@ describe("createNotificationHandlers", () => {
     });
 
     it("should archive notification", async () => {
-      const notification = { id: "notif_1", userId: "user_123", archived: true };
-      const mockGet = vi.fn().mockResolvedValue({ id: "notif_1", userId: "user_123" });
+      const notification = {
+        id: "notif_1",
+        userId: "user_123",
+        archived: true,
+      };
+      const mockGet = vi
+        .fn()
+        .mockResolvedValue({ id: "notif_1", userId: "user_123" });
       const mockArchive = vi.fn().mockResolvedValue(notification);
       const manager = createMockManager({ get: mockGet, archive: mockArchive });
       const handlers = createNotificationHandlers({
@@ -323,7 +342,7 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.POST(
         createMockRequest("POST", "/api/notifications/notif_1/archive", {}),
-        createMockContext(["notif_1", "archive"])
+        createMockContext(["notif_1", "archive"]),
       );
 
       expect(response.status).toBe(200);
@@ -333,7 +352,9 @@ describe("createNotificationHandlers", () => {
 
   describe("DELETE routes", () => {
     it("should delete notification", async () => {
-      const mockGet = vi.fn().mockResolvedValue({ id: "notif_1", userId: "user_123" });
+      const mockGet = vi
+        .fn()
+        .mockResolvedValue({ id: "notif_1", userId: "user_123" });
       const mockDelete = vi.fn().mockResolvedValue(true);
       const manager = createMockManager({ get: mockGet, delete: mockDelete });
       const handlers = createNotificationHandlers({
@@ -343,7 +364,7 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.DELETE(
         createMockRequest("DELETE", "/api/notifications/notif_1"),
-        createMockContext(["notif_1"])
+        createMockContext(["notif_1"]),
       );
 
       expect(response.status).toBe(200);
@@ -351,7 +372,9 @@ describe("createNotificationHandlers", () => {
     });
 
     it("should return 403 when deleting another user's notification", async () => {
-      const mockGet = vi.fn().mockResolvedValue({ id: "notif_1", userId: "other_user" });
+      const mockGet = vi
+        .fn()
+        .mockResolvedValue({ id: "notif_1", userId: "other_user" });
       const manager = createMockManager({ get: mockGet });
       const handlers = createNotificationHandlers({
         manager,
@@ -360,7 +383,7 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.DELETE(
         createMockRequest("DELETE", "/api/notifications/notif_1"),
-        createMockContext(["notif_1"])
+        createMockContext(["notif_1"]),
       );
 
       expect(response.status).toBe(403);
@@ -383,7 +406,7 @@ describe("createNotificationHandlers", () => {
 
       const response = await handlers.GET(
         createMockRequest("GET", "/api/notifications"),
-        createMockContext()
+        createMockContext(),
       );
 
       const body = await response.json();

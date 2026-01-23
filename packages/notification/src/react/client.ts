@@ -1,9 +1,9 @@
+import type { HttpNotificationManager } from "../client/http-manager";
 import type {
   Notification,
   NotificationFilter,
   NotificationTypesConstraint,
 } from "../manager";
-import type { HttpNotificationManager } from "../client/http-manager";
 
 /**
  * State for a notification query.
@@ -15,7 +15,10 @@ export type QueryState<Types extends NotificationTypesConstraint> = {
   dataUpdatedAt: number | undefined;
 };
 
-type HttpFilter<Types extends NotificationTypesConstraint> = Omit<NotificationFilter<Types>, "userId">;
+type HttpFilter<Types extends NotificationTypesConstraint> = Omit<
+  NotificationFilter<Types>,
+  "userId"
+>;
 
 type Query<Types extends NotificationTypesConstraint> = {
   key: string;
@@ -119,7 +122,9 @@ export class NotificationClient<Types extends NotificationTypesConstraint> {
    * Notify all listeners of a query that state has changed.
    */
   private notify(query: Query<Types>): void {
-    query.listeners.forEach((listener) => listener());
+    for (const listener of query.listeners) {
+      listener();
+    }
   }
 
   /**

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { createNotificationClient, type QueryState } from "../src/react";
 import type { HttpNotificationManager } from "../src/client";
+import { createNotificationClient } from "../src/react";
 
 type TestTypes = {
   message: { from: string };
@@ -8,7 +8,7 @@ type TestTypes = {
 };
 
 function createMockManager(
-  overrides: Partial<HttpNotificationManager<TestTypes>> = {}
+  overrides: Partial<HttpNotificationManager<TestTypes>> = {},
 ): HttpNotificationManager<TestTypes> {
   return {
     send: vi.fn(),
@@ -62,9 +62,11 @@ describe("NotificationClient", () => {
   });
 
   it("should auto-fetch on first subscription", async () => {
-    const mockList = vi.fn().mockResolvedValue([
-      { id: "1", type: "message", data: { from: "john" } },
-    ]);
+    const mockList = vi
+      .fn()
+      .mockResolvedValue([
+        { id: "1", type: "message", data: { from: "john" } },
+      ]);
     const manager = createMockManager({ list: mockList });
     const client = createNotificationClient(manager);
 
@@ -143,12 +145,12 @@ describe("NotificationClient", () => {
   });
 
   it("should dedupe concurrent fetches", async () => {
-    let resolvePromise: (value: unknown[]) => void;
+    let resolvePromise: ((value: unknown[]) => void) | undefined;
     const mockList = vi.fn().mockImplementation(
       () =>
         new Promise((resolve) => {
           resolvePromise = resolve;
-        })
+        }),
     );
     const manager = createMockManager({ list: mockList });
     const client = createNotificationClient(manager);
@@ -161,7 +163,7 @@ describe("NotificationClient", () => {
     expect(mockList).toHaveBeenCalledTimes(1);
 
     // Resolve
-    resolvePromise!([]);
+    resolvePromise?.([]);
     await Promise.all([fetch1, fetch2]);
   });
 

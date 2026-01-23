@@ -18,7 +18,7 @@ describe("createHttpNotificationManager", () => {
       "/api/notifications",
       expect.objectContaining({
         headers: { "Content-Type": "application/json" },
-      })
+      }),
     );
   });
 
@@ -35,10 +35,7 @@ describe("createHttpNotificationManager", () => {
 
     await manager.list();
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      "/custom/api",
-      expect.any(Object)
-    );
+    expect(mockFetch).toHaveBeenCalledWith("/custom/api", expect.any(Object));
   });
 
   it("should build query string from filter", async () => {
@@ -55,7 +52,7 @@ describe("createHttpNotificationManager", () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       "/api/notifications?type=message&read=false&limit=10&offset=5",
-      expect.any(Object)
+      expect.any(Object),
     );
   });
 
@@ -100,7 +97,7 @@ describe("createHttpNotificationManager", () => {
               title: "Test",
               data: { from: "john" },
             },
-          })
+          }),
         ),
     });
 
@@ -119,8 +116,12 @@ describe("createHttpNotificationManager", () => {
       "/api/notifications/send",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ type: "message", title: "Test", data: { from: "john" } }),
-      })
+        body: JSON.stringify({
+          type: "message",
+          title: "Test",
+          data: { from: "john" },
+        }),
+      }),
     );
   });
 
@@ -130,8 +131,10 @@ describe("createHttpNotificationManager", () => {
       text: () =>
         Promise.resolve(
           JSON.stringify({
-            json: { data: [{ id: "1", createdAt: "2024-01-01T00:00:00.000Z" }] },
-          })
+            json: {
+              data: [{ id: "1", createdAt: "2024-01-01T00:00:00.000Z" }],
+            },
+          }),
         ),
     });
 
@@ -147,6 +150,8 @@ describe("createHttpNotificationManager", () => {
     });
 
     const result = await manager.list();
-    expect(result).toEqual([{ id: "1", createdAt: "2024-01-01T00:00:00.000Z" }]);
+    expect(result).toEqual([
+      { id: "1", createdAt: "2024-01-01T00:00:00.000Z" },
+    ]);
   });
 });

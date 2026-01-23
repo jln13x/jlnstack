@@ -8,7 +8,11 @@ export type {
   SendOptions,
 } from "../manager";
 
-export { NotificationClient, createNotificationClient, type QueryState } from "./client";
+export {
+  createNotificationClient,
+  NotificationClient,
+  type QueryState,
+} from "./client";
 export {
   NotificationClientProvider,
   useNotificationClient,

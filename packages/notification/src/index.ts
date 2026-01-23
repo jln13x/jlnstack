@@ -1,4 +1,7 @@
-export { createMemoryAdapter, type MemoryAdapterOptions } from "./adapters/memory";
+export {
+  createMemoryAdapter,
+  type MemoryAdapterOptions,
+} from "./adapters/memory";
 export {
   createNotificationManager,
   type InferNotificationTypes,
@@ -13,6 +16,6 @@ export {
   type NotificationSchemaDefinition,
   type NotificationTypesConstraint,
   type SendOptions,
-  type Transformer,
   type StandardSchemaV1,
+  type Transformer,
 } from "./manager";

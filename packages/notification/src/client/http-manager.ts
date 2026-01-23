@@ -17,7 +17,7 @@ type HttpNotificationManager<Types extends NotificationTypesConstraint> = {
    */
   send<K extends keyof Types & string>(
     type: K,
-    options: Omit<SendOptions<Types, K>, "userId">
+    options: Omit<SendOptions<Types, K>, "userId">,
   ): Promise<Notification<Types, K>>;
 
   /**
@@ -30,7 +30,9 @@ type HttpNotificationManager<Types extends NotificationTypesConstraint> = {
    * List notifications for the authenticated user.
    * The userId filter is automatically applied server-side.
    */
-  list(filter?: Omit<NotificationFilter<Types>, "userId">): Promise<Notification<Types>[]>;
+  list(
+    filter?: Omit<NotificationFilter<Types>, "userId">,
+  ): Promise<Notification<Types>[]>;
 
   /**
    * Count notifications for the authenticated user.
@@ -75,7 +77,9 @@ type HttpNotificationManager<Types extends NotificationTypesConstraint> = {
   /**
    * Delete multiple notifications matching the filter.
    */
-  deleteMany(filter: Omit<NotificationFilter<Types>, "userId">): Promise<number>;
+  deleteMany(
+    filter: Omit<NotificationFilter<Types>, "userId">,
+  ): Promise<number>;
 };
 
 type HttpNotificationManagerOptions = {
@@ -116,7 +120,7 @@ async function request<T>(
   path: string,
   options: RequestInit = {},
   fetchFn: typeof fetch = fetch,
-  deserialize: <U>(data: unknown) => U = (data) => data as never
+  deserialize: <U>(data: unknown) => U = (data) => data as never,
 ): Promise<T> {
   const url = path.startsWith("http") ? path : `${baseUrl}${path}`;
   const res = await fetchFn(url, {
@@ -148,12 +152,13 @@ async function request<T>(
 }
 
 function buildQueryString(
-  filter: Omit<NotificationFilter<NotificationTypesConstraint>, "userId">
+  filter: Omit<NotificationFilter<NotificationTypesConstraint>, "userId">,
 ): string {
   const params = new URLSearchParams();
   if (filter.type !== undefined) params.set("type", String(filter.type));
   if (filter.read !== undefined) params.set("read", String(filter.read));
-  if (filter.archived !== undefined) params.set("archived", String(filter.archived));
+  if (filter.archived !== undefined)
+    params.set("archived", String(filter.archived));
   if (filter.limit !== undefined) params.set("limit", String(filter.limit));
   if (filter.offset !== undefined) params.set("offset", String(filter.offset));
   const qs = params.toString();
@@ -185,18 +190,19 @@ function buildQueryString(
  * ```
  */
 function createHttpNotificationManager<
-  Types extends NotificationTypesConstraint = NotificationTypesConstraint
+  Types extends NotificationTypesConstraint = NotificationTypesConstraint,
 >(
-  options: HttpNotificationManagerOptions = {}
+  options: HttpNotificationManagerOptions = {},
 ): HttpNotificationManager<Types> {
   const baseUrl = options.baseUrl ?? "/api/notifications";
   const fetchFn = options.fetch ?? fetch;
-  const deserializeFn = options.transformer?.deserialize ?? ((data) => data as never);
+  const deserializeFn =
+    options.transformer?.deserialize ?? ((data) => data as never);
 
   const manager: HttpNotificationManager<Types> = {
     async send<K extends keyof Types & string>(
       type: K,
-      opts: Omit<SendOptions<Types, K>, "userId">
+      opts: Omit<SendOptions<Types, K>, "userId">,
     ): Promise<Notification<Types, K>> {
       return request<Notification<Types, K>>(
         baseUrl,
@@ -206,7 +212,7 @@ function createHttpNotificationManager<
           body: JSON.stringify({ type, ...opts }),
         },
         fetchFn,
-        deserializeFn
+        deserializeFn,
       );
     },
 
@@ -217,7 +223,7 @@ function createHttpNotificationManager<
           `/${id}`,
           {},
           fetchFn,
-          deserializeFn
+          deserializeFn,
         );
       } catch {
         return null;
@@ -225,24 +231,26 @@ function createHttpNotificationManager<
     },
 
     async list(
-      filter: Omit<NotificationFilter<Types>, "userId"> = {}
+      filter: Omit<NotificationFilter<Types>, "userId"> = {},
     ): Promise<Notification<Types>[]> {
       return request<Notification<Types>[]>(
         baseUrl,
         buildQueryString(filter),
         {},
         fetchFn,
-        deserializeFn
+        deserializeFn,
       );
     },
 
-    async count(filter: Omit<NotificationFilter<Types>, "userId"> = {}): Promise<number> {
+    async count(
+      filter: Omit<NotificationFilter<Types>, "userId"> = {},
+    ): Promise<number> {
       const result = await request<{ count: number }>(
         baseUrl,
         `/count${buildQueryString(filter)}`,
         {},
         fetchFn,
-        deserializeFn
+        deserializeFn,
       );
       return result.count;
     },
@@ -253,7 +261,7 @@ function createHttpNotificationManager<
         `/unread-count`,
         {},
         fetchFn,
-        deserializeFn
+        deserializeFn,
       );
       return result.count;
     },
@@ -264,7 +272,7 @@ function createHttpNotificationManager<
         `/${id}/read`,
         { method: "POST" },
         fetchFn,
-        deserializeFn
+        deserializeFn,
       );
     },
 
@@ -280,7 +288,7 @@ function createHttpNotificationManager<
           method: "POST",
         },
         fetchFn,
-        deserializeFn
+        deserializeFn,
       );
     },
 
@@ -290,7 +298,7 @@ function createHttpNotificationManager<
         `/${id}/archive`,
         { method: "POST" },
         fetchFn,
-        deserializeFn
+        deserializeFn,
       );
     },
 
@@ -300,7 +308,7 @@ function createHttpNotificationManager<
         `/${id}/unarchive`,
         { method: "POST" },
         fetchFn,
-        deserializeFn
+        deserializeFn,
       );
     },
 
@@ -311,7 +319,7 @@ function createHttpNotificationManager<
           `/${id}`,
           { method: "DELETE" },
           fetchFn,
-          deserializeFn
+          deserializeFn,
         );
         return true;
       } catch {
@@ -319,7 +327,9 @@ function createHttpNotificationManager<
       }
     },
 
-    async deleteMany(filter: Omit<NotificationFilter<Types>, "userId">): Promise<number> {
+    async deleteMany(
+      filter: Omit<NotificationFilter<Types>, "userId">,
+    ): Promise<number> {
       // List matching notifications and delete each
       const notifications = await manager.list(filter);
       await Promise.all(notifications.map((n) => manager.delete(n.id)));

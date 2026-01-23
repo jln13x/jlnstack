@@ -227,7 +227,8 @@ function NotificationInbox({ userId }: { userId: string }) {
     const sample =
       sampleNotifications[
         Math.floor(Math.random() * sampleNotifications.length)
-      ]!;
+      ];
+    if (!sample) return;
 
     await manager.send(sample.type, {
       userId,
@@ -346,7 +347,7 @@ function SendNotificationPanel({ userId }: { userId: string }) {
   const [from, setFrom] = useState("");
   const [preview, setPreview] = useState("");
   const [severity, setSeverity] = useState<"info" | "warning" | "error">(
-    "info"
+    "info",
   );
 
   const handleSend = async () => {
@@ -377,8 +378,14 @@ function SendNotificationPanel({ userId }: { userId: string }) {
 
       <div className="space-y-3">
         <div>
-          <label className="block text-xs text-neutral-500 mb-1">Type</label>
+          <label
+            htmlFor="notif-type"
+            className="block text-xs text-neutral-500 mb-1"
+          >
+            Type
+          </label>
           <select
+            id="notif-type"
             value={type}
             onChange={(e) =>
               setType(e.target.value as "message" | "alert" | "system")
@@ -392,8 +399,14 @@ function SendNotificationPanel({ userId }: { userId: string }) {
         </div>
 
         <div>
-          <label className="block text-xs text-neutral-500 mb-1">Title</label>
+          <label
+            htmlFor="notif-title"
+            className="block text-xs text-neutral-500 mb-1"
+          >
+            Title
+          </label>
           <input
+            id="notif-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -405,10 +418,14 @@ function SendNotificationPanel({ userId }: { userId: string }) {
         {type === "message" && (
           <>
             <div>
-              <label className="block text-xs text-neutral-500 mb-1">
+              <label
+                htmlFor="notif-from"
+                className="block text-xs text-neutral-500 mb-1"
+              >
                 From
               </label>
               <input
+                id="notif-from"
                 type="text"
                 value={from}
                 onChange={(e) => setFrom(e.target.value)}
@@ -417,10 +434,14 @@ function SendNotificationPanel({ userId }: { userId: string }) {
               />
             </div>
             <div>
-              <label className="block text-xs text-neutral-500 mb-1">
+              <label
+                htmlFor="notif-preview"
+                className="block text-xs text-neutral-500 mb-1"
+              >
                 Preview
               </label>
               <input
+                id="notif-preview"
                 type="text"
                 value={preview}
                 onChange={(e) => setPreview(e.target.value)}
@@ -433,10 +454,14 @@ function SendNotificationPanel({ userId }: { userId: string }) {
 
         {type === "alert" && (
           <div>
-            <label className="block text-xs text-neutral-500 mb-1">
+            <label
+              htmlFor="notif-severity"
+              className="block text-xs text-neutral-500 mb-1"
+            >
               Severity
             </label>
             <select
+              id="notif-severity"
               value={severity}
               onChange={(e) =>
                 setSeverity(e.target.value as "info" | "warning" | "error")

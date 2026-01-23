@@ -1,1 +1,4 @@
-export { createNotificationHandlers, type NotificationHandlers } from "./handlers";
+export {
+  createNotificationHandlers,
+  type NotificationHandlers,
+} from "./handlers";

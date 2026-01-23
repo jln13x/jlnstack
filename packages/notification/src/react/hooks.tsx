@@ -1,16 +1,19 @@
 "use client";
 
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useCallback, useSyncExternalStore } from "react";
+import type { HttpNotificationManager } from "../client/http-manager";
 import type {
   Notification,
   NotificationFilter,
   NotificationTypesConstraint,
 } from "../manager";
-import type { HttpNotificationManager } from "../client/http-manager";
-import { useNotificationClient } from "./context";
 import type { QueryState } from "./client";
+import { useNotificationClient } from "./context";
 
-type HttpFilter<Types extends NotificationTypesConstraint> = Omit<NotificationFilter<Types>, "userId">;
+type HttpFilter<Types extends NotificationTypesConstraint> = Omit<
+  NotificationFilter<Types>,
+  "userId"
+>;
 
 type UseNotificationsOptions<Types extends NotificationTypesConstraint> = {
   filter?: HttpFilter<Types>;
@@ -32,28 +35,6 @@ type UseNotificationsReturn<Types extends NotificationTypesConstraint> = {
   /** Refetch notifications */
   refetch: () => void;
 };
-
-/**
- * Serialize filter to a stable string for comparison.
- */
-function serializeFilter<Types extends NotificationTypesConstraint>(
-  filter: HttpFilter<Types> | undefined,
-): string {
-  if (!filter) return "{}";
-  const sorted = Object.keys(filter)
-    .sort()
-    .reduce(
-      (acc, key) => {
-        const value = filter[key as keyof typeof filter];
-        if (value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      },
-      {} as Record<string, unknown>,
-    );
-  return JSON.stringify(sorted);
-}
 
 /**
  * Hook to manage notifications with loading states.
@@ -83,23 +64,18 @@ export function useNotifications<
   const client = useNotificationClient<Types>();
   const filter = options?.filter;
 
-  // Create a stable key for the filter to detect changes
-  const filterKey = useMemo(() => serializeFilter(filter), [filter]);
-
   // Subscribe function - recreated when filter changes to resubscribe to new query
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
       return client.subscribe(filter, onStoreChange);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [client, filterKey],
+    [client, filter],
   );
 
   // Get snapshot function - recreated when filter changes
   const getSnapshot = useCallback(() => {
     return client.getSnapshot(filter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, filterKey]);
+  }, [client, filter]);
 
   // Use the external store
   const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -107,8 +83,7 @@ export function useNotifications<
   // Refetch function
   const refetch = useCallback(() => {
     client.fetch(filter);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, filterKey]);
+  }, [client, filter]);
 
   return {
     manager: client.getManager(),

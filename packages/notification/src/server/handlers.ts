@@ -10,18 +10,13 @@ type NextRequest = {
   json: () => Promise<unknown>;
 };
 
-type NextResponse = {
-  status: number;
-  json: () => Promise<unknown>;
-};
-
 type RouteContext = {
   params: Promise<{ path?: string[] }>;
 };
 
 type RouteHandler = (
   request: NextRequest,
-  context: RouteContext
+  context: RouteContext,
 ) => Promise<Response>;
 
 type NotificationHandlers = {
@@ -150,7 +145,7 @@ function errorResponse(message: string, status = 400): Response {
  * - `DELETE /api/notifications/:id` - Delete notification
  */
 function createNotificationHandlers<Types extends NotificationTypesConstraint>(
-  options: NotificationHandlersOptions<Types>
+  options: NotificationHandlersOptions<Types>,
 ): NotificationHandlers {
   const { manager, transformer, getId } = options;
   const serialize = transformer?.serialize ?? ((data) => data);
@@ -164,7 +159,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
     } catch (err) {
       return errorResponse(
         err instanceof Error ? err.message : "Unauthorized",
-        401
+        401,
       );
     }
 
@@ -183,10 +178,10 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
         ? searchParams.get("archived") === "true"
         : undefined,
       limit: searchParams.has("limit")
-        ? parseInt(searchParams.get("limit")!, 10)
+        ? parseInt(searchParams.get("limit") ?? "", 10)
         : undefined,
       offset: searchParams.has("offset")
-        ? parseInt(searchParams.get("offset")!, 10)
+        ? parseInt(searchParams.get("offset") ?? "", 10)
         : undefined,
     };
 
@@ -204,9 +199,14 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
       }
 
       // GET /:id
-      if (path.length === 1 && path[0] !== "count" && path[0] !== "unread-count") {
-        const id = path[0]!;
-        const notification = await manager.get(id);
+      const pathId = path[0];
+      if (
+        path.length === 1 &&
+        pathId &&
+        pathId !== "count" &&
+        pathId !== "unread-count"
+      ) {
+        const notification = await manager.get(pathId);
         if (!notification) {
           return errorResponse("Notification not found", 404);
         }
@@ -223,7 +223,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
     } catch (err) {
       return errorResponse(
         err instanceof Error ? err.message : "Unknown error",
-        500
+        500,
       );
     }
   };
@@ -236,7 +236,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
     } catch (err) {
       return errorResponse(
         err instanceof Error ? err.message : "Unauthorized",
-        401
+        401,
       );
     }
 
@@ -253,7 +253,12 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
       // POST /send - Note: sends notification TO the authenticated user
       // For sending to other users, use the manager directly on the server
       if (path[0] === "send") {
-        const { type, title, data, body: notificationBody } = body as {
+        const {
+          type,
+          title,
+          data,
+          body: notificationBody,
+        } = body as {
           type: string;
           title: string;
           body?: string;
@@ -280,47 +285,45 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
       }
 
       // POST /:id/read
-      if (path.length === 2 && path[1] === "read") {
-        const id = path[0]!;
+      const postId = path[0];
+      if (path.length === 2 && postId && path[1] === "read") {
         // Verify ownership before marking as read
-        const existing = await manager.get(id);
+        const existing = await manager.get(postId);
         if (!existing) {
           return errorResponse("Notification not found", 404);
         }
         if (existing.userId !== recipientId) {
           return errorResponse("Forbidden", 403);
         }
-        const notification = await manager.markAsRead(id);
+        const notification = await manager.markAsRead(postId);
         return jsonResponse({ data: notification });
       }
 
       // POST /:id/archive
-      if (path.length === 2 && path[1] === "archive") {
-        const id = path[0]!;
+      if (path.length === 2 && postId && path[1] === "archive") {
         // Verify ownership before archiving
-        const existing = await manager.get(id);
+        const existing = await manager.get(postId);
         if (!existing) {
           return errorResponse("Notification not found", 404);
         }
         if (existing.userId !== recipientId) {
           return errorResponse("Forbidden", 403);
         }
-        const notification = await manager.archive(id);
+        const notification = await manager.archive(postId);
         return jsonResponse({ data: notification });
       }
 
       // POST /:id/unarchive
-      if (path.length === 2 && path[1] === "unarchive") {
-        const id = path[0]!;
+      if (path.length === 2 && postId && path[1] === "unarchive") {
         // Verify ownership before unarchiving
-        const existing = await manager.get(id);
+        const existing = await manager.get(postId);
         if (!existing) {
           return errorResponse("Notification not found", 404);
         }
         if (existing.userId !== recipientId) {
           return errorResponse("Forbidden", 403);
         }
-        const notification = await manager.unarchive(id);
+        const notification = await manager.unarchive(postId);
         return jsonResponse({ data: notification });
       }
 
@@ -328,7 +331,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
     } catch (err) {
       return errorResponse(
         err instanceof Error ? err.message : "Unknown error",
-        500
+        500,
       );
     }
   };
@@ -341,7 +344,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
     } catch (err) {
       return errorResponse(
         err instanceof Error ? err.message : "Unauthorized",
-        401
+        401,
       );
     }
 
@@ -349,17 +352,17 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
 
     try {
       // DELETE /:id
-      if (path.length === 1) {
-        const id = path[0]!;
+      const deleteId = path[0];
+      if (path.length === 1 && deleteId) {
         // Verify ownership before deleting
-        const existing = await manager.get(id);
+        const existing = await manager.get(deleteId);
         if (!existing) {
           return errorResponse("Notification not found", 404);
         }
         if (existing.userId !== recipientId) {
           return errorResponse("Forbidden", 403);
         }
-        await manager.delete(id);
+        await manager.delete(deleteId);
         return jsonResponse({ success: true });
       }
 
@@ -367,7 +370,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
     } catch (err) {
       return errorResponse(
         err instanceof Error ? err.message : "Unknown error",
-        500
+        500,
       );
     }
   };

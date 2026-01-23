@@ -16,7 +16,10 @@ type MemoryAdapterOptions = {
 
 const globalKey = Symbol.for("@jlnstack/notification/memory");
 
-type NotificationStore = Map<string, NotificationBase & { type: string; data: unknown }>;
+type NotificationStore = Map<
+  string,
+  NotificationBase & { type: string; data: unknown }
+>;
 
 function getGlobalStore(): NotificationStore {
   const g = globalThis as typeof globalThis & {
