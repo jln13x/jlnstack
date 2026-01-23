@@ -1,5 +1,11 @@
 # @jlnstack/modal
 
+## 0.0.3
+
+### Patch Changes
+
+- 51b92f5: fix cache
+
 ## 0.0.2
 
 ### Patch Changes
