@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
-import type { Modal, ModalInstance, WithDefaults } from "../types";
+import type { ModalInstanceState } from "../store";
+import type { Modal, WithDefaults } from "../types";
 import { useModalManager } from "./context";
 
-const EMPTY_MODALS: ModalInstance[] = [];
+const EMPTY_MODALS: ModalInstanceState[] = [];
 
 export function useModal<
   TInput,
@@ -26,9 +27,10 @@ export function useModal<
 export function useModals() {
   const manager = useModalManager();
 
+  // Use the store's getAll directly - it's already cached
   const modals = useSyncExternalStore(
     (cb) => manager.subscribe(cb),
-    () => manager.getAll(),
+    () => manager.store.actions.getAll(),
     () => EMPTY_MODALS,
   );
 
@@ -45,6 +47,7 @@ export function useModals() {
       setSize: manager.setSize,
       close: manager.close,
       closeAll: manager.closeAll,
+      getInstance: manager.getInstance,
     }),
     [manager],
   );

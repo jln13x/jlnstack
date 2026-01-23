@@ -1,54 +1,59 @@
 "use client";
 
 import { type ReactNode, useCallback, useSyncExternalStore } from "react";
-import type { ModalInstance, Position, Size } from "../types";
+import type { ModalInstanceState } from "../store";
+import type { Position, Size } from "../types";
 import { useModalManager } from "./context";
 
-const EMPTY_MODALS: ModalInstance[] = [];
+const EMPTY_MODALS: ModalInstanceState[] = [];
 
 export function ModalOutlet() {
   const manager = useModalManager();
 
+  // Use the store's getAll directly - it's already cached
   const modals = useSyncExternalStore(
     (cb) => manager.subscribe(cb),
-    () => manager.getAll(),
+    () => manager.store.actions.getAll(),
     () => EMPTY_MODALS,
   );
 
   return (
     <>
       {modals.map((modal) => (
-        <ModalRenderer key={modal.id} modal={modal} />
+        <ModalRenderer key={modal.id} id={modal.id} />
       ))}
     </>
   );
 }
 
-function ModalRenderer({ modal }: { modal: ModalInstance }) {
+function ModalRenderer({ id }: { id: string }) {
   const manager = useModalManager();
+  const instance = manager.getInstance(id);
 
-  const close = useCallback(() => modal.close(), [modal]);
+  const close = useCallback(() => instance?.close(), [instance]);
   const resolve = useCallback(
-    (value: unknown) => modal.resolve(value),
-    [modal],
+    (value: unknown) => instance?.resolve(value),
+    [instance],
   );
   const setPosition = useCallback(
-    (position: Position) => manager.setPosition(modal.id, position),
-    [manager, modal.id],
+    (position: Position) => manager.setPosition(id, position),
+    [manager, id],
   );
   const updatePosition = useCallback(
-    (delta: Position) => manager.updatePosition(modal.id, delta),
-    [manager, modal.id],
+    (delta: Position) => manager.updatePosition(id, delta),
+    [manager, id],
   );
   const setSize = useCallback(
-    (size: Size) => manager.setSize(modal.id, size),
-    [manager, modal.id],
+    (size: Size) => manager.setSize(id, size),
+    [manager, id],
   );
+
+  if (!instance) return null;
 
   return (
     <ModalInstanceContext.Provider
       value={{
-        id: modal.id,
+        id,
         close,
         resolve,
         setPosition,
@@ -56,7 +61,7 @@ function ModalRenderer({ modal }: { modal: ModalInstance }) {
         setSize,
       }}
     >
-      {modal.render() as ReactNode}
+      {instance.render() as ReactNode}
     </ModalInstanceContext.Provider>
   );
 }
