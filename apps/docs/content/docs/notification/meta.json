@@ -1,0 +1,6 @@
+{
+  "title": "Notification",
+  "description": "Type-safe notification/inbox management",
+  "root": true,
+  "pages": ["---Getting Started---", "index", "---Adapters---", "adapters"]
+}
