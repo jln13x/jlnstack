@@ -70,7 +70,7 @@ describe("createNotificationHandlers", () => {
       expect(body).toEqual({ error: "Unauthorized" });
     });
 
-    it("should pass authenticated userId to manager", async () => {
+    it("should pass authenticated recipientId to manager", async () => {
       const mockList = vi.fn().mockResolvedValue([]);
       const manager = createMockManager({ list: mockList });
       const handlers = createNotificationHandlers({
@@ -84,14 +84,16 @@ describe("createNotificationHandlers", () => {
       );
 
       expect(mockList).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: "user_123" }),
+        expect.objectContaining({ recipientId: "user_123" }),
       );
     });
   });
 
   describe("GET routes", () => {
     it("should list notifications", async () => {
-      const notifications = [{ id: "1", userId: "user_123", type: "message" }];
+      const notifications = [
+        { id: "1", recipientId: "user_123", type: "message" },
+      ];
       const mockList = vi.fn().mockResolvedValue(notifications);
       const manager = createMockManager({ list: mockList });
       const handlers = createNotificationHandlers({
@@ -126,7 +128,7 @@ describe("createNotificationHandlers", () => {
       );
 
       expect(mockList).toHaveBeenCalledWith({
-        userId: "user_123",
+        recipientId: "user_123",
         type: "message",
         read: false,
         archived: undefined,
@@ -174,7 +176,7 @@ describe("createNotificationHandlers", () => {
     it("should get single notification", async () => {
       const notification = {
         id: "notif_1",
-        userId: "user_123",
+        recipientId: "user_123",
         type: "message",
       };
       const mockGet = vi.fn().mockResolvedValue(notification);
@@ -213,7 +215,7 @@ describe("createNotificationHandlers", () => {
     it("should return 403 for notification belonging to another user", async () => {
       const notification = {
         id: "notif_1",
-        userId: "other_user",
+        recipientId: "other_user",
         type: "message",
       };
       const mockGet = vi.fn().mockResolvedValue(notification);
@@ -236,7 +238,7 @@ describe("createNotificationHandlers", () => {
     it("should send notification", async () => {
       const notification = {
         id: "notif_1",
-        userId: "user_123",
+        recipientId: "user_123",
         type: "message",
         title: "Test",
         data: { from: "john" },
@@ -258,8 +260,9 @@ describe("createNotificationHandlers", () => {
       );
 
       expect(response.status).toBe(201);
-      expect(mockSend).toHaveBeenCalledWith("message", {
-        userId: "user_123",
+      expect(mockSend).toHaveBeenCalledWith({
+        type: "message",
+        recipientId: "user_123",
         title: "Test",
         body: undefined,
         data: { from: "john" },
@@ -284,10 +287,14 @@ describe("createNotificationHandlers", () => {
     });
 
     it("should mark as read", async () => {
-      const notification = { id: "notif_1", userId: "user_123", read: true };
+      const notification = {
+        id: "notif_1",
+        recipientId: "user_123",
+        read: true,
+      };
       const mockGet = vi
         .fn()
-        .mockResolvedValue({ id: "notif_1", userId: "user_123" });
+        .mockResolvedValue({ id: "notif_1", recipientId: "user_123" });
       const mockMarkAsRead = vi.fn().mockResolvedValue(notification);
       const manager = createMockManager({
         get: mockGet,
@@ -327,12 +334,12 @@ describe("createNotificationHandlers", () => {
     it("should archive notification", async () => {
       const notification = {
         id: "notif_1",
-        userId: "user_123",
+        recipientId: "user_123",
         archived: true,
       };
       const mockGet = vi
         .fn()
-        .mockResolvedValue({ id: "notif_1", userId: "user_123" });
+        .mockResolvedValue({ id: "notif_1", recipientId: "user_123" });
       const mockArchive = vi.fn().mockResolvedValue(notification);
       const manager = createMockManager({ get: mockGet, archive: mockArchive });
       const handlers = createNotificationHandlers({
@@ -354,7 +361,7 @@ describe("createNotificationHandlers", () => {
     it("should delete notification", async () => {
       const mockGet = vi
         .fn()
-        .mockResolvedValue({ id: "notif_1", userId: "user_123" });
+        .mockResolvedValue({ id: "notif_1", recipientId: "user_123" });
       const mockDelete = vi.fn().mockResolvedValue(true);
       const manager = createMockManager({ get: mockGet, delete: mockDelete });
       const handlers = createNotificationHandlers({
@@ -374,7 +381,7 @@ describe("createNotificationHandlers", () => {
     it("should return 403 when deleting another user's notification", async () => {
       const mockGet = vi
         .fn()
-        .mockResolvedValue({ id: "notif_1", userId: "other_user" });
+        .mockResolvedValue({ id: "notif_1", recipientId: "other_user" });
       const manager = createMockManager({ get: mockGet });
       const handlers = createNotificationHandlers({
         manager,

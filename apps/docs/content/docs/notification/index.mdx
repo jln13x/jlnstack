@@ -5,7 +5,7 @@ description: Type-safe notification/inbox management
 
 # Notification
 
-<PackageInfo name="@jlnstack/notification" />
+<PackageInfo name="@jlnstack/notifications" />
 
 A lightweight, type-safe notification/inbox management library with support for:
 
@@ -17,7 +17,7 @@ A lightweight, type-safe notification/inbox management library with support for:
 ## Installation
 
 ```bash
-npm install @jlnstack/notification
+npm install @jlnstack/notifications
 ```
 
 ## Quick Start
@@ -28,7 +28,7 @@ Use Standard Schema libraries like zod to define your notification types:
 
 ```ts
 import { z } from "zod";
-import { createNotificationManager, createMemoryAdapter } from "@jlnstack/notification";
+import { createNotificationManager, createMemoryAdapter } from "@jlnstack/notifications";
 
 const manager = createNotificationManager({
   types: {
@@ -51,14 +51,16 @@ The `send` method is fully type-safe based on your schema definitions:
 
 ```ts
 // Type-safe - data must match the schema
-await manager.send("message", {
-  userId: "user_123",
+await manager.send({
+  type: "message",
+  recipientId: "user_123",
   title: "New message from John",
   data: { from: "john", preview: "Hey there!" },
 });
 
-await manager.send("alert", {
-  userId: "user_123",
+await manager.send({
+  type: "alert",
+  recipientId: "user_123",
   title: "System Warning",
   data: { severity: "warning" },
 });
@@ -67,9 +69,9 @@ await manager.send("alert", {
 ### 3. Query Notifications
 
 ```ts
-// List all unread notifications for a user
+// List all unread notifications for a recipient
 const unread = await manager.list({
-  userId: "user_123",
+  recipientId: "user_123",
   read: false,
 });
 
@@ -78,7 +80,7 @@ const count = await manager.unreadCount("user_123");
 
 // Filter by notification type
 const alerts = await manager.list({
-  userId: "user_123",
+  recipientId: "user_123",
   type: "alert", // Type-safe: only "message" | "alert" | "system" allowed
 });
 ```
@@ -96,7 +98,7 @@ await manager.unarchive("notification_id");
 
 // Delete
 await manager.delete("notification_id");
-await manager.deleteMany({ userId: "user_123", read: true });
+await manager.deleteMany({ recipientId: "user_123", read: true });
 ```
 
 ## Hooks
@@ -114,7 +116,7 @@ const manager = createNotificationManager({
     // Send email for alerts
     if (notification.type === "alert" && notification.data.severity === "error") {
       await sendEmail({
-        to: notification.userId,
+        to: getEmailForRecipient(notification.recipientId),
         subject: notification.title,
       });
     }
@@ -132,7 +134,7 @@ The hook receives the full notification object after it's been stored, including
 Use the `/react` export for React hooks with loading states powered by `useTransition`.
 
 ```tsx
-import { NotificationProvider, useNotifications } from "@jlnstack/notification/react";
+import { NotificationProvider, useNotifications } from "@jlnstack/notifications/react";
 
 // Wrap your app with the provider
 function App() {
@@ -146,7 +148,7 @@ function App() {
 // Use the hook in your components
 function NotificationInbox() {
   const { manager, data, isPending, refetch } = useNotifications({
-    filter: { userId: "user_123", read: false },
+    filter: { read: false }, // recipientId is determined server-side
   });
 
   // Mutations use the manager directly
@@ -217,14 +219,14 @@ Creates a notification manager instance.
 
 | Method | Description |
 |--------|-------------|
-| `send(type, options)` | Send a new notification |
+| `send(input)` | Send a new notification |
 | `get(id)` | Get a notification by ID |
 | `list(filter?)` | List notifications with optional filtering |
 | `count(filter?)` | Count notifications matching filter |
-| `unreadCount(userId)` | Get unread count for a user |
+| `unreadCount(recipientId)` | Get unread count for a recipient |
 | `markAsRead(id)` | Mark a notification as read |
 | `markManyAsRead(ids)` | Mark multiple notifications as read |
-| `markAllAsRead(userId)` | Mark all notifications for a user as read |
+| `markAllAsRead(recipientId)` | Mark all notifications for a recipient as read |
 | `archive(id)` | Archive a notification |
 | `unarchive(id)` | Unarchive a notification |
 | `delete(id)` | Delete a notification |
@@ -237,7 +239,7 @@ Each notification has the following fields:
 ```ts
 type Notification = {
   id: string;
-  userId: string;
+  recipientId: string;
   type: string;        // Your defined notification type
   title: string;
   body?: string;

@@ -67,7 +67,7 @@ type Transformer = {
  */
 type NotificationBase = {
   id: string;
-  userId: string;
+  recipientId: string;
   title: string;
   body?: string;
   read: boolean;
@@ -100,7 +100,7 @@ type NotificationInput<
 > = K extends keyof Types
   ? {
       type: K;
-      userId: string;
+      recipientId: string;
       title: string;
       body?: string;
       data: Types[K];
@@ -113,7 +113,7 @@ type NotificationInput<
 type NotificationFilter<
   Types extends NotificationTypesConstraint = NotificationTypesConstraint,
 > = {
-  userId?: string;
+  recipientId?: string;
   type?: keyof Types & string;
   read?: boolean;
   archived?: boolean;
@@ -167,7 +167,7 @@ type NotificationAdapter<Types extends NotificationTypesConstraint> = {
   /**
    * Mark all notifications for a user as read.
    */
-  markAllAsRead(userId: string): Promise<void>;
+  markAllAsRead(recipientId: string): Promise<void>;
 
   /**
    * Delete multiple notifications matching the filter.
@@ -211,11 +211,16 @@ type NotificationManagerOptions<TSchema extends NotificationSchemaDefinition> =
     ) => void | Promise<void>;
   };
 
-type SendOptions<
+/**
+ * Input for sending a notification.
+ * Includes type for discriminated union narrowing.
+ */
+type SendInput<
   Types extends NotificationTypesConstraint,
-  K extends keyof Types,
+  K extends keyof Types & string = keyof Types & string,
 > = {
-  userId: string;
+  type: K;
+  recipientId: string;
   title: string;
   body?: string;
   data: Types[K];
@@ -227,16 +232,16 @@ type NotificationManager<Types extends NotificationTypesConstraint> = {
    *
    * @example
    * ```ts
-   * await manager.send("message", {
-   *   userId: "user_123",
+   * await manager.send({
+   *   type: "message",
+   *   recipientId: "user_123",
    *   title: "New message",
    *   data: { from: "john", preview: "Hey!" }
    * });
    * ```
    */
   send<K extends keyof Types & string>(
-    type: K,
-    options: SendOptions<Types, K>,
+    input: SendInput<Types, K>,
   ): Promise<Notification<Types, K>>;
 
   /**
@@ -249,7 +254,7 @@ type NotificationManager<Types extends NotificationTypesConstraint> = {
    *
    * @example
    * ```ts
-   * const unread = await manager.list({ userId: "user_123", read: false });
+   * const unread = await manager.list({ recipientId: "user_123", read: false });
    * ```
    */
   list(filter?: NotificationFilter<Types>): Promise<Notification<Types>[]>;
@@ -259,16 +264,16 @@ type NotificationManager<Types extends NotificationTypesConstraint> = {
    *
    * @example
    * ```ts
-   * const unreadCount = await manager.count({ userId: "user_123", read: false });
+   * const unreadCount = await manager.count({ recipientId: "user_123", read: false });
    * ```
    */
   count(filter?: NotificationFilter<Types>): Promise<number>;
 
   /**
    * Get unread count for a user.
-   * Shorthand for `count({ userId, read: false })`.
+   * Shorthand for `count({ recipientId, read: false })`.
    */
-  unreadCount(userId: string): Promise<number>;
+  unreadCount(recipientId: string): Promise<number>;
 
   /**
    * Mark a notification as read.
@@ -283,7 +288,7 @@ type NotificationManager<Types extends NotificationTypesConstraint> = {
   /**
    * Mark all notifications for a user as read.
    */
-  markAllAsRead(userId: string): Promise<void>;
+  markAllAsRead(recipientId: string): Promise<void>;
 
   /**
    * Archive a notification.
@@ -332,8 +337,9 @@ type NotificationManager<Types extends NotificationTypesConstraint> = {
  * });
  *
  * // Type-safe - data must match the schema
- * await manager.send("message", {
- *   userId: "user_123",
+ * await manager.send({
+ *   type: "message",
+ *   recipientId: "user_123",
  *   title: "New message from John",
  *   data: { from: "john", preview: "Hey there!" }
  * });
@@ -350,17 +356,16 @@ function createNotificationManager<
 
   return {
     async send<K extends keyof Types & string>(
-      type: K,
-      opts: SendOptions<Types, K>,
+      input: SendInput<Types, K>,
     ): Promise<Notification<Types, K>> {
       // Type assertion needed because TypeScript can't narrow the generic K
       // to the specific discriminated union member at compile time
       const notification = await adapter.insert({
-        type,
-        userId: opts.userId,
-        title: opts.title,
-        body: opts.body,
-        data: opts.data,
+        type: input.type,
+        recipientId: input.recipientId,
+        title: input.title,
+        body: input.body,
+        data: input.data,
       } as never);
 
       if (onSend) {
@@ -384,8 +389,8 @@ function createNotificationManager<
       return adapter.count(filter);
     },
 
-    async unreadCount(userId: string): Promise<number> {
-      return adapter.count({ userId, read: false });
+    async unreadCount(recipientId: string): Promise<number> {
+      return adapter.count({ recipientId, read: false });
     },
 
     async markAsRead(id: string): Promise<Notification<Types> | null> {
@@ -399,8 +404,8 @@ function createNotificationManager<
       return adapter.markAsRead(ids);
     },
 
-    async markAllAsRead(userId: string): Promise<void> {
-      return adapter.markAllAsRead(userId);
+    async markAllAsRead(recipientId: string): Promise<void> {
+      return adapter.markAllAsRead(recipientId);
     },
 
     async archive(id: string): Promise<Notification<Types> | null> {
@@ -441,7 +446,7 @@ export {
   type NotificationManagerOptions,
   type NotificationSchemaDefinition,
   type NotificationTypesConstraint,
-  type SendOptions,
+  type SendInput,
   type Transformer,
   type StandardSchemaV1,
 };

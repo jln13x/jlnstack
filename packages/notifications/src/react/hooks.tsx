@@ -12,7 +12,7 @@ import { useNotificationClient } from "./context";
 
 type HttpFilter<Types extends NotificationTypesConstraint> = Omit<
   NotificationFilter<Types>,
-  "userId"
+  "recipientId"
 >;
 
 type UseNotificationsOptions<Types extends NotificationTypesConstraint> = {
@@ -40,7 +40,7 @@ type UseNotificationsReturn<Types extends NotificationTypesConstraint> = {
  * Hook to manage notifications with loading states.
  * Uses useSyncExternalStore for proper React 18+ concurrent rendering support.
  *
- * The userId is automatically determined server-side from the auth context,
+ * The recipientId is automatically determined server-side from the auth context,
  * so you don't need to pass it in the filter.
  *
  * @example
@@ -53,7 +53,7 @@ type UseNotificationsReturn<Types extends NotificationTypesConstraint> = {
  * {data.map(n => <div key={n.id}>{n.title}</div>)}
  *
  * // Mutations: use manager directly
- * await manager.send("message", { title: "Hello", data: { from: "john" } });
+ * await manager.send({ type: "message", title: "Hello", data: { from: "john" } });
  * await manager.markAsRead(id);
  * refetch(); // Refresh the list after mutations
  * ```

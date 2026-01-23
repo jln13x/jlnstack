@@ -17,7 +17,7 @@ export type QueryState<Types extends NotificationTypesConstraint> = {
 
 type HttpFilter<Types extends NotificationTypesConstraint> = Omit<
   NotificationFilter<Types>,
-  "userId"
+  "recipientId"
 >;
 
 type Query<Types extends NotificationTypesConstraint> = {

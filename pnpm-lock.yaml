@@ -50,9 +50,9 @@ importers:
       '@jlnstack/modal':
         specifier: workspace:*
         version: link:../../packages/modal
-      '@jlnstack/notification':
+      '@jlnstack/notifications':
         specifier: workspace:*
-        version: link:../../packages/notification
+        version: link:../../packages/notifications
       '@jlnstack/store':
         specifier: workspace:*
         version: link:../../packages/store
@@ -273,7 +273,7 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@24.10.4)(@vitest/ui@2.1.9)(jsdom@27.4.0)(lightningcss@1.30.2)
 
-  packages/notification:
+  packages/notifications:
     dependencies:
       react:
         specifier: '>=19'

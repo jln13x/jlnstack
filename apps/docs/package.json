@@ -17,7 +17,7 @@
     "@jlnstack/filter": "workspace:*",
     "@jlnstack/form": "workspace:*",
     "@jlnstack/modal": "workspace:*",
-    "@jlnstack/notification": "workspace:*",
+    "@jlnstack/notifications": "workspace:*",
     "@jlnstack/store": "workspace:*",
     "fumadocs-core": "16.4.1",
     "fumadocs-mdx": "14.2.3",

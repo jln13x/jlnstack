@@ -2,8 +2,8 @@ import {
   createMemoryAdapter,
   createNotificationManager,
   type Transformer,
-} from "@jlnstack/notification";
-import { createNotificationHandlers } from "@jlnstack/notification/server";
+} from "@jlnstack/notifications";
+import { createNotificationHandlers } from "@jlnstack/notifications/server";
 import superjson from "superjson";
 import { z } from "zod";
 
@@ -46,12 +46,12 @@ function getManager(): ManagerType {
   return g[globalKey];
 }
 
-// Demo user ID for the playground
-const DEMO_USER_ID = "user_demo";
+// Demo recipient ID for the playground
+const DEMO_RECIPIENT_ID = "recipient_demo";
 
 const handlers = createNotificationHandlers({
   manager: getManager(),
-  getId: () => DEMO_USER_ID,
+  getId: () => DEMO_RECIPIENT_ID,
   transformer,
 });
 

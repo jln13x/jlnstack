@@ -5,7 +5,7 @@ export type {
   NotificationFilter,
   NotificationManager,
   NotificationTypesConstraint,
-  SendOptions,
+  SendInput,
 } from "../manager";
 
 export {

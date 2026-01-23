@@ -34,8 +34,9 @@ describe("createNotificationManager type inference", () => {
     });
 
     // When sending "message", data should have from and preview
-    const messageResult = await manager.send("message", {
-      userId: "user_123",
+    const messageResult = await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Test",
       data: { from: "john", preview: "Hey!" },
     });
@@ -46,8 +47,9 @@ describe("createNotificationManager type inference", () => {
     }>();
 
     // When sending "alert", data should have severity
-    const alertResult = await manager.send("alert", {
-      userId: "user_123",
+    const alertResult = await manager.send({
+      type: "alert",
+      recipientId: "user_123",
       title: "Test",
       data: { severity: "warning" },
     });
@@ -134,8 +136,9 @@ describe("plain types (no schema)", () => {
       adapter: createMemoryAdapter(),
     });
 
-    const notification = await manager.send("message", {
-      userId: "user_123",
+    const notification = await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Test",
       data: { from: "john", preview: "Hey!" },
     });

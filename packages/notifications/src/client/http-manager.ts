@@ -2,45 +2,55 @@ import type {
   Notification,
   NotificationFilter,
   NotificationTypesConstraint,
-  SendOptions,
+  SendInput,
   Transformer,
 } from "../manager";
 
 /**
+ * Input for sending a notification via HTTP client.
+ * Omits recipientId since it's determined server-side from auth context.
+ */
+type HttpSendInput<
+  Types extends NotificationTypesConstraint,
+  K extends keyof Types & string = keyof Types & string,
+> = Omit<SendInput<Types, K>, "recipientId">;
+
+/**
  * HTTP-based notification manager for client-side use.
- * Similar to NotificationManager but with auth-aware methods that don't require userId.
+ * Similar to NotificationManager but with auth-aware methods that don't require recipientId.
  */
 type HttpNotificationManager<Types extends NotificationTypesConstraint> = {
   /**
-   * Send a notification to the authenticated user.
-   * The userId is automatically set from the server-side auth context.
+   * Send a notification to the authenticated recipient.
+   * The recipientId is automatically set from the server-side auth context.
    */
   send<K extends keyof Types & string>(
-    type: K,
-    options: Omit<SendOptions<Types, K>, "userId">,
+    input: HttpSendInput<Types, K>,
   ): Promise<Notification<Types, K>>;
 
   /**
    * Get a notification by ID.
-   * Only returns notifications belonging to the authenticated user.
+   * Only returns notifications belonging to the authenticated recipient.
    */
   get(id: string): Promise<Notification<Types> | null>;
 
   /**
-   * List notifications for the authenticated user.
-   * The userId filter is automatically applied server-side.
+   * List notifications for the authenticated recipient.
+   * The recipientId filter is automatically applied server-side.
    */
   list(
-    filter?: Omit<NotificationFilter<Types>, "userId">,
+    filter?: Omit<NotificationFilter<Types>, "recipientId">,
   ): Promise<Notification<Types>[]>;
 
   /**
-   * Count notifications for the authenticated user.
+   * Count notifications for the authenticated recipient.
    */
-  count(filter?: Omit<NotificationFilter<Types>, "userId">): Promise<number>;
+  count(
+    filter?: Omit<NotificationFilter<Types>, "recipientId">,
+  ): Promise<number>;
 
   /**
-   * Get unread count for the authenticated user.
+   * Get unread count for the authenticated recipient.
    */
   unreadCount(): Promise<number>;
 
@@ -55,7 +65,7 @@ type HttpNotificationManager<Types extends NotificationTypesConstraint> = {
   markManyAsRead(ids: string[]): Promise<void>;
 
   /**
-   * Mark all notifications as read for the authenticated user.
+   * Mark all notifications as read for the authenticated recipient.
    */
   markAllAsRead(): Promise<void>;
 
@@ -78,7 +88,7 @@ type HttpNotificationManager<Types extends NotificationTypesConstraint> = {
    * Delete multiple notifications matching the filter.
    */
   deleteMany(
-    filter: Omit<NotificationFilter<Types>, "userId">,
+    filter: Omit<NotificationFilter<Types>, "recipientId">,
   ): Promise<number>;
 };
 
@@ -99,7 +109,7 @@ type HttpNotificationManagerOptions = {
    * @example
    * ```ts
    * import superjson from "superjson"
-   * import type { Transformer } from "@jlnstack/notification"
+   * import type { Transformer } from "@jlnstack/notifications"
    *
    * const transformer: Transformer = {
    *   serialize: (data) => superjson.serialize(data),
@@ -152,7 +162,7 @@ async function request<T>(
 }
 
 function buildQueryString(
-  filter: Omit<NotificationFilter<NotificationTypesConstraint>, "userId">,
+  filter: Omit<NotificationFilter<NotificationTypesConstraint>, "recipientId">,
 ): string {
   const params = new URLSearchParams();
   if (filter.type !== undefined) params.set("type", String(filter.type));
@@ -172,8 +182,8 @@ function buildQueryString(
  *
  * @example
  * ```ts
- * import { createHttpNotificationManager } from "@jlnstack/notification/client"
- * import { createNotificationClient, NotificationClientProvider } from "@jlnstack/notification/react"
+ * import { createHttpNotificationManager } from "@jlnstack/notifications/client"
+ * import { createNotificationClient, NotificationClientProvider } from "@jlnstack/notifications/react"
  * import { transformer } from "@/lib/notifications" // shared transformer
  *
  * const manager = createHttpNotificationManager({
@@ -201,15 +211,14 @@ function createHttpNotificationManager<
 
   const manager: HttpNotificationManager<Types> = {
     async send<K extends keyof Types & string>(
-      type: K,
-      opts: Omit<SendOptions<Types, K>, "userId">,
+      input: HttpSendInput<Types, K>,
     ): Promise<Notification<Types, K>> {
       return request<Notification<Types, K>>(
         baseUrl,
         "/send",
         {
           method: "POST",
-          body: JSON.stringify({ type, ...opts }),
+          body: JSON.stringify(input),
         },
         fetchFn,
         deserializeFn,
@@ -231,7 +240,7 @@ function createHttpNotificationManager<
     },
 
     async list(
-      filter: Omit<NotificationFilter<Types>, "userId"> = {},
+      filter: Omit<NotificationFilter<Types>, "recipientId"> = {},
     ): Promise<Notification<Types>[]> {
       return request<Notification<Types>[]>(
         baseUrl,
@@ -243,7 +252,7 @@ function createHttpNotificationManager<
     },
 
     async count(
-      filter: Omit<NotificationFilter<Types>, "userId"> = {},
+      filter: Omit<NotificationFilter<Types>, "recipientId"> = {},
     ): Promise<number> {
       const result = await request<{ count: number }>(
         baseUrl,
@@ -328,7 +337,7 @@ function createHttpNotificationManager<
     },
 
     async deleteMany(
-      filter: Omit<NotificationFilter<Types>, "userId">,
+      filter: Omit<NotificationFilter<Types>, "recipientId">,
     ): Promise<number> {
       // List matching notifications and delete each
       const notifications = await manager.list(filter);

@@ -60,7 +60,7 @@ type NotificationHandlersOptions<Types extends NotificationTypesConstraint> = {
    * @example
    * ```ts
    * import superjson from "superjson"
-   * import type { Transformer } from "@jlnstack/notification"
+   * import type { Transformer } from "@jlnstack/notifications"
    *
    * const transformer: Transformer = {
    *   serialize: (data) => superjson.serialize(data),
@@ -92,16 +92,16 @@ function errorResponse(message: string, status = 400): Response {
 /**
  * Creates Next.js App Router handlers for notification operations.
  *
- * All operations are automatically scoped to the authenticated user via the `getId` callback.
- * The user ID is determined server-side, so clients don't need to pass it.
+ * All operations are automatically scoped to the authenticated recipient via the `getId` callback.
+ * The recipient ID is determined server-side, so clients don't need to pass it.
  *
  * Mount this at a catch-all route like `app/api/notifications/[...path]/route.ts`:
  *
  * @example
  * ```ts
  * // lib/notifications.ts
- * import { createNotificationManager, createMemoryAdapter, type Transformer } from "@jlnstack/notification"
- * import { createNotificationHandlers } from "@jlnstack/notification/server"
+ * import { createNotificationManager, createMemoryAdapter, type Transformer } from "@jlnstack/notifications"
+ * import { createNotificationHandlers } from "@jlnstack/notifications/server"
  * import { auth } from "@/lib/auth" // your auth library
  * import superjson from "superjson"
  *
@@ -132,7 +132,7 @@ function errorResponse(message: string, status = 400): Response {
  * export const { GET, POST, DELETE } = handlers
  * ```
  *
- * API Routes (all scoped to authenticated user):
+ * API Routes (all scoped to authenticated recipient):
  * - `GET /api/notifications` - List notifications (query: type, read, archived, limit, offset)
  * - `GET /api/notifications/count` - Count notifications (same query params)
  * - `GET /api/notifications/unread-count` - Get unread count
@@ -169,7 +169,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
 
     // Parse common filter params, always scoped to the authenticated recipient
     const filter = {
-      userId: recipientId,
+      recipientId: recipientId,
       type: searchParams.get("type") ?? undefined,
       read: searchParams.has("read")
         ? searchParams.get("read") === "true"
@@ -211,7 +211,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
           return errorResponse("Notification not found", 404);
         }
         // Verify the notification belongs to the authenticated recipient
-        if (notification.userId !== recipientId) {
+        if (notification.recipientId !== recipientId) {
           return errorResponse("Forbidden", 403);
         }
         return jsonResponse({ data: notification });
@@ -250,8 +250,8 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
         // Empty body is fine for some endpoints
       }
 
-      // POST /send - Note: sends notification TO the authenticated user
-      // For sending to other users, use the manager directly on the server
+      // POST /send - Note: sends notification TO the authenticated recipient
+      // For sending to other recipients, use the manager directly on the server
       if (path[0] === "send") {
         const {
           type,
@@ -269,8 +269,9 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
           return errorResponse("type and title are required");
         }
 
-        const notification = await manager.send(type as keyof Types & string, {
-          userId: recipientId,
+        const notification = await manager.send({
+          type: type as keyof Types & string,
+          recipientId: recipientId,
           title,
           body: notificationBody,
           data: data as Types[keyof Types & string],
@@ -278,7 +279,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
         return jsonResponse({ data: notification }, 201);
       }
 
-      // POST /read-all - Mark all as read for the authenticated user
+      // POST /read-all - Mark all as read for the authenticated recipient
       if (path[0] === "read-all") {
         await manager.markAllAsRead(recipientId);
         return jsonResponse({ success: true });
@@ -292,7 +293,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
         if (!existing) {
           return errorResponse("Notification not found", 404);
         }
-        if (existing.userId !== recipientId) {
+        if (existing.recipientId !== recipientId) {
           return errorResponse("Forbidden", 403);
         }
         const notification = await manager.markAsRead(postId);
@@ -306,7 +307,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
         if (!existing) {
           return errorResponse("Notification not found", 404);
         }
-        if (existing.userId !== recipientId) {
+        if (existing.recipientId !== recipientId) {
           return errorResponse("Forbidden", 403);
         }
         const notification = await manager.archive(postId);
@@ -320,7 +321,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
         if (!existing) {
           return errorResponse("Notification not found", 404);
         }
-        if (existing.userId !== recipientId) {
+        if (existing.recipientId !== recipientId) {
           return errorResponse("Forbidden", 403);
         }
         const notification = await manager.unarchive(postId);
@@ -359,7 +360,7 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
         if (!existing) {
           return errorResponse("Notification not found", 404);
         }
-        if (existing.userId !== recipientId) {
+        if (existing.recipientId !== recipientId) {
           return errorResponse("Forbidden", 403);
         }
         await manager.delete(deleteId);

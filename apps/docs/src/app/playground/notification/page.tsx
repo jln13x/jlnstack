@@ -1,11 +1,11 @@
 "use client";
 
-import { createHttpNotificationManager } from "@jlnstack/notification/client";
+import { createHttpNotificationManager } from "@jlnstack/notifications/client";
 import {
   createNotificationClient,
   NotificationClientProvider,
   useNotifications,
-} from "@jlnstack/notification/react";
+} from "@jlnstack/notifications/react";
 import {
   AlertCircle,
   Archive,
@@ -188,7 +188,7 @@ function NotificationItem({
 // Notification Inbox
 // ============================================================================
 
-function NotificationInbox({ userId: _userId }: { userId: string }) {
+function NotificationInbox({ recipientId: _recipientId }: { recipientId: string }) {
   const [filter, setFilter] = useState<"all" | "unread" | "archived">("all");
 
   const { manager, data, isPending, refetch } = useNotifications({
@@ -229,7 +229,8 @@ function NotificationInbox({ userId: _userId }: { userId: string }) {
       ];
     if (!sample) return;
 
-    await manager.send(sample.type, {
+    await manager.send({
+      type: sample.type,
       title: sample.title,
       data: sample.data,
     });
@@ -338,7 +339,7 @@ function NotificationInbox({ userId: _userId }: { userId: string }) {
 // Send Notification Panel
 // ============================================================================
 
-function SendNotificationPanel({ userId: _userId }: { userId: string }) {
+function SendNotificationPanel({ recipientId: _recipientId }: { recipientId: string }) {
   const { manager, refetch } = useNotifications();
   const [type, setType] = useState<"message" | "alert" | "system">("message");
   const [title, setTitle] = useState("");
@@ -360,7 +361,7 @@ function SendNotificationPanel({ userId: _userId }: { userId: string }) {
       data = {};
     }
 
-    await manager.send(type, { title, data });
+    await manager.send({ type, title, data });
 
     setTitle("");
     setFrom("");
@@ -490,7 +491,7 @@ function SendNotificationPanel({ userId: _userId }: { userId: string }) {
 // Main Page
 // ============================================================================
 
-const USER_ID = "user_demo";
+const RECIPIENT_ID = "recipient_demo";
 
 export default function NotificationPlaygroundPage() {
   return (
@@ -499,7 +500,7 @@ export default function NotificationPlaygroundPage() {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl font-bold mb-2">Notification Playground</h1>
           <p className="text-neutral-500 mb-8">
-            Interactive demo of @jlnstack/notification
+            Interactive demo of @jlnstack/notifications
           </p>
 
           <div className="grid md:grid-cols-2 gap-6">
@@ -507,13 +508,13 @@ export default function NotificationPlaygroundPage() {
               <h2 className="text-sm font-medium text-neutral-400 mb-3">
                 Inbox
               </h2>
-              <NotificationInbox userId={USER_ID} />
+              <NotificationInbox recipientId={RECIPIENT_ID} />
             </div>
             <div>
               <h2 className="text-sm font-medium text-neutral-400 mb-3">
                 Send
               </h2>
-              <SendNotificationPanel userId={USER_ID} />
+              <SendNotificationPanel recipientId={RECIPIENT_ID} />
             </div>
           </div>
         </div>

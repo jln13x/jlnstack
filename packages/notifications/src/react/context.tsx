@@ -67,7 +67,7 @@ export function useNotificationClient<
  * @example
  * ```tsx
  * const manager = useNotificationManager();
- * await manager.send("alert", { title: "Hello", data: { ... } });
+ * await manager.send({ type: "alert", title: "Hello", data: { ... } });
  * ```
  */
 export function useNotificationManager<

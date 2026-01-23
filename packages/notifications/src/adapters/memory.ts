@@ -14,7 +14,7 @@ type MemoryAdapterOptions = {
   generateId?: () => string;
 };
 
-const globalKey = Symbol.for("@jlnstack/notification/memory");
+const globalKey = Symbol.for("@jlnstack/notifications/memory");
 
 type NotificationStore = Map<
   string,
@@ -47,7 +47,10 @@ function createMemoryAdapter<Types extends NotificationTypesConstraint>(
     notification: Notification<Types>,
     filter: NotificationFilter<Types>,
   ): boolean {
-    if (filter.userId !== undefined && notification.userId !== filter.userId) {
+    if (
+      filter.recipientId !== undefined &&
+      notification.recipientId !== filter.recipientId
+    ) {
       return false;
     }
     if (filter.type !== undefined && notification.type !== filter.type) {
@@ -71,7 +74,7 @@ function createMemoryAdapter<Types extends NotificationTypesConstraint>(
     ): Promise<Notification<Types>> {
       const notification: Notification<Types> = {
         id: generateId(),
-        userId: input.userId,
+        recipientId: input.recipientId,
         type: input.type,
         title: input.title,
         body: input.body,
@@ -155,10 +158,10 @@ function createMemoryAdapter<Types extends NotificationTypesConstraint>(
       }
     },
 
-    async markAllAsRead(userId: string): Promise<void> {
+    async markAllAsRead(recipientId: string): Promise<void> {
       const now = new Date();
       for (const [id, notification] of store.entries()) {
-        if (notification.userId === userId && !notification.read) {
+        if (notification.recipientId === recipientId && !notification.read) {
           store.set(id, {
             ...notification,
             read: true,

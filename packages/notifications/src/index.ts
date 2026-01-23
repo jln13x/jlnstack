@@ -15,7 +15,7 @@ export {
   type NotificationManagerOptions,
   type NotificationSchemaDefinition,
   type NotificationTypesConstraint,
-  type SendOptions,
+  type SendInput,
   type StandardSchemaV1,
   type Transformer,
 } from "./manager";

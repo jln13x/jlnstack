@@ -107,7 +107,8 @@ describe("createHttpNotificationManager", () => {
       fetch: mockFetch,
     });
 
-    await manager.send("message", {
+    await manager.send({
+      type: "message",
       title: "Test",
       data: { from: "john" },
     });

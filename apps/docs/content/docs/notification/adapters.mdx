@@ -12,7 +12,7 @@ Adapters provide the storage layer for notifications. The package includes a bui
 The memory adapter stores notifications in memory. Useful for development, testing, and simple use cases.
 
 ```ts
-import { createMemoryAdapter } from "@jlnstack/notification";
+import { createMemoryAdapter } from "@jlnstack/notifications";
 
 const adapter = createMemoryAdapter();
 ```
@@ -36,7 +36,7 @@ const adapter = createMemoryAdapter({
 Implement the `NotificationAdapter` interface to create custom adapters:
 
 ```ts
-import type { NotificationAdapter, NotificationTypesConstraint } from "@jlnstack/notification";
+import type { NotificationAdapter, NotificationTypesConstraint } from "@jlnstack/notifications";
 
 function createCustomAdapter<Types extends NotificationTypesConstraint>(): NotificationAdapter<Types> {
   return {
@@ -85,7 +85,7 @@ A Drizzle ORM adapter is planned for persistent storage:
 
 ```ts
 // Future API
-import { createDrizzleAdapter } from "@jlnstack/notification/drizzle";
+import { createDrizzleAdapter } from "@jlnstack/notifications/drizzle";
 
 const adapter = createDrizzleAdapter({
   db,

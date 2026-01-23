@@ -34,15 +34,16 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
   it("should send and retrieve a notification with inferred types", async () => {
     const manager = createManager();
 
-    const notification = await manager.send("message", {
-      userId: "user_123",
+    const notification = await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "New message",
       data: { from: "john", preview: "Hey there!" },
     });
 
     expect(notification.id).toBeDefined();
     expect(notification.type).toBe("message");
-    expect(notification.userId).toBe("user_123");
+    expect(notification.recipientId).toBe("user_123");
     expect(notification.title).toBe("New message");
     expect(notification.data.from).toBe("john");
     expect(notification.data.preview).toBe("Hey there!");
@@ -54,20 +55,23 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
   it("should support different notification types", async () => {
     const manager = createManager();
 
-    const message = await manager.send("message", {
-      userId: "user_123",
+    const message = await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "New message",
       data: { from: "john", preview: "Hey!" },
     });
 
-    const alert = await manager.send("alert", {
-      userId: "user_123",
+    const alert = await manager.send({
+      type: "alert",
+      recipientId: "user_123",
       title: "Warning",
       data: { severity: "warning" },
     });
 
-    const system = await manager.send("system", {
-      userId: "user_123",
+    const system = await manager.send({
+      type: "system",
+      recipientId: "user_123",
       title: "System update",
       data: {},
     });
@@ -84,20 +88,23 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
   it("should list notifications", async () => {
     const manager = createManager();
 
-    await manager.send("message", {
-      userId: "user_123",
+    await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Message 1",
       data: { from: "john", preview: "Hey!" },
     });
 
-    await manager.send("alert", {
-      userId: "user_123",
+    await manager.send({
+      type: "alert",
+      recipientId: "user_123",
       title: "Alert 1",
       data: { severity: "warning" },
     });
 
-    await manager.send("message", {
-      userId: "user_456",
+    await manager.send({
+      type: "message",
+      recipientId: "user_456",
       title: "Message 2",
       data: { from: "jane", preview: "Hello!" },
     });
@@ -105,7 +112,9 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
     const allNotifications = await manager.list();
     expect(allNotifications).toHaveLength(3);
 
-    const user123Notifications = await manager.list({ userId: "user_123" });
+    const user123Notifications = await manager.list({
+      recipientId: "user_123",
+    });
     expect(user123Notifications).toHaveLength(2);
 
     // Type-safe filtering by notification type
@@ -116,8 +125,9 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
   it("should mark as read", async () => {
     const manager = createManager();
 
-    const notification = await manager.send("message", {
-      userId: "user_123",
+    const notification = await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Test",
       data: { from: "john", preview: "Hey!" },
     });
@@ -134,20 +144,23 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
   it("should mark all as read for a user", async () => {
     const manager = createManager();
 
-    await manager.send("message", {
-      userId: "user_123",
+    await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Message 1",
       data: { from: "john", preview: "Hey!" },
     });
 
-    await manager.send("alert", {
-      userId: "user_123",
+    await manager.send({
+      type: "alert",
+      recipientId: "user_123",
       title: "Alert 1",
       data: { severity: "info" },
     });
 
-    await manager.send("message", {
-      userId: "user_456",
+    await manager.send({
+      type: "message",
+      recipientId: "user_456",
       title: "Message 2",
       data: { from: "jane", preview: "Hello!" },
     });
@@ -168,8 +181,9 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
   it("should archive and unarchive", async () => {
     const manager = createManager();
 
-    const notification = await manager.send("system", {
-      userId: "user_123",
+    const notification = await manager.send({
+      type: "system",
+      recipientId: "user_123",
       title: "System notification",
       data: {},
     });
@@ -186,8 +200,9 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
   it("should delete notifications", async () => {
     const manager = createManager();
 
-    const notification = await manager.send("message", {
-      userId: "user_123",
+    const notification = await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "To delete",
       data: { from: "john", preview: "..." },
     });
@@ -205,14 +220,16 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
   it("should count unread notifications", async () => {
     const manager = createManager();
 
-    await manager.send("message", {
-      userId: "user_123",
+    await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Message 1",
       data: { from: "john", preview: "Hey!" },
     });
 
-    await manager.send("message", {
-      userId: "user_123",
+    await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Message 2",
       data: { from: "jane", preview: "Hi!" },
     });
@@ -224,25 +241,27 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
   it("should filter by read status", async () => {
     const manager = createManager();
 
-    const n1 = await manager.send("message", {
-      userId: "user_123",
+    const n1 = await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Message 1",
       data: { from: "john", preview: "Hey!" },
     });
 
-    await manager.send("message", {
-      userId: "user_123",
+    await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Message 2",
       data: { from: "jane", preview: "Hi!" },
     });
 
     await manager.markAsRead(n1.id);
 
-    const unread = await manager.list({ userId: "user_123", read: false });
+    const unread = await manager.list({ recipientId: "user_123", read: false });
     expect(unread).toHaveLength(1);
     expect(unread[0]?.title).toBe("Message 2");
 
-    const read = await manager.list({ userId: "user_123", read: true });
+    const read = await manager.list({ recipientId: "user_123", read: true });
     expect(read).toHaveLength(1);
     expect(read[0]?.title).toBe("Message 1");
   });
@@ -251,18 +270,19 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
     const manager = createManager();
 
     for (let i = 0; i < 10; i++) {
-      await manager.send("message", {
-        userId: "user_123",
+      await manager.send({
+        type: "message",
+        recipientId: "user_123",
         title: `Message ${i}`,
         data: { from: "john", preview: `Content ${i}` },
       });
     }
 
-    const page1 = await manager.list({ userId: "user_123", limit: 3 });
+    const page1 = await manager.list({ recipientId: "user_123", limit: 3 });
     expect(page1).toHaveLength(3);
 
     const page2 = await manager.list({
-      userId: "user_123",
+      recipientId: "user_123",
       limit: 3,
       offset: 3,
     });
@@ -277,30 +297,33 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
   it("should delete many notifications", async () => {
     const manager = createManager();
 
-    await manager.send("message", {
-      userId: "user_123",
+    await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Message 1",
       data: { from: "john", preview: "Hey!" },
     });
 
-    await manager.send("alert", {
-      userId: "user_123",
+    await manager.send({
+      type: "alert",
+      recipientId: "user_123",
       title: "Alert 1",
       data: { severity: "error" },
     });
 
-    await manager.send("message", {
-      userId: "user_456",
+    await manager.send({
+      type: "message",
+      recipientId: "user_456",
       title: "Message 2",
       data: { from: "jane", preview: "Hi!" },
     });
 
-    const deletedCount = await manager.deleteMany({ userId: "user_123" });
+    const deletedCount = await manager.deleteMany({ recipientId: "user_123" });
     expect(deletedCount).toBe(2);
 
     const remaining = await manager.list();
     expect(remaining).toHaveLength(1);
-    expect(remaining[0]?.userId).toBe("user_456");
+    expect(remaining[0]?.recipientId).toBe("user_456");
   });
 
   it("should expose the types object", async () => {
@@ -331,8 +354,9 @@ describe("createNotificationManager with plain types (no schema)", () => {
       adapter: createMemoryAdapter(),
     });
 
-    const notification = await manager.send("message", {
-      userId: "user_123",
+    const notification = await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Test",
       data: { from: "john", preview: "Hey!" },
     });
@@ -360,8 +384,9 @@ describe("onSend hook", () => {
       },
     });
 
-    await manager.send("message", {
-      userId: "user_123",
+    await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Test",
       data: { from: "john" },
     });
@@ -369,7 +394,7 @@ describe("onSend hook", () => {
     expect(sentNotifications).toHaveLength(1);
     expect(sentNotifications[0]).toMatchObject({
       type: "message",
-      userId: "user_123",
+      recipientId: "user_123",
       title: "Test",
       data: { from: "john" },
     });
@@ -389,8 +414,9 @@ describe("onSend hook", () => {
       },
     });
 
-    await manager.send("alert", {
-      userId: "user_123",
+    await manager.send({
+      type: "alert",
+      recipientId: "user_123",
       title: "Test",
       data: { severity: "warning" },
     });
@@ -411,8 +437,9 @@ describe("onSend hook", () => {
       },
     });
 
-    await manager.send("message", {
-      userId: "user_123",
+    await manager.send({
+      type: "message",
+      recipientId: "user_123",
       title: "Test",
       body: "Test body",
       data: { from: "john" },
@@ -420,7 +447,7 @@ describe("onSend hook", () => {
 
     expect(receivedNotification).toMatchObject({
       id: expect.any(String),
-      userId: "user_123",
+      recipientId: "user_123",
       type: "message",
       title: "Test",
       body: "Test body",

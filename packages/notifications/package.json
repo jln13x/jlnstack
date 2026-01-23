@@ -1,5 +1,5 @@
 {
-  "name": "@jlnstack/notification",
+  "name": "@jlnstack/notifications",
   "description": "Type-safe notification/inbox management",
   "version": "0.0.1",
   "license": "MIT",
