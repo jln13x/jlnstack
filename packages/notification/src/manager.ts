@@ -44,6 +44,25 @@ type InferNotificationTypes<T extends NotificationSchemaDefinition> = {
 type NotificationTypesConstraint = Record<string, Record<string, unknown>>;
 
 /**
+ * Transformer for transforming data across network boundaries.
+ * Use this to preserve Date objects and other non-JSON types.
+ *
+ * @example
+ * ```ts
+ * import superjson from "superjson"
+ *
+ * const transformer: Transformer = {
+ *   serialize: (data) => superjson.serialize(data),
+ *   deserialize: (data) => superjson.deserialize(data),
+ * }
+ * ```
+ */
+type Transformer = {
+  serialize: (data: unknown) => unknown;
+  deserialize: <T>(data: unknown) => T;
+};
+
+/**
  * Base notification fields shared across all notification types.
  */
 type NotificationBase = {
@@ -423,5 +442,6 @@ export {
   type NotificationSchemaDefinition,
   type NotificationTypesConstraint,
   type SendOptions,
+  type Transformer,
   type StandardSchemaV1,
 };

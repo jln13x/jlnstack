@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { createMemoryAdapter, createNotificationManager } from "../src";
+import { clearMemoryStore } from "../src/adapters/memory";
 
 describe("createNotificationManager with Standard Schema (zod)", () => {
   // Define notification types using zod schemas
@@ -14,6 +15,10 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
   });
 
   const systemSchema = z.object({});
+
+  beforeEach(() => {
+    clearMemoryStore();
+  });
 
   function createManager() {
     return createNotificationManager({
@@ -309,6 +314,10 @@ describe("createNotificationManager with Standard Schema (zod)", () => {
 });
 
 describe("createNotificationManager with plain types (no schema)", () => {
+  beforeEach(() => {
+    clearMemoryStore();
+  });
+
   it("should work with plain object types", async () => {
     // Define types as plain objects (not Standard Schema)
     type MessageData = { from: string; preview: string };
@@ -334,6 +343,10 @@ describe("createNotificationManager with plain types (no schema)", () => {
 });
 
 describe("onSend hook", () => {
+  beforeEach(() => {
+    clearMemoryStore();
+  });
+
   it("should call onSend hook after sending a notification", async () => {
     const sentNotifications: unknown[] = [];
 

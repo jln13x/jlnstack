@@ -1,11 +1,18 @@
 import { defineConfig } from "tsdown";
 
+export const input = [
+  "src/index.ts",
+  "src/react/index.ts",
+  "src/server/index.ts",
+  "src/client/index.ts",
+];
+
 export default defineConfig({
   target: ["node18", "es2017"],
-  entry: ["src/index.ts"],
+  entry: input,
   dts: {
     sourcemap: true,
-    tsconfig: "./tsconfig.json",
+    tsconfig: "./tsconfig.build.json",
   },
   unbundle: true,
   format: ["cjs", "esm"],

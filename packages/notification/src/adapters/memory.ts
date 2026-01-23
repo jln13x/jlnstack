@@ -1,6 +1,7 @@
 import type {
   Notification,
   NotificationAdapter,
+  NotificationBase,
   NotificationFilter,
   NotificationInput,
   NotificationTypesConstraint,
@@ -13,16 +14,30 @@ type MemoryAdapterOptions = {
   generateId?: () => string;
 };
 
+const globalKey = Symbol.for("@jlnstack/notification/memory");
+
+type NotificationStore = Map<string, NotificationBase & { type: string; data: unknown }>;
+
+function getGlobalStore(): NotificationStore {
+  const g = globalThis as typeof globalThis & {
+    [globalKey]?: NotificationStore;
+  };
+  if (!g[globalKey]) {
+    g[globalKey] = new Map();
+  }
+  return g[globalKey];
+}
+
 /**
  * Creates an in-memory adapter for notification storage.
  * Useful for development, testing, and simple use cases.
  *
- * Note: Data is lost when the process restarts.
+ * Data persists across hot reloads in development but is lost when the process restarts.
  */
 function createMemoryAdapter<Types extends NotificationTypesConstraint>(
   options: MemoryAdapterOptions = {},
 ): NotificationAdapter<Types> {
-  const store = new Map<string, Notification<Types>>();
+  const store = getGlobalStore() as Map<string, Notification<Types>>;
   const generateId = options.generateId ?? (() => crypto.randomUUID());
 
   function matchesFilter(
@@ -163,4 +178,11 @@ function createMemoryAdapter<Types extends NotificationTypesConstraint>(
   };
 }
 
-export { createMemoryAdapter, type MemoryAdapterOptions };
+/**
+ * Clears all notifications from the global store.
+ */
+function clearMemoryStore(): void {
+  getGlobalStore().clear();
+}
+
+export { clearMemoryStore, createMemoryAdapter, type MemoryAdapterOptions };

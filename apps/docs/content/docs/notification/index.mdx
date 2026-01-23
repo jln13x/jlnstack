@@ -12,6 +12,7 @@ A lightweight, type-safe notification/inbox management library with support for:
 - **Type-safe notifications** with Standard Schema support (zod, valibot, arktype)
 - **Adapter-based storage** for flexible persistence (in-memory, Drizzle, etc.)
 - **Full type inference** from your notification schemas
+- **React hooks** with loading states powered by `useTransition`
 
 ## Installation
 
@@ -125,6 +126,59 @@ const manager = createNotificationManager({
 ```
 
 The hook receives the full notification object after it's been stored, including the generated `id` and `createdAt` fields.
+
+## React Integration
+
+Use the `/react` export for React hooks with loading states powered by `useTransition`.
+
+```tsx
+import { NotificationProvider, useNotifications } from "@jlnstack/notification/react";
+
+// Wrap your app with the provider
+function App() {
+  return (
+    <NotificationProvider manager={manager}>
+      <NotificationInbox />
+    </NotificationProvider>
+  );
+}
+
+// Use the hook in your components
+function NotificationInbox() {
+  const { manager, data, isPending, refetch } = useNotifications({
+    filter: { userId: "user_123", read: false },
+  });
+
+  // Mutations use the manager directly
+  const handleMarkAsRead = async (id: string) => {
+    await manager.markAsRead(id);
+    refetch();
+  };
+
+  if (isPending) return <div>Loading...</div>;
+
+  return (
+    <ul>
+      {data.map((notification) => (
+        <li key={notification.id} onClick={() => handleMarkAsRead(notification.id)}>
+          {notification.title}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### `useNotifications(options?)`
+
+Returns notifications with loading state and the manager for mutations.
+
+| Return | Type | Description |
+|--------|------|-------------|
+| `manager` | `NotificationManager` | Manager instance for mutations |
+| `data` | `Notification[]` | List of notifications |
+| `isPending` | `boolean` | Whether a fetch is in progress |
+| `refetch` | `() => void` | Refetch notifications |
 
 ## Plain Types (No Schema)
 
