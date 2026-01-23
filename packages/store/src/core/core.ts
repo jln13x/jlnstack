@@ -12,7 +12,7 @@ export function createStore<TState, TActions, TResults extends PluginResult[]>(
   options: StoreOptions<TState, TActions, TResults>,
 ): Store<TState, TActions, TResults> {
   const zustandStore = zustandCreateStore<TState>(() => options.state);
-  let pluginResults: TResults;
+  let pluginResults: TResults = [] as unknown as TResults;
 
   const baseSetState: SetState<TState> = (updater) => {
     const prevState = zustandStore.getState();

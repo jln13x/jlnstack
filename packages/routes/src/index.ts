@@ -559,9 +559,9 @@ function createRoutesWithConfig<
     const resolved = segments.flatMap((seg) => {
       if (!(seg in params)) return seg;
       const value = params[seg];
-      if (Array.isArray(value)) return value;
+      if (Array.isArray(value)) return value.map((v) => encodeURIComponent(v));
       if (value === undefined) return [];
-      return String(value);
+      return encodeURIComponent(String(value));
     });
 
     const basePath = resolved.length === 0 ? "/" : `/${resolved.join("/")}`;
