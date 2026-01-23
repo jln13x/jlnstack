@@ -60,6 +60,25 @@ Every package must be properly documented in the docs app (`apps/docs`).
    - It improves readability for complex types
    - It's required for public API boundaries
 
+4. **Internal type casts are acceptable** when the cast is contained within the implementation and doesn't leak to consumers. This applies to:
+   - Complex generic transformations where TypeScript's inference falls short
+   - Integrations with external libraries whose types don't align cleanly
+   - Internal state management, middleware patterns, or plugin systems
+
+   The key principle: consumer-facing APIs must remain fully type-safe.
+
+   ```ts
+   // Acceptable - internal casts, consumer types are preserved
+   let pluginResults: TResults = [] as unknown as TResults;
+
+   const middleware = (setState, getState) => (updater: unknown) => {
+     setState(produce(getState(), updater as (draft: any) => void));
+   };
+
+   // Not acceptable - cast leaks to consumer
+   export function getState(): any { ... }
+   ```
+
 ### Exports
 
 Only export functions and types that are useful for consumers. Internal utilities should remain unexported.
