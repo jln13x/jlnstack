@@ -188,7 +188,11 @@ function NotificationItem({
 // Notification Inbox
 // ============================================================================
 
-function NotificationInbox({ recipientId: _recipientId }: { recipientId: string }) {
+function NotificationInbox({
+  recipientId: _recipientId,
+}: {
+  recipientId: string;
+}) {
   const [filter, setFilter] = useState<"all" | "unread" | "archived">("all");
 
   const { manager, data, isPending, refetch } = useNotifications({
@@ -339,7 +343,11 @@ function NotificationInbox({ recipientId: _recipientId }: { recipientId: string 
 // Send Notification Panel
 // ============================================================================
 
-function SendNotificationPanel({ recipientId: _recipientId }: { recipientId: string }) {
+function SendNotificationPanel({
+  recipientId: _recipientId,
+}: {
+  recipientId: string;
+}) {
   const { manager, refetch } = useNotifications();
   const [type, setType] = useState<"message" | "alert" | "system">("message");
   const [title, setTitle] = useState("");
