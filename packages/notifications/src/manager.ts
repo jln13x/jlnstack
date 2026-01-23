@@ -14,6 +14,55 @@ type StandardSchemaV1<T = unknown> = {
 };
 
 /**
+ * Error thrown when notification data fails schema validation.
+ */
+class NotificationValidationError extends Error {
+  constructor(
+    public readonly type: string,
+    public readonly issues: readonly unknown[],
+  ) {
+    const issueMessages = issues
+      .map((issue) => {
+        if (typeof issue === "object" && issue !== null && "message" in issue) {
+          return (issue as { message: string }).message;
+        }
+        return String(issue);
+      })
+      .join(", ");
+    super(`Invalid data for notification type "${type}": ${issueMessages}`);
+    this.name = "NotificationValidationError";
+  }
+}
+
+/**
+ * Parse notification data through its schema.
+ * Returns the validated data or throws NotificationValidationError.
+ * Throws if the schema doesn't implement Standard Schema.
+ */
+function parseNotificationData<T>(
+  schema: unknown,
+  data: unknown,
+  type: string,
+): T {
+  const standardSchema = schema as StandardSchemaV1 | undefined;
+  const validate = standardSchema?.["~standard"]?.validate;
+
+  if (!validate) {
+    throw new Error(
+      `Schema for notification type "${type}" must implement Standard Schema (e.g., Zod, Valibot, ArkType)`,
+    );
+  }
+
+  const result = validate(data);
+
+  if ("issues" in result) {
+    throw new NotificationValidationError(type, result.issues);
+  }
+
+  return result.value as T;
+}
+
+/**
  * Infer the output type from a Standard Schema or plain type.
  */
 type InferSchema<T> = T extends StandardSchemaV1<infer O>
@@ -358,6 +407,14 @@ function createNotificationManager<
     async send<K extends keyof Types & string>(
       input: SendInput<Types, K>,
     ): Promise<Notification<Types, K>> {
+      // Validate data against the schema for this notification type
+      const schema = types[input.type];
+      const validatedData = parseNotificationData<Types[K]>(
+        schema,
+        input.data,
+        input.type,
+      );
+
       // Type assertion needed because TypeScript can't narrow the generic K
       // to the specific discriminated union member at compile time
       const notification = await adapter.insert({
@@ -365,7 +422,7 @@ function createNotificationManager<
         recipientId: input.recipientId,
         title: input.title,
         body: input.body,
-        data: input.data,
+        data: validatedData,
       } as never);
 
       if (onSend) {
@@ -435,6 +492,8 @@ function createNotificationManager<
 
 export {
   createNotificationManager,
+  NotificationValidationError,
+  parseNotificationData,
   type InferNotificationTypes,
   type InferSchema,
   type Notification,

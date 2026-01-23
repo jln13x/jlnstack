@@ -4,6 +4,8 @@ export {
 } from "./adapters/memory";
 export {
   createNotificationManager,
+  NotificationValidationError,
+  parseNotificationData,
   type InferNotificationTypes,
   type InferSchema,
   type Notification,

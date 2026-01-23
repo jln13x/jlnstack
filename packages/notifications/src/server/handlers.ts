@@ -1,7 +1,8 @@
-import type {
-  NotificationManager,
-  NotificationTypesConstraint,
-  Transformer,
+import {
+  NotificationValidationError,
+  type NotificationManager,
+  type NotificationTypesConstraint,
+  type Transformer,
 } from "../manager";
 
 type NextRequest = {
@@ -330,6 +331,9 @@ function createNotificationHandlers<Types extends NotificationTypesConstraint>(
 
       return errorResponse("Unknown action", 404);
     } catch (err) {
+      if (err instanceof NotificationValidationError) {
+        return errorResponse(err.message, 400);
+      }
       return errorResponse(
         err instanceof Error ? err.message : "Unknown error",
         500,

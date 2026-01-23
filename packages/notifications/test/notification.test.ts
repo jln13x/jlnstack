@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { z } from "zod";
-import { createMemoryAdapter, createNotificationManager } from "../src";
+import {
+  createMemoryAdapter,
+  createNotificationManager,
+  NotificationValidationError,
+} from "../src";
 import { clearMemoryStore } from "../src/adapters/memory";
 
 describe("createNotificationManager with Standard Schema (zod)", () => {
@@ -341,7 +345,7 @@ describe("createNotificationManager with plain types (no schema)", () => {
     clearMemoryStore();
   });
 
-  it("should work with plain object types", async () => {
+  it("should throw error when schema doesn't implement Standard Schema", async () => {
     // Define types as plain objects (not Standard Schema)
     type MessageData = { from: string; preview: string };
     type AlertData = { severity: "info" | "warning" | "error" };
@@ -354,15 +358,155 @@ describe("createNotificationManager with plain types (no schema)", () => {
       adapter: createMemoryAdapter(),
     });
 
+    await expect(
+      manager.send({
+        type: "message",
+        recipientId: "user_123",
+        title: "Test",
+        data: { from: "john", preview: "Hey!" },
+      }),
+    ).rejects.toThrow(
+      'Schema for notification type "message" must implement Standard Schema',
+    );
+  });
+});
+
+describe("schema validation", () => {
+  beforeEach(() => {
+    clearMemoryStore();
+  });
+
+  it("should throw NotificationValidationError for invalid data", async () => {
+    const manager = createNotificationManager({
+      types: {
+        message: z.object({
+          from: z.string(),
+          preview: z.string(),
+        }),
+      },
+      adapter: createMemoryAdapter(),
+    });
+
+    await expect(
+      manager.send({
+        type: "message",
+        recipientId: "user_123",
+        title: "Test",
+        // @ts-expect-error - intentionally invalid data
+        data: { from: 123, preview: "Hey!" },
+      }),
+    ).rejects.toThrow(NotificationValidationError);
+  });
+
+  it("should throw NotificationValidationError with descriptive message", async () => {
+    const manager = createNotificationManager({
+      types: {
+        alert: z.object({
+          severity: z.enum(["info", "warning", "error"]),
+        }),
+      },
+      adapter: createMemoryAdapter(),
+    });
+
+    await expect(
+      manager.send({
+        type: "alert",
+        recipientId: "user_123",
+        title: "Test",
+        // @ts-expect-error - intentionally invalid data
+        data: { severity: "critical" },
+      }),
+    ).rejects.toThrow('Invalid data for notification type "alert"');
+  });
+
+  it("should throw NotificationValidationError for missing required fields", async () => {
+    const manager = createNotificationManager({
+      types: {
+        message: z.object({
+          from: z.string(),
+          preview: z.string(),
+        }),
+      },
+      adapter: createMemoryAdapter(),
+    });
+
+    await expect(
+      manager.send({
+        type: "message",
+        recipientId: "user_123",
+        title: "Test",
+        // @ts-expect-error - intentionally invalid data
+        data: { from: "john" },
+      }),
+    ).rejects.toThrow(NotificationValidationError);
+  });
+
+  it("should pass through valid data after validation", async () => {
+    const manager = createNotificationManager({
+      types: {
+        message: z.object({
+          from: z.string(),
+          preview: z.string(),
+        }),
+      },
+      adapter: createMemoryAdapter(),
+    });
+
     const notification = await manager.send({
       type: "message",
       recipientId: "user_123",
       title: "Test",
-      data: { from: "john", preview: "Hey!" },
+      data: { from: "john", preview: "Hey there!" },
     });
 
-    expect(notification.type).toBe("message");
     expect(notification.data.from).toBe("john");
+    expect(notification.data.preview).toBe("Hey there!");
+  });
+
+  it("should coerce data through schema transformations", async () => {
+    const manager = createNotificationManager({
+      types: {
+        payment: z.object({
+          amount: z.coerce.number(),
+          currency: z.string().toUpperCase(),
+        }),
+      },
+      adapter: createMemoryAdapter(),
+    });
+
+    const notification = await manager.send({
+      type: "payment",
+      recipientId: "user_123",
+      title: "Payment received",
+      // @ts-expect-error - intentionally passing string for coercion
+      data: { amount: "100", currency: "usd" },
+    });
+
+    expect(notification.data.amount).toBe(100);
+    expect(notification.data.currency).toBe("USD");
+  });
+
+  it("should strip extra fields when schema uses .strict() or passthrough", async () => {
+    const manager = createNotificationManager({
+      types: {
+        message: z
+          .object({
+            from: z.string(),
+          })
+          .strict(),
+      },
+      adapter: createMemoryAdapter(),
+    });
+
+    await expect(
+      manager.send({
+        type: "message",
+        recipientId: "user_123",
+        title: "Test",
+        // @ts-expect-error - intentionally passing extra field
+        data: { from: "john", extraField: "should fail" },
+      }),
+    ).rejects.toThrow(NotificationValidationError);
   });
 });
 
