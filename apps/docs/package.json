@@ -17,6 +17,7 @@
     "@jlnstack/filter": "workspace:*",
     "@jlnstack/form": "workspace:*",
     "@jlnstack/modal": "workspace:*",
+    "@jlnstack/notifications": "workspace:*",
     "@jlnstack/store": "workspace:*",
     "fumadocs-core": "16.4.1",
     "fumadocs-mdx": "14.2.3",
@@ -27,6 +28,8 @@
     "radix-ui": "^1.4.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "superjson": "^2.2.6",
+    "zod": "^3.24.0",
     "zustand": "^5.0.9"
   },
   "devDependencies": {

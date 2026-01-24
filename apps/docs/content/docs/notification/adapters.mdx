@@ -1,0 +1,94 @@
+---
+title: Adapters
+description: Storage adapters for notifications
+---
+
+# Adapters
+
+Adapters provide the storage layer for notifications. The package includes a built-in memory adapter and supports custom adapters for any storage backend.
+
+## Memory Adapter
+
+The memory adapter stores notifications in memory. Useful for development, testing, and simple use cases.
+
+```ts
+import { createMemoryAdapter } from "@jlnstack/notifications";
+
+const adapter = createMemoryAdapter();
+```
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `generateId` | `() => string` | Custom ID generator (default: `crypto.randomUUID()`) |
+
+```ts
+const adapter = createMemoryAdapter({
+  generateId: () => `notif_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+});
+```
+
+**Note:** Data is lost when the process restarts.
+
+## Custom Adapters
+
+Implement the `NotificationAdapter` interface to create custom adapters:
+
+```ts
+import type { NotificationAdapter, NotificationTypesConstraint } from "@jlnstack/notifications";
+
+function createCustomAdapter<Types extends NotificationTypesConstraint>(): NotificationAdapter<Types> {
+  return {
+    async insert(input) {
+      // Insert notification into storage
+    },
+
+    async findById(id) {
+      // Find notification by ID
+    },
+
+    async findMany(filter) {
+      // Query notifications with filter
+    },
+
+    async count(filter) {
+      // Count matching notifications
+    },
+
+    async update(id, data) {
+      // Update notification fields
+    },
+
+    async delete(id) {
+      // Delete notification by ID
+    },
+
+    async markAsRead(ids) {
+      // Mark multiple as read
+    },
+
+    async markAllAsRead(userId) {
+      // Mark all user notifications as read
+    },
+
+    async deleteMany(filter) {
+      // Delete matching notifications
+    },
+  };
+}
+```
+
+## Drizzle Adapter (Coming Soon)
+
+A Drizzle ORM adapter is planned for persistent storage:
+
+```ts
+// Future API
+import { createDrizzleAdapter } from "@jlnstack/notifications/drizzle";
+
+const adapter = createDrizzleAdapter({
+  db,
+  table: notificationsTable,
+});
+```

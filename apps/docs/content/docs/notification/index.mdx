@@ -1,0 +1,252 @@
+---
+title: Introduction
+description: Type-safe notification/inbox management
+---
+
+# Notification
+
+<PackageInfo name="@jlnstack/notifications" />
+
+A lightweight, type-safe notification/inbox management library with support for:
+
+- **Type-safe notifications** with Standard Schema support (zod, valibot, arktype)
+- **Adapter-based storage** for flexible persistence (in-memory, Drizzle, etc.)
+- **Full type inference** from your notification schemas
+- **React hooks** with loading states powered by `useTransition`
+
+## Installation
+
+```bash
+npm install @jlnstack/notifications
+```
+
+## Quick Start
+
+### 1. Define Notification Types
+
+Use Standard Schema libraries like zod to define your notification types:
+
+```ts
+import { z } from "zod";
+import { createNotificationManager, createMemoryAdapter } from "@jlnstack/notifications";
+
+const manager = createNotificationManager({
+  types: {
+    message: z.object({
+      from: z.string(),
+      preview: z.string(),
+    }),
+    alert: z.object({
+      severity: z.enum(["info", "warning", "error"]),
+    }),
+    system: z.object({}),
+  },
+  adapter: createMemoryAdapter(),
+});
+```
+
+### 2. Send Notifications
+
+The `send` method is fully type-safe based on your schema definitions:
+
+```ts
+// Type-safe - data must match the schema
+await manager.send({
+  type: "message",
+  recipientId: "user_123",
+  title: "New message from John",
+  data: { from: "john", preview: "Hey there!" },
+});
+
+await manager.send({
+  type: "alert",
+  recipientId: "user_123",
+  title: "System Warning",
+  data: { severity: "warning" },
+});
+```
+
+### 3. Query Notifications
+
+```ts
+// List all unread notifications for a recipient
+const unread = await manager.list({
+  recipientId: "user_123",
+  read: false,
+});
+
+// Get unread count
+const count = await manager.unreadCount("user_123");
+
+// Filter by notification type
+const alerts = await manager.list({
+  recipientId: "user_123",
+  type: "alert", // Type-safe: only "message" | "alert" | "system" allowed
+});
+```
+
+### 4. Manage Notifications
+
+```ts
+// Mark as read
+await manager.markAsRead("notification_id");
+await manager.markAllAsRead("user_123");
+
+// Archive
+await manager.archive("notification_id");
+await manager.unarchive("notification_id");
+
+// Delete
+await manager.delete("notification_id");
+await manager.deleteMany({ recipientId: "user_123", read: true });
+```
+
+## Hooks
+
+Use the `onSend` hook to trigger side effects when notifications are sent:
+
+```ts
+const manager = createNotificationManager({
+  types: {
+    message: z.object({ from: z.string() }),
+    alert: z.object({ severity: z.enum(["info", "warning", "error"]) }),
+  },
+  adapter: createMemoryAdapter(),
+  onSend: async (notification) => {
+    // Send email for alerts
+    if (notification.type === "alert" && notification.data.severity === "error") {
+      await sendEmail({
+        to: getEmailForRecipient(notification.recipientId),
+        subject: notification.title,
+      });
+    }
+
+    // Send push notification
+    await sendPushNotification(notification);
+  },
+});
+```
+
+The hook receives the full notification object after it's been stored, including the generated `id` and `createdAt` fields.
+
+## React Integration
+
+Use the `/react` export for React hooks with loading states powered by `useTransition`.
+
+```tsx
+import { NotificationProvider, useNotifications } from "@jlnstack/notifications/react";
+
+// Wrap your app with the provider
+function App() {
+  return (
+    <NotificationProvider manager={manager}>
+      <NotificationInbox />
+    </NotificationProvider>
+  );
+}
+
+// Use the hook in your components
+function NotificationInbox() {
+  const { manager, data, isPending, refetch } = useNotifications({
+    filter: { read: false }, // recipientId is determined server-side
+  });
+
+  // Mutations use the manager directly
+  const handleMarkAsRead = async (id: string) => {
+    await manager.markAsRead(id);
+    refetch();
+  };
+
+  if (isPending) return <div>Loading...</div>;
+
+  return (
+    <ul>
+      {data.map((notification) => (
+        <li key={notification.id} onClick={() => handleMarkAsRead(notification.id)}>
+          {notification.title}
+        </li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### `useNotifications(options?)`
+
+Returns notifications with loading state and the manager for mutations.
+
+| Return | Type | Description |
+|--------|------|-------------|
+| `manager` | `NotificationManager` | Manager instance for mutations |
+| `data` | `Notification[]` | List of notifications |
+| `isPending` | `boolean` | Whether a fetch is in progress |
+| `refetch` | `() => void` | Refetch notifications |
+
+## Plain Types (No Schema)
+
+You can also use plain TypeScript types without a schema library:
+
+```ts
+type MessageData = { from: string; preview: string };
+type AlertData = { severity: "info" | "warning" | "error" };
+
+const manager = createNotificationManager({
+  types: {
+    message: {} as MessageData,
+    alert: {} as AlertData,
+  },
+  adapter: createMemoryAdapter(),
+});
+```
+
+## API Reference
+
+### `createNotificationManager(options)`
+
+Creates a notification manager instance.
+
+**Options:**
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `types` | `Record<string, Schema>` | Notification type definitions |
+| `adapter` | `NotificationAdapter` | Storage adapter |
+| `onSend` | `(notification) => void \| Promise<void>` | Hook called after sending |
+
+**Returns:** `NotificationManager`
+
+### NotificationManager Methods
+
+| Method | Description |
+|--------|-------------|
+| `send(input)` | Send a new notification |
+| `get(id)` | Get a notification by ID |
+| `list(filter?)` | List notifications with optional filtering |
+| `count(filter?)` | Count notifications matching filter |
+| `unreadCount(recipientId)` | Get unread count for a recipient |
+| `markAsRead(id)` | Mark a notification as read |
+| `markManyAsRead(ids)` | Mark multiple notifications as read |
+| `markAllAsRead(recipientId)` | Mark all notifications for a recipient as read |
+| `archive(id)` | Archive a notification |
+| `unarchive(id)` | Unarchive a notification |
+| `delete(id)` | Delete a notification |
+| `deleteMany(filter)` | Delete notifications matching filter |
+
+### Notification Structure
+
+Each notification has the following fields:
+
+```ts
+type Notification = {
+  id: string;
+  recipientId: string;
+  type: string;        // Your defined notification type
+  title: string;
+  body?: string;
+  data: unknown;       // Type-safe based on your schema
+  read: boolean;
+  archived: boolean;
+  createdAt: Date;
+  readAt?: Date;
+};
+```

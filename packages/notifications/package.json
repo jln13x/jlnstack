@@ -1,0 +1,86 @@
+{
+  "name": "@jlnstack/notifications",
+  "description": "Type-safe notification/inbox management",
+  "version": "0.0.1",
+  "license": "MIT",
+  "author": "jln13x",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jln13x/jlnstack"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui"
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.16",
+    "@vitest/ui": "^2.1.8",
+    "tsdown": "^0.15.4",
+    "typescript": "catalog:",
+    "vitest": "^2.1.8",
+    "zod": "^3.24.0"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./react": {
+      "import": {
+        "types": "./dist/react/index.d.mts",
+        "default": "./dist/react/index.mjs"
+      },
+      "require": {
+        "types": "./dist/react/index.d.cts",
+        "default": "./dist/react/index.cjs"
+      }
+    },
+    "./server": {
+      "import": {
+        "types": "./dist/server/index.d.mts",
+        "default": "./dist/server/index.mjs"
+      },
+      "require": {
+        "types": "./dist/server/index.d.cts",
+        "default": "./dist/server/index.cjs"
+      }
+    },
+    "./client": {
+      "import": {
+        "types": "./dist/client/index.d.mts",
+        "default": "./dist/client/index.mjs"
+      },
+      "require": {
+        "types": "./dist/client/index.d.cts",
+        "default": "./dist/client/index.cjs"
+      }
+    }
+  }
+}
