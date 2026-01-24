@@ -104,6 +104,10 @@ function createRoutes<const R extends string>(): Routes<R>
 function createRoutes<R extends string>(): Routes<R>
 ```
 
+### Changesets
+
+Package changes require a changeset. Run `pnpm changeset`, select the affected packages, and choose `patch`.
+
 ## Code Comments & Documentation
 
 ### Minimize Comments
